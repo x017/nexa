@@ -151,6 +151,11 @@ class Router:
         return self._stack[self._index][0] if 0 <= self._index < len(self._stack) else ""
 
     @property
+    def current(self) -> str:
+        """Alias for ``current_name``."""
+        return self.current_name
+
+    @property
     def current_params(self) -> Dict[str, Any]:
         return self._stack[self._index][1] if 0 <= self._index < len(self._stack) else {}
 
@@ -229,6 +234,11 @@ class Router:
             return view.render(ui)
         return None
 
+    def __call__(self, ui: Optional[UI] = None) -> Any:
+        return self.render(ui)
+
+    navigate = push
+
 
 class Application:
     """High-level OOP base class bundling ``App``, ``BackgroundRunner``, and ``Router``.
@@ -254,8 +264,8 @@ class Application:
 
     def __init__(
         self,
-        *,
         title: Optional[str] = None,
+        *,
         width: Optional[int] = None,
         height: Optional[int] = None,
         theme: Optional[ThemeMode] = None,

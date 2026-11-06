@@ -69,7 +69,7 @@ def main() -> None:
                     log.info(f"Built shader (roughness={roughness:.2f}, octaves={octaves})")
                 ctx.toolbar_separator()
                 show_grid = ctx.toolbar_toggle(show_grid, ui.Icon.GRID_3X3, tooltip="Show canvas grid")
-                snap_nodes = ctx.toolbar_toggle(snap_nodes, ui.Icon.MAGNET if hasattr(ui.Icon, "MAGNET") else ui.Icon.TARGET, tooltip="Snap")
+                snap_nodes = ctx.toolbar_toggle(snap_nodes, ui.Icon.TARGET, tooltip="Snap to grid")
                 ctx.toolbar_spacer()
                 ctx.theme_toggle()
 

@@ -21,7 +21,7 @@ from .._cdefs import (
 )
 from .._lib import get_cdll
 from ..scopes import ConditionalScope
-from ..types import Color, ColorLike, LogLevel, SizeLike
+from ..types import Color, ColorLike, LogLevel, Size, SizeKind, SizeLike
 
 
 class LogBuffer:
@@ -257,7 +257,7 @@ class ToolsMixin:
         buffer: LogBuffer,
         *,
         width: SizeLike = None,
-        height: float = 320.0,
+        height: SizeLike = 320.0,
         timestamps: bool = False,
         no_toolbar: bool = False,
         size: float = 0.0,
@@ -265,7 +265,12 @@ class ToolsMixin:
         keep = self._frame_keepalive
         opts = CuiLogViewOpts()
         opts.width = to_c_size(width)
-        opts.height = float(height)
+        if height is None:
+            opts.height = 320.0
+        elif isinstance(height, Size):
+            opts.height = -1.0 if height.kind in (SizeKind.GROW, SizeKind.PERCENT) else float(height.value)
+        else:
+            opts.height = float(height)
         opts.timestamps = bool(timestamps)
         opts.no_toolbar = bool(no_toolbar)
         opts.size = float(size)
