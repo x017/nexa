@@ -51,6 +51,7 @@ def main() -> None:
                 tab = ctx.tabs(
                     "tracker_tabs", ["Kanban Board", "Gantt Timeline", "Week Schedule"], tab,
                     icons=[ui.Icon.GRID_3X3, ui.Icon.SLIDERS_HORIZONTAL, ui.Icon.CALENDAR],
+                    variant=ui.TabsVariant.PILL,
                 )
                 ctx.spacer()
                 ctx.presence("team_pres", team)

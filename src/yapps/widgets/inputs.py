@@ -32,6 +32,8 @@ from ..types import (
     Key,
     KeyCombo,
     Mod,
+    Size,
+    SizeKind,
     SizeLike,
     Vec2,
 )
@@ -69,7 +71,10 @@ def _build_input_opts(
     opts.read_only = bool(read_only)
     opts.size = int(size)
     opts.width = to_c_size(width)
-    opts.height = float(height)
+    if isinstance(height, Size):
+        opts.height = -1.0 if height.kind in (SizeKind.GROW, SizeKind.PERCENT) else float(height.value)
+    else:
+        opts.height = float(height)
     opts.prefix = encode_opt(prefix, keep)
     opts.suffix = encode_opt(suffix, keep)
     keep.append(opts)

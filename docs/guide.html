@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documentation &amp; Tutorials — yapps</title>
+  <meta name="description" content="Complete step-by-step tutorials (Functional, Procedural, and OOP), theming guide, concurrency guide, and 150+ component API reference for yapps." />
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <!-- Sticky Top Bar -->
+  <header class="topbar">
+    <div class="topbar-inner" style="max-width: 1380px;">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">y</span>
+        <span>yapps</span>
+        <span class="brand-badge">Docs</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="nav-link" href="index.html">Overview</a>
+        <a class="nav-link active" href="guide.html#getting-started">Guide</a>
+        <a class="nav-link" href="guide.html#tutorial-functional">Functional Tutorial</a>
+        <a class="nav-link" href="guide.html#tutorial-oop">OOP Tutorial</a>
+        <a class="nav-link" href="guide.html#components-reference">Components</a>
+      </nav>
+      <div class="topbar-right">
+        <div class="accent-strip" id="header-accent-strip" title="Switch live OKLCH accent"></div>
+        <button class="icon-btn" id="theme-toggle-btn" type="button">☀ Light</button>
+        <a class="icon-btn" href="https://github.com/x017/yapps" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Three-Column Documentation Shell -->
+  <div class="docs-shell">
+    <!-- Left Chapter Navigation + Instant Search -->
+    <aside class="docs-sidebar" aria-label="Documentation chapters">
+      <div class="search-box">
+        <input id="docs-search-input" type="search" placeholder="Search guides &amp; widgets..." autocomplete="off" />
+        <span class="search-kbd">/</span>
+      </div>
+      <div class="search-results" id="docs-search-results"></div>
+      <nav id="docs-sidebar-nav"></nav>
+    </aside>
+
+    <!-- Main Chapter Article -->
+    <main class="docs-main">
+      <article class="prose" id="docs-article">
+        <noscript>Please enable JavaScript or browse the Markdown files directly in the <code>docs/</code> directory on GitHub.</noscript>
+      </article>
+    </main>
+
+    <!-- Right Table of Contents -->
+    <aside class="docs-toc" aria-label="On this page">
+      <div class="toc-title">On this page</div>
+      <nav id="docs-toc-links"></nav>
+    </aside>
+  </div>
+
+  <script src="assets/docs-data.js"></script>
+  <script src="assets/site.js"></script>
+</body>
+</html>

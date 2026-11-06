@@ -137,7 +137,7 @@ def main() -> None:
                     cur.body = ctx.textarea(
                         "note_body", cur.body,
                         placeholder="Write something...",
-                        width=ui.FILL, height=-1,
+                        width=ui.FILL, height=ui.FILL,
                     )
                 else:
                     if ctx.empty_state(

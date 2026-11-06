@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>yapps — Ultra-Compact Native Desktop UI Engine for Python</title>
+  <meta name="description" content="Zero-dependency, C99-backed immediate-mode UI framework for Python. 150+ components, Functional & OOP paradigms, OKLCH design system, asyncio & threading, in a ~652 KB native core." />
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <!-- Sticky Header with Live 8-Accent & Light/Dark Controls -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">y</span>
+        <span>yapps</span>
+        <span class="brand-badge">v1.0</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="nav-link active" href="index.html">Overview</a>
+        <a class="nav-link" href="guide.html#getting-started">Guide</a>
+        <a class="nav-link" href="guide.html#tutorial-functional">Functional Tutorial</a>
+        <a class="nav-link" href="guide.html#tutorial-oop">OOP Tutorial</a>
+        <a class="nav-link" href="guide.html#components-reference">Components</a>
+      </nav>
+      <div class="topbar-right">
+        <div class="accent-strip" id="header-accent-strip" title="Switch live OKLCH accent"></div>
+        <button class="icon-btn" id="theme-toggle-btn" type="button">☀ Light</button>
+        <a class="icon-btn" href="https://github.com/x017/yapps" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero container">
+      <div class="hero-eyebrow">
+        <span>C99 Engine + Pure Pythonic API</span> · <strong>Zero Runtime Dependencies</strong>
+      </div>
+      <h1>
+        Native Python desktop apps,<br />
+        <span class="accent-word">without the 150 MB bloat.</span>
+      </h1>
+      <p class="hero-sub">
+        <strong>yapps</strong> pairs a single-pass C99 layout and GPU/SIMD rendering core with an expressive, value-returning Python API. Write 20-line functional scripts or structured multi-route OOP studios—with <strong>150+ components</strong> and <strong>0% idle CPU</strong>.
+      </p>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="guide.html#getting-started">Read the Guide →</a>
+        <a class="btn btn-outline" href="guide.html#tutorial-functional">Start Tutorials</a>
+        <div class="install-pill">
+          <span>$</span>
+          <code>pip install git+https://github.com/x017/yapps.git</code>
+          <button class="copy-mini" type="button" data-copy-text="pip install git+https://github.com/x017/yapps.git">Copy</button>
+        </div>
+      </div>
+
+      <!-- Key Engineering Metrics -->
+      <div class="metrics-grid">
+        <div class="metric-cell">
+          <div class="metric-val">652 <span>KB</span></div>
+          <div class="metric-lbl">Compiled native library (Inter, Geist Mono &amp; 168 Lucide icons embedded)</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-val">487 <span>KB</span></div>
+          <div class="metric-lbl">Minimal LTO build for custom Vulkan / Metal / DirectX engines</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-val">150<span>+</span></div>
+          <div class="metric-lbl">Built-in widgets across 19 domains—charts, Kanban, nodes &amp; tables</div>
+        </div>
+        <div class="metric-cell">
+          <div class="metric-val">0<span>%</span> CPU</div>
+          <div class="metric-lbl">Event-driven OS sleep when idle, GIL-free blocking waits &amp; 60fps springs</div>
+        </div>
+      </div>
+
+      <!-- Interactive Live-Rendered Screenshot Window -->
+      <div class="showcase-tabs" id="showcase-tabs"></div>
+      <div class="window-frame">
+        <div class="window-bar">
+          <div class="window-dots"><i></i><i></i><i></i></div>
+          <span id="showcase-win-title">Gallery &amp; Studio — yapps</span>
+          <span style="width: 42px;"></span>
+        </div>
+        <img id="showcase-img" src="assets/screenshots/gallery.png" alt="yapps Studio &amp; Node Editor screenshot" loading="eager" />
+      </div>
+      <div class="showcase-caption">
+        <span id="showcase-caption-text"></span>
+        <a id="showcase-source-link" href="https://github.com/x017/yapps/blob/main/examples/gallery.py" target="_blank" rel="noopener">View examples/gallery.py →</a>
+      </div>
+    </section>
+
+    <!-- Paradigm Switcher: Functional vs Procedural vs OOP -->
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-kicker">Three First-Class Paradigms</div>
+          <h2>Your Python, your architecture.</h2>
+          <p>
+            Every widget is a plain value-returning Python function or context manager. Start with a functional closure, pass explicit state dictionaries, or scale into isolated <code>Component</code>, <code>View</code>, <code>Router</code>, and <code>Store</code> classes.
+          </p>
+        </div>
+
+        <div class="paradigm-box">
+          <div class="paradigm-selector" id="paradigm-selector">
+            <button class="paradigm-card active" type="button" data-paradigm="functional">
+              <h3><span>1. Functional Closure</span> <span class="bento-tag">ui.run</span></h3>
+              <p>Zero boilerplate. Close over local variables and render your entire tool in 20 lines of clean Python.</p>
+            </button>
+            <button class="paradigm-card" type="button" data-paradigm="procedural">
+              <h3><span>2. Procedural Context</span> <span class="bento-tag">ctx: ui.UI</span></h3>
+              <p>Explicit <code>while app.frame():</code> loop with plain helper functions and dataclasses—ideal for multi-window &amp; headless testing.</p>
+            </button>
+            <button class="paradigm-card" type="button" data-paradigm="oop">
+              <h3><span>3. Object-Oriented</span> <span class="bento-tag">Component</span></h3>
+              <p>Subclass <code>Application</code>, <code>Component</code>, and <code>View</code> with automatic ID-collision isolation and route navigation.</p>
+            </button>
+            <a class="btn btn-outline" id="paradigm-guide-link" href="guide.html#tutorial-functional" style="justify-content: center; margin-top: 4px;">
+              Read Functional Tutorial →
+            </a>
+          </div>
+
+          <div class="code-panel">
+            <div class="code-header">
+              <span id="paradigm-filename">hello_functional.py</span>
+              <button class="copy-mini" data-copy-code="1" type="button">Copy</button>
+            </div>
+            <pre><code id="paradigm-code"></code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Live Interactive 8-Accent OKLCH System -->
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-kicker">Perceptual OKLCH Color Science</div>
+          <h2>8 calibrated accents + 34 live theme tokens.</h2>
+          <p>
+            Click any of <code>yapps</code>'s 8 built-in <code>ui.Accent</code> presets below (and toggle Light/Dark mode in the top bar) to preview the exact perceptual OKLCH palette used by the native C engine. Need your own brand hex? Override <code>ctx.theme[ui.Token.ACCENT]</code> at runtime.
+          </p>
+        </div>
+
+        <div class="accents-grid" id="accents-interactive-grid"></div>
+
+        <div class="code-panel" style="margin-top: 18px;">
+          <div class="code-header">
+            <span>Selected Python configuration</span>
+            <a href="guide.html#theming-and-styling" style="color: var(--accent);">Full Theming &amp; Custom Brand Colors Guide →</a>
+          </div>
+          <pre><code id="active-accent-code">accent=ui.Accent.BLUE  # #6ba3ff (dark mode)</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 19 Component Domains Bento Grid -->
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-kicker">Batteries Included</div>
+          <h2>150+ components across 19 domains.</h2>
+          <p>
+            No third-party charting, node-graph, or table plugins required—every widget renders in a single native C pass.
+          </p>
+        </div>
+
+        <div class="bento-grid">
+          <a class="bento-card" href="guide.html#components-reference">
+            <h3>Data &amp; Virtual Tables <span class="bento-tag">10k+ rows</span></h3>
+            <p>Virtualized sortable tables, KPI cards with sparklines, rolling odometer counters, treemaps, Sankey diagrams &amp; heatmaps.</p>
+          </a>
+          <a class="bento-card" href="guide.html#components-reference">
+            <h3>Charts &amp; Sparklines <span class="bento-tag">6 types</span></h3>
+            <p>Smooth cubic area/line charts, grouped bars, donut breakdowns, interactive scrubbers &amp; inline sparklines.</p>
+          </a>
+          <a class="bento-card" href="guide.html#components-reference">
+            <h3>Node Editor &amp; Tools <span class="bento-tag">Studio</span></h3>
+            <p>Pannable Bezier node graphs, typed property grids, C-backed ring-buffer log viewer, code blocks &amp; diff views.</p>
+          </a>
+          <a class="bento-card" href="guide.html#components-reference">
+            <h3>AI &amp; Chat Primitives <span class="bento-tag">Streaming</span></h3>
+            <p>Chat bubbles, prompt composer with attachments, model selector, token ring meters, artifacts, citations &amp; voice orb.</p>
+          </a>
+          <a class="bento-card" href="guide.html#components-reference">
+            <h3>Kanban, Gantt &amp; Dates <span class="bento-tag">Planning</span></h3>
+            <p>Drag-and-drop Kanban columns, interactive Gantt timelines, week schedules, calendars &amp; date range pickers.</p>
+          </a>
+          <a class="bento-card" href="guide.html#concurrency-and-async">
+            <h3>Asyncio &amp; Threading <span class="bento-tag">GIL-Free</span></h3>
+            <p><code>BackgroundRunner</code>, <code>AsyncBridge</code>, thread-safe <code>Channel[T]</code>, <code>LogBuffer</code> &amp; <code>app.wake()</code> from any thread.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Binary Size & Architecture -->
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-kicker">Systems Engineering</div>
+          <h2>Tiny footprint. Headless CI testable.</h2>
+          <p>
+            <code>yapps</code> ships zero Python runtime dependencies, releases the Python GIL during OS event waits, and runs identically in headless CI/Docker with <code>headless=True</code>.
+          </p>
+        </div>
+
+        <div class="size-bars">
+          <div>
+            <div class="size-row-top">
+              <strong>Default Full Build (OpenGL 3.3 + SIMD Software Fallback + 4 Embedded Fonts)</strong>
+              <code>652.1 KB</code>
+            </div>
+            <div class="size-track"><div class="size-fill" style="width: 100%;"></div></div>
+          </div>
+          <div>
+            <div class="size-row-top">
+              <strong>Minimal + Software Renderer (LTO, Custom Fonts)</strong>
+              <code>499.5 KB</code>
+            </div>
+            <div class="size-track"><div class="size-fill" style="width: 76.6%;"></div></div>
+          </div>
+          <div>
+            <div class="size-row-top">
+              <strong>Ultra-Minimal Core Only (LTO, Bring-Your-Own GPU Backend)</strong>
+              <code>487.4 KB</code>
+            </div>
+            <div class="size-track"><div class="size-fill" style="width: 74.7%;"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <strong>yapps</strong> · Pythonic Desktop UI Engine powered by CUI · MIT License
+      </div>
+      <div style="display: flex; gap: 18px;">
+        <a href="guide.html#getting-started">Documentation</a>
+        <a href="guide.html#tutorial-functional">Functional Tutorial</a>
+        <a href="guide.html#tutorial-oop">OOP Tutorial</a>
+        <a href="guide.html#components-reference">API Reference</a>
+        <a href="https://github.com/x017/yapps" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/site.js"></script>
+</body>
+</html>

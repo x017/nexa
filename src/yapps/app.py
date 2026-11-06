@@ -60,8 +60,13 @@ class App:
         self._title = title
         self._continuous = bool(continuous)
 
-        env_headless = os.environ.get("YAPPS_HEADLESS", "").strip().lower() in ("1", "true", "yes")
+        env_headless = (
+            os.environ.get("YAPPS_HEADLESS", "").strip().lower() in ("1", "true", "yes")
+            or os.environ.get("CUI_HEADLESS", "").strip().lower() in ("1", "true", "yes")
+        )
         force_headless = (headless is True) or env_headless
+        max_f_env = os.environ.get("YAPPS_MAX_FRAMES") or os.environ.get("CUI_MAX_FRAMES")
+        self._env_max_frames: Optional[int] = int(max_f_env) if max_f_env else None
 
         self._app: Optional[int] = None
         self._headless_sw: Optional[SoftwareRenderer] = None
@@ -117,7 +122,7 @@ class App:
             renderer=self._headless_sw,
         )
         self._headless_running = True
-        if self._screenshot_path:
+        if self._screenshot_path or self._env_max_frames is not None:
             self._continuous = True
 
     @property
@@ -233,13 +238,14 @@ class App:
         if self._headless_in_frame:
             dd = self.ui.end_frame()
             self._headless_in_frame = False
+            self._frame_counter += 1
             if self._headless_sw is not None and dd.width_px > 0 and dd.height_px > 0:
                 px = self._headless_sw.render(dd)
-                if self._screenshot_path:
-                    self._frame_counter += 1
-                    if self._frame_counter >= self._screenshot_frames:
-                        write_png(self._screenshot_path, px, dd.width_px, dd.height_px)
-                        self._headless_running = False
+                if self._screenshot_path and self._frame_counter >= self._screenshot_frames:
+                    write_png(self._screenshot_path, px, dd.width_px, dd.height_px)
+                    self._headless_running = False
+            if self._env_max_frames is not None and self._frame_counter >= self._env_max_frames:
+                self._headless_running = False
 
         if not self._headless_running:
             return False

@@ -71,7 +71,7 @@ class AppearanceView(ui.View):
                 self.theme_hdr(ctx)
                 with ctx.column(gap=14, width=ui.FILL):
                     s["theme_mode"] = ctx.theme_switcher(s["theme_mode"])
-                    accents = [ui.accent_name(ui.Accent(i)).capitalize() for i in range(int(ui.Accent.COUNT))]
+                    accents = [ui.accent_name(a).capitalize() for a in ui.Accent]
                     new_acc = ctx.segmented("accent", accents, int(ctx.accent))
                     if new_acc != int(ctx.accent):
                         ctx.accent = ui.Accent(new_acc)

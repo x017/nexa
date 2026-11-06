@@ -60,6 +60,8 @@ class ThemeMode(IntEnum):
 
 
 class Accent(IntEnum):
+    """Built-in perceptual OKLCH theme accent palettes."""
+
     NEUTRAL = 0
     VIOLET = 1
     BLUE = 2
@@ -68,6 +70,10 @@ class Accent(IntEnum):
     ORANGE = 5
     CORAL = 6
     ROSE = 7
+
+
+# Expose CUI_ACCENT_COUNT parity without adding a 9th member when iterating `for a in ui.Accent`
+type.__setattr__(Accent, "COUNT", 8)
 
 
 class RendererKind(IntEnum):
