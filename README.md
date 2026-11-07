@@ -17,6 +17,7 @@
 
 Learn `nexa` from scratch in [`docs/`](docs/):
 
+0. **[Zero to Hero: The Complete `nexa` Full Tutorial](docs/zero-to-hero.md)** — Comprehensive 11-module masterclass taking you from your first 15-line native window through Flexbox/Grid layouts, forms & pickers, desktop chrome, 50k virtualized grids, code & diff editors, studio canvases, OOP architecture, OKLCH theming, async worker streams, headless `pytest`, and building **Pulse Studio** (`examples/zero_to_hero.py`).
 1. **[Getting Started & Core Mental Model](docs/getting-started.md)** — Installation, value-returning immediate mode, widget IDs & `id_scope`, conditional vs. unconditional `with` scopes, and transition flags.
 2. **[Tutorial: Functional & Procedural Coding](docs/tutorial-functional.md)** — Top-level `ui.run(draw)`, flexbox/grid sizing (`FIT`, `FILL`, `GROW`, `PX`, `PCT`), procedural helper decomposition, manual `while app.frame():` loops, and a complete Budget Tracker project.
 3. **[Tutorial: Object-Oriented (OOP) Architecture](docs/tutorial-oop.md)** — `Application`, reusable auto-ID-scoped `Component`s, multi-view `Router` & `View` navigation, reactive `Store[T]`, and a complete Incident Console project.
@@ -206,10 +207,11 @@ if __name__ == "__main__":
 
 ## Examples & Tests
 
-Run any of the **12 complete example apps** in [`examples/`](examples/):
+Run any of the **13 complete example apps** in [`examples/`](examples/):
 
 | Example | Highlights |
 |---|---|
+| [`examples/zero_to_hero.py`](examples/zero_to_hero.py) | **0-to-Hero Capstone (*Pulse Studio*)**: OOP `Application` + `Component` + `Store`, `dockspace`, `path_bar`, `tree_table`, `code_editor`, `diff_view`, GFM `markdown`, `line_chart`, `flame_graph`, `BackgroundRunner` & `command_palette` |
 | [`examples/workbench.py`](examples/workbench.py) | **New in 1.1**: Multi-split `dockspace`, `path_bar`, `tree_table`, `code_editor`, `diff_view`, `markdown`, `flame_graph`, `curve_editor`, `gradient_editor`, `timeline_editor` & `hex_view` |
 | [`examples/hello.py`](examples/hello.py) | Functional quickstart, `input`, `switch`, `toast`, `theme_toggle` |
 | [`examples/notes.py`](examples/notes.py) | Split-view notes editor, search, tags, `dialog`, `command_palette` (`Ctrl+K`) |

@@ -22,6 +22,14 @@
 
   const SHOWCASES = [
     {
+      id: "zero_to_hero",
+      label: "Pulse Studio (0→Hero)",
+      title: "Pulse Studio — 0-to-Hero Capstone (1240×820)",
+      img: "assets/screenshots/zero_to_hero.png",
+      caption: "Built step-by-step in the 0→Hero Full Tutorial: OOP Application + Store, multi-split dockspace, tree table, code & diff editors, GFM runbook, live telemetry & profiler.",
+      file: "examples/zero_to_hero.py",
+    },
+    {
       id: "workbench",
       label: "Workbench 1.1",
       title: "Workbench Studio — nexa 1.1 (1240×855)",
@@ -80,12 +88,13 @@
   ];
 
   const TUTORIAL_TRACK = [
-    { num: "01", slug: "getting-started", short: "Start", time: "5 min", tag: "Core Model", desc: "Install nexa, open your first native window, and learn value-returning widgets, IDs, and scopes." },
-    { num: "02", slug: "tutorial-functional", short: "Functional", time: "12 min", tag: "ui.run & ctx", desc: "Build concise closures with ui.run(draw), decompose procedural helpers, and create a complete Budget Tracker." },
-    { num: "03", slug: "tutorial-oop", short: "OOP", time: "15 min", tag: "Component & Store", desc: "Scale multi-screen apps with Application, auto-scoped Component classes, Router, View, and reactive Store[T]." },
-    { num: "04", slug: "theming-and-styling", short: "Theming", time: "8 min", tag: "8 OKLCH Accents", desc: "Master Light & Dark modes, all 8 perceptual OKLCH accents, 34 semantic tokens, custom .ttf fonts & 168 Lucide icons." },
-    { num: "05", slug: "concurrency-and-async", short: "Async & Threads", time: "10 min", tag: "GIL-Free", desc: "Run worker pools, token streams, thread-safe Channel[T], LogBuffer, and cooperative asyncio without dropping 60fps." },
-    { num: "06", slug: "advanced-rendering-and-packaging", short: "GPU & Packaging", time: "10 min", tag: "CI & Freezing", desc: "Vector canvas drawing, headless pytest screenshot verification, custom GPU backends, --rtl shaping & PyInstaller/Nuitka." },
+    { num: "00", slug: "zero-to-hero", short: "0 → Hero", fullTitle: "Zero to Hero: The Complete nexa Masterclass", time: "45 min", tag: "Full 11-Module Course", desc: "End-to-end masterclass from your first 15-line window through layouts, forms, chrome, 50k data grids, studio canvases, OOP, OKLCH, async workers & building Pulse Studio." },
+    { num: "01", slug: "getting-started", short: "Start", fullTitle: "Getting Started & Mental Model", time: "5 min", tag: "Core Model", desc: "Install nexa, open your first native window, and learn value-returning widgets, IDs, and scopes." },
+    { num: "02", slug: "tutorial-functional", short: "Functional", fullTitle: "Functional & Procedural Coding", time: "12 min", tag: "ui.run & ctx", desc: "Build concise closures with ui.run(draw), decompose procedural helpers, and create a complete Budget Tracker." },
+    { num: "03", slug: "tutorial-oop", short: "OOP", fullTitle: "Object-Oriented Architecture", time: "15 min", tag: "Component & Store", desc: "Scale multi-screen apps with Application, auto-scoped Component classes, Router, View, and reactive Store[T]." },
+    { num: "04", slug: "theming-and-styling", short: "Theming", fullTitle: "Theming, OKLCH Accents & Icons", time: "8 min", tag: "8 OKLCH Accents", desc: "Master Light & Dark modes, all 8 perceptual OKLCH accents, 34 semantic tokens, custom .ttf fonts & 168 Lucide icons." },
+    { num: "05", slug: "concurrency-and-async", short: "Async & Threads", fullTitle: "Concurrency, Asyncio & Networking", time: "10 min", tag: "GIL-Free", desc: "Run worker pools, token streams, thread-safe Channel[T], LogBuffer, and cooperative asyncio without dropping 60fps." },
+    { num: "06", slug: "advanced-rendering-and-packaging", short: "GPU & Packaging", fullTitle: "Vector Canvas, Custom GPU & Packaging", time: "10 min", tag: "CI & Freezing", desc: "Vector canvas drawing, headless pytest screenshot verification, custom GPU backends, --rtl shaping & PyInstaller/Nuitka." },
   ];
 
   // Interactive Component Catalog items (highlights + full coverage across all 20 domains)
@@ -531,21 +540,48 @@
   }
 
   // ---- Special Views for `guide.html` (#tutorials, #components, #changelog) ----
-  function buildTutorialsHubHtml() {
-    const cards = TUTORIAL_TRACK.map(
-      (t) => `<a class="tutorial-hub-card" href="#${t.slug}" data-doc-link="${t.slug}">
+  function buildTutorialsHubHtml(docsData) {
+    const heroChapter = docsData && Array.isArray(docsData.chapters) ? docsData.chapters.find((c) => c.slug === "zero-to-hero") : null;
+    const modulePills =
+      heroChapter && Array.isArray(heroChapter.toc)
+        ? heroChapter.toc
+            .filter((t) => /^Module\s+\d+/i.test(t.title))
+            .map((t) => {
+              const shortLbl = t.title.split("—")[0].replace("Module ", "M").trim();
+              return `<a class="module-jump-pill" href="#zero-to-hero--${escapeHtml(t.id)}">${escapeHtml(shortLbl)}</a>`;
+            })
+            .join("")
+        : "";
+
+    const cards = TUTORIAL_TRACK.filter((t) => t.slug !== "zero-to-hero")
+      .map(
+        (t) => `<a class="tutorial-hub-card" href="#${t.slug}" data-doc-link="${t.slug}">
         <div class="tutorial-hub-top">
           <span class="tutorial-hub-num">CHAPTER ${t.num} · ${escapeHtml(t.tag)}</span>
           <span class="tutorial-hub-meta">${escapeHtml(t.time)}</span>
         </div>
-        <h3>${escapeHtml(t.short === "Start" ? "Getting Started & Mental Model" : t.short === "Functional" ? "Functional & Procedural Coding" : t.short === "OOP" ? "Object-Oriented Architecture" : t.short === "Theming" ? "Theming, OKLCH Accents & Icons" : t.short === "Async & Threads" ? "Concurrency, Asyncio & Networking" : "Vector Canvas, Custom GPU & Packaging")}</h3>
+        <h3>${escapeHtml(t.fullTitle)}</h3>
         <p>${escapeHtml(t.desc)}</p>
       </a>`
-    ).join("");
+      )
+      .join("");
 
     return `
       <h1>Step-by-Step Tutorials</h1>
-      <p>Every tutorial in <code>nexa</code> contains complete, standalone Python programs tested automatically in CI. Follow the 6-part curriculum in order, or jump straight to your preferred architecture style (<a href="#tutorial-functional" data-doc-link="tutorial-functional">Functional / Procedural</a> or <a href="#tutorial-oop" data-doc-link="tutorial-oop">Object-Oriented</a>).</p>
+      <p>Every tutorial in <code>nexa</code> contains complete, standalone Python programs tested automatically in CI. Start with the comprehensive <strong>0 → Hero Full Tutorial</strong> below, or dive into a focused topic guide.</p>
+      <div class="hero-course-banner">
+        <div class="tutorial-hub-top">
+          <span class="tutorial-hub-num">FEATURED FULL COURSE · 11 MODULES · 11 RUNNABLE APPS</span>
+          <span class="badge-new">0 → Hero</span>
+        </div>
+        <h2><a href="#zero-to-hero" data-doc-link="zero-to-hero" style="color: inherit; text-decoration: none;">Zero to Hero: The Complete <code>nexa</code> Masterclass →</a></h2>
+        <p>Go from installing <code>nexa</code> and opening your first 15-line native window all the way to building, testing, and freezing <strong>Pulse Studio</strong>—a multi-pane OOP desktop IDE &amp; telemetry workbench with docking, 50k virtualized grids, code &amp; diff editors, GFM checklists, live charts, flame profilers, and worker streams.</p>
+        ${modulePills ? `<div class="module-jump-strip">${modulePills}</div>` : ""}
+        <div style="margin-top: 4px;">
+          <a class="btn btn-primary" href="#zero-to-hero" data-doc-link="zero-to-hero">Start 0 → Hero Full Tutorial →</a>
+        </div>
+      </div>
+      <h2>Focused Deep-Dive Guides</h2>
       <div class="tutorials-hub-grid">${cards}</div>
       <div class="changelog-entry" style="margin-top: 24px;">
         <h2>Looking for widget signatures?</h2>
@@ -676,6 +712,7 @@
         if (navKey === "guide") isAct = slug === "getting-started";
         else if (navKey === "tutorials")
           isAct =
+            slug === "zero-to-hero" ||
             slug === "tutorials" ||
             slug === "tutorial-functional" ||
             slug === "tutorial-oop" ||
@@ -721,7 +758,8 @@
                         )
                         .join("")}</div>`
                     : "";
-                return `<a class="sidebar-link${isAct ? " active" : ""}" href="#${ch.slug}" data-chapter="${ch.slug}">${escapeHtml(ch.title)}</a>${subHtml}`;
+                const badgeHtml = ch.slug === "zero-to-hero" ? ' <span class="badge-new">FULL</span>' : "";
+                return `<a class="sidebar-link${isAct ? " active" : ""}" href="#${ch.slug}" data-chapter="${ch.slug}">${escapeHtml(ch.title)}${badgeHtml}</a>${subHtml}`;
               })
               .join("")
         )
@@ -750,7 +788,7 @@
         renderSidebar(slug);
         updateTopbarActive(slug);
         if (slug === "tutorials") {
-          articleRoot.innerHTML = buildTutorialsHubHtml();
+          articleRoot.innerHTML = buildTutorialsHubHtml(docsData);
           document.title = "Tutorials — nexa Documentation";
           if (tocRoot) tocRoot.innerHTML = TUTORIAL_TRACK.map((t) => `<a class="toc-link" href="#${t.slug}" data-doc-link="${t.slug}">${t.num}. ${escapeHtml(t.short)}</a>`).join("");
         } else if (slug === "components") {
@@ -822,14 +860,53 @@
       window.scrollTo({ top: 0, behavior: "auto" });
     }
 
+    function updateActiveTocOnScroll() {
+      const headings = Array.from(articleRoot.querySelectorAll("h2[id]"));
+      if (!headings.length) return;
+      let activeId = headings[0].id;
+      const threshold = 130;
+      for (let i = 0; i < headings.length; i++) {
+        if (headings[i].getBoundingClientRect().top <= threshold) {
+          activeId = headings[i].id;
+        } else {
+          break;
+        }
+      }
+      if (tocRoot) {
+        tocRoot.querySelectorAll(".toc-link[data-anchor]").forEach((el) => {
+          el.classList.toggle("active", el.dataset.anchor === activeId);
+        });
+      }
+      navRoot.querySelectorAll(".sidebar-sublink[data-anchor]").forEach((el) => {
+        el.classList.toggle("active", el.dataset.anchor === activeId);
+      });
+    }
+
+    let spyTicking = false;
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (!spyTicking) {
+          spyTicking = true;
+          requestAnimationFrame(() => {
+            spyTicking = false;
+            updateActiveTocOnScroll();
+          });
+        }
+      },
+      { passive: true }
+    );
+
     function syncFromHash() {
       const raw = (window.location.hash || "").replace(/^#/, "");
       if (!raw) {
         renderChapter(chapters[0].slug, "");
+        updateActiveTocOnScroll();
         return;
       }
       const parts = raw.split("--");
       renderChapter(parts[0], parts[1] || "");
+      updateActiveTocOnScroll();
     }
 
     window.addEventListener("hashchange", syncFromHash);

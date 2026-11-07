@@ -1737,9 +1737,101 @@ body.guide-mode .read-progress {
   transition: color var(--t-hover), background var(--t-hover);
 }
 
-.sidebar-sublink:hover {
+.sidebar-sublink:hover,
+.sidebar-sublink.active {
   color: var(--fg);
   background: var(--surface-muted);
+}
+
+.sidebar-sublink.active {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.toc-link.active {
+  color: var(--accent) !important;
+  font-weight: 500;
+}
+
+.doc-figure {
+  margin: 26px 0;
+}
+
+.prose h4 {
+  margin: 24px 0 8px;
+  font: 600 15.5px/1.35 var(--font-display);
+  color: var(--fg);
+  letter-spacing: -0.01em;
+}
+
+.prose blockquote.callout-tip {
+  border-left-color: var(--accent);
+  background: var(--accent-subtle);
+}
+
+.prose blockquote.callout-warn {
+  border-left-color: #f3ad20;
+}
+
+.hero-course-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 26px;
+  margin: 18px 0 24px;
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: 0 0 0 1.5px var(--accent-ring), 0 0 0 5px var(--bezel), var(--shadow-sm);
+  text-decoration: none;
+  color: var(--fg);
+}
+
+.hero-course-banner h2 {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  font: 600 23px/1.25 var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.hero-course-banner p {
+  margin: 0 !important;
+  color: var(--text-2);
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.module-jump-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.module-jump-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--bezel);
+  box-shadow: 0 0 0 1px var(--bezel-edge);
+  font: 500 12px/1.2 var(--font);
+  color: var(--text-2);
+  text-decoration: none;
+  transition: color var(--t-hover), background var(--t-hover), box-shadow var(--t-hover);
+}
+
+.module-jump-pill:hover {
+  color: var(--fg);
+  background: var(--accent-subtle);
+  box-shadow: 0 0 0 1px var(--accent-ring);
+}
+
+.guide-card-featured {
+  grid-column: 1 / -1;
+  background: var(--surface) !important;
+  box-shadow: 0 0 0 1.5px var(--accent-ring), 0 0 0 4px var(--bezel) !important;
 }
 
 .tutorial-track {
