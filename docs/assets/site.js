@@ -1,5 +1,5 @@
 /* ==========================================================================
-   yapps Interactive Theme, Accent, Landing Showcase & Documentation Controller
+   yapps Interactive Theme, Accent, Ordered-Bayer Dither & Docs Controller
    ========================================================================== */
 
 (function () {
@@ -17,10 +17,13 @@
     { key: "ROSE",    id: 7, label: "Rose",    dark: "#ff8bc5", darkFg: "#280718", light: "#d23286", lightFg: "#ffffff" },
   ];
 
+  const ICON_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+  const ICON_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+
   const SHOWCASES = [
     {
       id: "gallery",
-      label: "Studio & Node Editor",
+      label: "Editor & Nodes",
       title: "Gallery & Studio — yapps (1200×780)",
       img: "assets/screenshots/gallery.png",
       caption: "Desktop menu bar, toolbar, dirty document tabs, Bezier node graph, typed property inspector & C-backed log console.",
@@ -28,43 +31,43 @@
     },
     {
       id: "dashboard",
-      label: "Analytics Dashboard",
+      label: "Data & Analytics",
       title: "Larkspur Analytics — yapps (1140×740)",
       img: "assets/screenshots/dashboard.png",
       caption: "Animated rolling KPIs, sparklines, smooth cubic area chart, donut breakdown, filter bar & 250-row virtualized data grid.",
       file: "examples/dashboard.py",
     },
     {
+      id: "tracker",
+      label: "Planning",
+      title: "Tracker — yapps (1100×700)",
+      img: "assets/screenshots/tracker.png",
+      caption: "Light-mode drag-and-drop Kanban board, interactive Gantt timeline, 7-day week schedule & live team presence rings.",
+      file: "examples/tracker.py",
+    },
+    {
       id: "assistant",
-      label: "AI Agent Workspace",
+      label: "Assistant",
       title: "Muse AI — yapps (1160×740)",
       img: "assets/screenshots/assistant.png",
       caption: "Non-blocking BackgroundRunner token streaming, model picker, context ring meter, execution plan & procedural voice orb.",
       file: "examples/assistant.py",
     },
     {
-      id: "settings",
-      label: "OOP Settings & 8 Accents",
-      title: "Settings — yapps OOP (980×680)",
-      img: "assets/screenshots/settings.png",
-      caption: "Object-oriented Application + Router + View + Component architecture showcasing all 8 built-in OKLCH Accent presets.",
-      file: "examples/settings.py",
-    },
-    {
       id: "finance",
-      label: "Portfolio Terminal",
+      label: "Charts & Finance",
       title: "Finance — yapps (1080×720)",
       img: "assets/screenshots/finance.png",
       caption: "Live scrolling market ticker, rolling odometer counter, proportional Treemap, split bar, Sankey diagram & trading heatmap.",
       file: "examples/finance.py",
     },
     {
-      id: "tracker",
-      label: "Sprint Kanban (Light)",
-      title: "Tracker — yapps (1100×700)",
-      img: "assets/screenshots/tracker.png",
-      caption: "Light-mode drag-and-drop Kanban board, interactive Gantt timeline, 7-day week schedule & live team presence rings.",
-      file: "examples/tracker.py",
+      id: "settings",
+      label: "OOP & 8 Accents",
+      title: "Settings — yapps OOP (980×680)",
+      img: "assets/screenshots/settings.png",
+      caption: "Object-oriented Application + Router + View + Component architecture showcasing all 8 built-in OKLCH Accent presets.",
+      file: "examples/settings.py",
     },
   ];
 
@@ -165,7 +168,13 @@
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
-  let currentTheme = localStorage.getItem("yapps_theme") || "dark";
+  const savedTheme = localStorage.getItem("yapps_theme");
+  let currentTheme =
+    savedTheme === "dark" || savedTheme === "light"
+      ? savedTheme
+      : matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   let currentAccent = localStorage.getItem("yapps_accent") || "BLUE";
   if (!ACCENTS.some((a) => a.key === currentAccent)) currentAccent = "BLUE";
 
@@ -177,12 +186,13 @@
     const root = document.documentElement.style;
     root.setProperty("--accent", hex);
     root.setProperty("--accent-fg", fg);
-    root.setProperty("--accent-subtle", hexToRgba(hex, currentTheme === "dark" ? 0.15 : 0.11));
-    root.setProperty("--accent-ring", hexToRgba(hex, currentTheme === "dark" ? 0.36 : 0.28));
+    root.setProperty("--accent-subtle", hexToRgba(hex, currentTheme === "dark" ? 0.15 : 0.10));
+    root.setProperty("--accent-ring", hexToRgba(hex, currentTheme === "dark" ? 0.35 : 0.26));
 
     const themeBtn = document.getElementById("theme-toggle-btn");
     if (themeBtn) {
-      themeBtn.textContent = currentTheme === "dark" ? "☀ Light" : "☾ Dark";
+      themeBtn.innerHTML = currentTheme === "dark" ? ICON_SUN : ICON_MOON;
+      themeBtn.title = currentTheme === "dark" ? "Switch to light mode" : "Switch to dark mode";
     }
 
     document.querySelectorAll(".accent-dot").forEach((el) => {
@@ -211,11 +221,12 @@
     }
   }
 
-  function initHeaderControls() {
+  function initHeaderAndScrollChrome() {
     const strip = document.getElementById("header-accent-strip");
     if (strip) {
       strip.innerHTML = ACCENTS.map(
-        (a) => `<button class="accent-dot" type="button" data-accent="${a.key}" title="ui.Accent.${a.key} (${a.label})" aria-label="${a.label}"></button>`
+        (a) =>
+          `<button class="accent-dot" type="button" data-accent="${a.key}" title="ui.Accent.${a.key} (${a.label})" aria-label="${a.label}"></button>`
       ).join("");
       strip.addEventListener("click", (ev) => {
         const btn = ev.target.closest(".accent-dot");
@@ -234,6 +245,103 @@
         applyThemeAndAccent();
       });
     }
+
+    const progressEl = document.getElementById("read-progress");
+    const updateScroll = () => {
+      document.body.classList.toggle("scrolled", window.scrollY > 6);
+      if (progressEl) {
+        const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+        const ratio = Math.min(1, Math.max(0, window.scrollY / max));
+        progressEl.style.transform = `scaleX(${ratio.toFixed(4)})`;
+      }
+    };
+    window.addEventListener("scroll", updateScroll, { passive: true });
+    updateScroll();
+  }
+
+  // Pointer spotlight tracking on bento & guide cards (matches CUI's spotlight)
+  function initCardSpotlights() {
+    document.querySelectorAll(".bento-card, .guide-card").forEach((card) => {
+      card.addEventListener("pointermove", (ev) => {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty("--mx", `${(ev.clientX - r.left).toFixed(1)}px`);
+        card.style.setProperty("--my", `${(ev.clientY - r.top).toFixed(1)}px`);
+      });
+    });
+  }
+
+  // Mount Ordered 8x8 Bayer Dithered Landscape Art on both Landing & Guide pages
+  function initDitherBackgrounds() {
+    if (typeof window.ditherArt !== "function") return;
+    const ART_SRC = "assets/tetons.jpg";
+
+    const homeHeroArt = document.getElementById("home-hero-art");
+    if (homeHeroArt) {
+      const heroDither = window.ditherArt({
+        src: ART_SRC,
+        focusY: 0.3,
+        gamma: 1.25,
+        loop: true,
+      });
+      homeHeroArt.appendChild(heroDither);
+
+      // Gentle 0.35x scroll drift + fade, matching CUI's homeMotion()
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        let ticking = false;
+        window.addEventListener(
+          "scroll",
+          () => {
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(() => {
+              ticking = false;
+              const y = Math.min(window.scrollY, 900);
+              heroDither.style.transform = `translate3d(0, ${(y * 0.35).toFixed(1)}px, 0)`;
+              heroDither.style.opacity = String(Math.max(0, 1 - y / 760).toFixed(3));
+            });
+          },
+          { passive: true }
+        );
+      }
+    }
+
+    const homeCtaBand = document.getElementById("home-cta-band");
+    if (homeCtaBand) {
+      homeCtaBand.prepend(
+        window.ditherArt({
+          src: ART_SRC,
+          focusY: 0.95,
+          gamma: 1.15,
+          reveal: "view",
+          loop: true,
+        })
+      );
+    }
+
+    const docsHeroArt = document.getElementById("docs-hero-art");
+    if (docsHeroArt) {
+      docsHeroArt.appendChild(
+        window.ditherArt({
+          src: ART_SRC,
+          focusY: 0.3,
+          gamma: 1.28,
+          loop: true,
+        })
+      );
+    }
+
+    const docsCtaBand = document.getElementById("docs-cta-band");
+    if (docsCtaBand) {
+      docsCtaBand.prepend(
+        window.ditherArt({
+          src: ART_SRC,
+          focusY: 0.95,
+          gamma: 1.18,
+          reveal: "view",
+          loop: true,
+        })
+      );
+    }
   }
 
   function bindCopyButtons(scope) {
@@ -250,8 +358,10 @@
         if (!text) return;
         navigator.clipboard.writeText(text).then(() => {
           const prev = btn.textContent;
-          btn.textContent = "Copied!";
-          setTimeout(() => { btn.textContent = prev; }, 1400);
+          btn.textContent = "Copied";
+          setTimeout(() => {
+            btn.textContent = prev;
+          }, 1400);
         });
       });
     });
@@ -273,7 +383,7 @@
         if (winTitle) winTitle.textContent = item.title;
         if (capText) capText.textContent = item.caption;
         if (capLink) {
-          capLink.textContent = `View ${item.file} →`;
+          capLink.textContent = `Source: ${item.file} →`;
           capLink.href = `https://github.com/x017/yapps/blob/main/${item.file}`;
         }
         tabsRoot.querySelectorAll(".tab-pill").forEach((b) => {
@@ -291,7 +401,6 @@
       selectShowcase("gallery");
     }
 
-    // Paradigm Switcher
     const pSelector = document.getElementById("paradigm-selector");
     const pCode = document.getElementById("paradigm-code");
     const pFile = document.getElementById("paradigm-filename");
@@ -317,7 +426,6 @@
       setParadigm("functional");
     }
 
-    // Interactive 8-Accents Grid
     const accGrid = document.getElementById("accents-interactive-grid");
     if (accGrid) {
       accGrid.innerHTML = ACCENTS.map(
@@ -349,9 +457,9 @@
     const searchResults = document.getElementById("docs-search-results");
     if (!docsData || !navRoot || !articleRoot) return;
 
+    document.body.classList.add("guide-mode");
     const chapters = docsData.chapters;
 
-    // Render grouped sidebar links
     const groups = [];
     chapters.forEach((ch) => {
       let g = groups.find((x) => x.name === ch.group);
@@ -362,12 +470,18 @@
       g.items.push(ch);
     });
 
-    navRoot.innerHTML = groups.map(
-      (g) => `<div class="sidebar-group-title">${g.name}</div>` +
-        g.items.map(
-          (ch) => `<a class="sidebar-link" href="#${ch.slug}" data-chapter="${ch.slug}">${ch.title}</a>`
-        ).join("")
-    ).join("");
+    navRoot.innerHTML = groups
+      .map(
+        (g) =>
+          `<div class="sidebar-group-title">${g.name}</div>` +
+          g.items
+            .map(
+              (ch) =>
+                `<a class="sidebar-link" href="#${ch.slug}" data-chapter="${ch.slug}">${ch.title}</a>`
+            )
+            .join("")
+      )
+      .join("");
 
     let activeSlug = "";
 
@@ -382,16 +496,20 @@
         const next = realIdx < chapters.length - 1 ? chapters[realIdx + 1] : null;
 
         const pagerHtml = `<div class="pager-nav">
-          ${prev
-            ? `<a class="pager-card prev" href="#${prev.slug}" data-doc-link="${prev.slug}">
-                 <span>← Previous Chapter</span><strong>${prev.title}</strong>
-               </a>`
-            : `<div></div>`}
-          ${next
-            ? `<a class="pager-card next" href="#${next.slug}" data-doc-link="${next.slug}">
-                 <span>Next Chapter →</span><strong>${next.title}</strong>
-               </a>`
-            : `<div></div>`}
+          ${
+            prev
+              ? `<a class="pager-card prev" href="#${prev.slug}" data-doc-link="${prev.slug}">
+                   <span>← Previous</span><strong>${prev.title}</strong>
+                 </a>`
+              : `<div></div>`
+          }
+          ${
+            next
+              ? `<a class="pager-card next" href="#${next.slug}" data-doc-link="${next.slug}">
+                   <span>Next →</span><strong>${next.title}</strong>
+                 </a>`
+              : `<div></div>`
+          }
         </div>`;
 
         articleRoot.innerHTML = ch.html + pagerHtml;
@@ -402,9 +520,12 @@
         });
 
         if (tocRoot) {
-          tocRoot.innerHTML = ch.toc.map(
-            (t) => `<a class="toc-link" href="#${ch.slug}--${t.id}" data-anchor="${t.id}">${t.title}</a>`
-          ).join("");
+          tocRoot.innerHTML = ch.toc
+            .map(
+              (t) =>
+                `<a class="toc-link" href="#${ch.slug}--${t.id}" data-anchor="${t.id}">${t.title}</a>`
+            )
+            .join("");
         }
 
         bindCopyButtons(articleRoot);
@@ -450,7 +571,6 @@
       }
     });
 
-    // Instant Search
     if (searchInput && searchResults) {
       searchInput.addEventListener("input", () => {
         const q = searchInput.value.trim().toLowerCase();
@@ -459,23 +579,27 @@
           searchResults.innerHTML = "";
           return;
         }
-        const hits = docsData.search.filter(
-          (item) =>
-            item.heading.toLowerCase().includes(q) ||
-            item.text.toLowerCase().includes(q) ||
-            item.chapter.toLowerCase().includes(q)
-        ).slice(0, 10);
+        const hits = docsData.search
+          .filter(
+            (item) =>
+              item.heading.toLowerCase().includes(q) ||
+              item.text.toLowerCase().includes(q) ||
+              item.chapter.toLowerCase().includes(q)
+          )
+          .slice(0, 10);
 
         if (!hits.length) {
           searchResults.innerHTML = `<div class="search-hit"><span>No matches for "${q}"</span></div>`;
         } else {
-          searchResults.innerHTML = hits.map((h) => {
-            const hash = h.anchor ? `#${h.slug}--${h.anchor}` : `#${h.slug}`;
-            return `<a class="search-hit" href="${hash}">
-              <strong>${h.chapter} · ${h.heading}</strong>
-              <span>${h.text.slice(0, 95)}…</span>
-            </a>`;
-          }).join("");
+          searchResults.innerHTML = hits
+            .map((h) => {
+              const hash = h.anchor ? `#${h.slug}--${h.anchor}` : `#${h.slug}`;
+              return `<a class="search-hit" href="${hash}">
+                <strong>${h.chapter} · ${h.heading}</strong>
+                <span>${h.text.slice(0, 95)}…</span>
+              </a>`;
+            })
+            .join("");
         }
         searchResults.classList.add("open");
       });
@@ -486,8 +610,10 @@
       });
 
       window.addEventListener("keydown", (ev) => {
-        if ((ev.key === "/" || ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "k")) &&
-            document.activeElement !== searchInput) {
+        if (
+          (ev.key === "/" || ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "k")) &&
+          document.activeElement !== searchInput
+        ) {
           ev.preventDefault();
           searchInput.focus();
         } else if (ev.key === "Escape" && document.activeElement === searchInput) {
@@ -501,10 +627,12 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    initHeaderControls();
+    initHeaderAndScrollChrome();
     applyThemeAndAccent();
+    initDitherBackgrounds();
     bindCopyButtons(document);
     initLandingPage();
     initDocsPortal();
+    initCardSpotlights();
   });
 })();
