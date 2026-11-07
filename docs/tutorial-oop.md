@@ -1,6 +1,6 @@
 # Tutorial: Object-Oriented (OOP) Architecture
 
-When your application grows into multiple views, reusable widget cards, shared state stores, and background workers, `yapps` provides a clean, zero-boilerplate Object-Oriented layer built directly on top of its immediate-mode engine:
+When your application grows into multiple views, reusable widget cards, shared state stores, and background workers, `nexa` provides a clean, zero-boilerplate Object-Oriented layer built directly on top of its immediate-mode engine:
 
 - **`ui.Application`** — Top-level application class managing the native `App` window, `Router`, `BackgroundRunner`, and lifecycle (`setup`, `build`, `on_close`).
 - **`ui.Component`** — Reusable, stateful or stateless UI building block with **automatic ID-scope isolation** (`on_mount`, `build`, `on_unmount`).
@@ -28,7 +28,7 @@ Both paradigms call the **exact same widget methods** and can even be mixed insi
 You can configure window defaults either as **class attributes** or via **`super().__init__(...)`** arguments:
 
 ```python
-import yapps as ui
+import nexa as ui
 
 class CounterApp(ui.Application):
     title = "OOP Counter"
@@ -74,7 +74,7 @@ In raw immediate-mode UIs, rendering two components that both contain `ctx.butto
 Even better: **`build(self, ctx)` can return a value**, so parent views can react to component events naturally!
 
 ```python
-import yapps as ui
+import nexa as ui
 
 class PipelineCard(ui.Component):
     def __init__(self, key: str, title: str, initial_rpm: int = 120) -> None:
@@ -188,7 +188,7 @@ Here is a complete, 100% standalone multi-view OOP application combining **`Appl
 
 from __future__ import annotations
 import time
-import yapps as ui
+import nexa as ui
 
 
 class IncidentCard(ui.Component):
@@ -324,7 +324,7 @@ class DetailView(ui.View):
 
 
 class IncidentConsoleApp(ui.Application):
-    title = "Incident Console — yapps OOP"
+    title = "Incident Console — nexa OOP"
     width = 960
     height = 660
     theme = ui.ThemeMode.DARK

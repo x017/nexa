@@ -745,7 +745,7 @@ bool cui__plat_init(cui_app *app) {
     XClassHint *ch = g_x11.XAllocClassHint();
     if (ch) {
         ch->res_name = (char *)app->title;
-        ch->res_class = (char *)"Yapps";
+        ch->res_class = (char *)"Nexa";
         g_x11.XSetClassHint(x->dpy, x->win, ch);
         g_x11.XFree(ch);
     }

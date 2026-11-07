@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import yapps as ui
+import nexa as ui
 
 
 def main() -> None:
@@ -169,7 +169,7 @@ def main() -> None:
                                 col_labels=[f"{h * 2:02d}h" for h in range(12)],
                             )
 
-    with ui.App("Dashboard — yapps", width=1140, height=740, theme=ui.ThemeMode.DARK) as app:
+    with ui.App("Dashboard — nexa", width=1140, height=740, theme=ui.ThemeMode.DARK) as app:
         app.run(draw)
 
 

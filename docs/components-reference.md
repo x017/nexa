@@ -1,10 +1,10 @@
-# Complete Component Reference (150+ Widgets Across 19 Domains)
+# Complete Component Reference (160+ Widgets Across 20 Domains)
 
-Every widget method below is available **both** on `ctx: ui.UI` (`ctx.button(...)`) **and** as a top-level function when inside an active frame (`import yapps as ui; ui.button(...)`).
+Every widget method below is available **both** on `ctx: ui.UI` (`ctx.button(...)`) **and** as a top-level function when inside an active frame (`import nexa as ui; ui.button(...)`).
 
 ---
 
-## 1. Layout & Containers (`yapps.widgets.layout`)
+## 1. Layout & Containers (`nexa.widgets.layout`)
 
 All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
@@ -22,7 +22,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ---
 
-## 2. Text & Typography (`yapps.widgets.text`)
+## 2. Text & Typography (`nexa.widgets.text`)
 
 - **`text(content, *, font=FontRole.BODY, size=0, color=None, align=TextAlign.LEFT, max_lines=0, selectable=False, strikethrough=False, underline=False, nowrap=False, width=None)`**
 - **`heading(content, level=2)`** (`level` in `1..4`)
@@ -34,7 +34,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ---
 
-## 3. Buttons & Actions (`yapps.widgets.actions`)
+## 3. Buttons & Actions (`nexa.widgets.actions`)
 
 - **`button(label, *, variant=ButtonVariant.DEFAULT, size=ControlSize.MD, icon=None, icon_right=None, disabled=False, loading=False, full_width=False, selected=False, tooltip=None, shortcut=None, width=None, color=None) -> bool`**
   - `ButtonVariant`: `DEFAULT`, `PRIMARY`, `SECONDARY`, `OUTLINE`, `GHOST`, `DANGER`, `LINK`.
@@ -55,7 +55,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ---
 
-## 4. Selection Controls (`yapps.widgets.selection`)
+## 4. Selection Controls (`nexa.widgets.selection`)
 
 - **`checkbox(label, checked: bool, *, description=None, indeterminate=False, disabled=False) -> bool`**
 - **`switch(label, on: bool, *, description=None, disabled=False) -> bool`**
@@ -70,7 +70,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ---
 
-## 5. Text & Specialized Inputs (`yapps.widgets.inputs`)
+## 5. Text & Specialized Inputs (`nexa.widgets.inputs`)
 
 - **`input(id, value: str, *, max_bytes=512, label=None, placeholder=None, icon=None, hint=None, error=None, password=False, disabled=False, clearable=False, autofocus=False, read_only=False, size=ControlSize.MD, width=None, prefix=None, suffix=None) -> str`**
 - **`search(id, value: str, *, placeholder="Search...", size=ControlSize.MD, width=None) -> str`**
@@ -88,7 +88,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ---
 
-## 6. Pickers (`yapps.widgets.pickers`)
+## 6. Pickers (`nexa.widgets.pickers`)
 
 - **`select(id, options, selected: int, *, label=None, placeholder=None, width=None, size=ControlSize.MD) -> int`**
 - **`combobox(id, options, selected: int, *, label=None, placeholder="Search...", width=None) -> int`**
@@ -106,12 +106,13 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ---
 
-## 7. Navigation (`yapps.widgets.navigation`)
+## 7. Navigation (`nexa.widgets.navigation`)
 
 - **`tabs(id, labels, selected: int, *, variant=TabsVariant.LINE, icons=None, badges=None) -> int`** (`TabsVariant`: `LINE`, `PILL`, `ENCLOSED`)
 - **`nav_section(title)`** | **`nav_item(label, *, icon=None, badge=None, selected=False, disabled=False, group=None) -> bool`**
-- **`breadcrumb(items, *, separator=None) -> int`** (returns clicked crumb index or `-1`)
-- **`pagination(id, page: int, page_count: int, *, siblings=1) -> int`**
+- **`breadcrumb(items) -> int`** (returns clicked crumb index or `-1`)
+- **`path_bar(id, segments: Sequence[str], *, icon=None, text=None, placeholder=None, size=ControlSize.MD, width=None, menus=False, no_edit=False) -> PathBarResult`** *(New in 1.1)* — Editable file-manager / IDE breadcrumb address bar (`clicked`, `submitted`, `editing`) + **`path_bar_menu(id)`** (`PathBarMenuScope` exposing `menu.segment`).
+- **`pagination(id, page: int, page_count: int) -> int`**
 - **`stepper(steps, current: int, *, clickable=True) -> int`**
 - **`tab_bar(id, items: Sequence[TabBarItem], selected: int, *, pill=False, icon_only=False, width=None) -> int`**
 - **`dock(id, *, magnify=0.45, base_size=44.0)`** + **`dock_item(icon, label, *, running=False, attention=False, badge=0) -> bool`** + **`dock_separator()`**
@@ -119,7 +120,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ---
 
-## 8. Overlays, Menus & Disclosure (`yapps.widgets.overlays`)
+## 8. Overlays, Menus & Disclosure (`nexa.widgets.overlays`)
 
 All popup/overlay scopes are **conditional**—always write `with ui.dialog(...) as d: if d: ...`!
 
@@ -129,15 +130,15 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
 - **`confirm_popover(id, *, title="Are you sure?", description=None, confirm_label="Confirm", cancel_label="Cancel", danger=False) -> bool`** (`confirm_popover_open(id)` opens it on the anchor widget)
 - **`menu(label, *, icon=None, variant=ButtonVariant.OUTLINE, size=ControlSize.MD)`** + **`context_menu(id)`** + **`user_menu(name, *, detail=None, avatar_tex=0, status=None, compact=False)`**
   - Inside menus: **`menu_item(label, *, icon=None, shortcut=None, disabled=False, danger=False, checked=False) -> bool`**, **`menu_separator()`**, **`menu_label(text)`**.
-- **`dialog(title, open: bool, *, description=None, width=440.0, dismissible=True, close_button=True)`** -> `BoolStateScope` (`dlg.open`) + **`dialog_footer()`**.
-- **`sheet(title, open: bool, *, description=None, side=Side.RIGHT, size=380.0, modal=True)`** -> `BoolStateScope` (`sh.open`).
-- **`accordion(title, expanded: bool, *, subtitle=None, icon=None)`** -> `BoolStateScope` (`acc.open`).
-- **`expandable_card(title, expanded: bool, *, subtitle=None, icon=None, badge=None, width=None)`** -> `BoolStateScope`.
+- **`dialog(title, is_open: bool, *, description=None, width=0.0, no_close_button=False, persistent=False)`** -> `OpenStateScope` (`dlg.open`) + **`dialog_footer()`**.
+- **`sheet(title, is_open: bool, *, side=Side.RIGHT, size=0.0, description=None)`** -> `OpenStateScope` (`sh.open`).
+- **`accordion(title, is_open: bool)`** -> `OpenStateScope` (`acc.open`).
+- **`expandable_card(title, is_open: bool, *, description=None, icon=None, badge=None, badge_tone=Tone.NEUTRAL)`** -> `OpenStateScope` (`card.open`).
 - **`expandable_text(id, text, *, lines=3, more_label="Show more", less_label="Show less")`**
 
 ---
 
-## 9. Feedback, Status & Badges (`yapps.widgets.feedback`)
+## 9. Feedback, Status & Badges (`nexa.widgets.feedback`)
 
 - **`toast(title, *, description=None, tone=Tone.NEUTRAL, duration=4.0, action=None, dismissible=True) -> int`** (+ `toast_action_clicked(h)`, `toast_dismiss(h)`)
 - **`alert(title, *, description=None, tone=Tone.INFO, icon=None, action=None, dismissible=False) -> tuple[bool, bool]`**
@@ -155,7 +156,7 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
 
 ---
 
-## 10. Data, Virtual Lists, Tables, Grids & Code (`yapps.widgets.data`)
+## 10. Data, Virtual Lists, Tables, Grids & Code (`nexa.widgets.data`)
 
 - **`tree(label, expanded=False, *, icon=None, badge=None, leaf=False, selected=False)`** -> `TreeScope` (`if tr:` for children; `tr.expanded`, `tr.clicked`).
 - **`list_item(title, *, subtitle=None, trailing=None, icon=None, avatar=None, badge=None, badge_tone=Tone.NEUTRAL, chevron=False, selected=False, active=False) -> bool`**
@@ -163,14 +164,18 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
 - **`reorder(id, order: Sequence[int], *, horizontal=False, gap=6.0, width=None)`** -> `ReorderScope` (`with ro.item(pos): ...`; read `ro.order`).
 - **`timeline_item(title, *, description=None, time=None, icon=None, tone=Tone.ACCENT, last=False)`**
 - **`table(id, columns: Sequence[TableColumn], *, sort=None, height=None, striped=False, compact=False, selectable=False)`** -> `TableScope` (`if tbl:`; `tbl.row(selected=...) -> bool`, `tbl.cell()`, `tbl.cell_text(s)`, `tbl.sort`).
-- **`data_grid(id, columns: Sequence[GridColumn], row_count: int, *, width=None, height=None, row_height=0, selected=None, sort=None, striped=False, borderless=False, cursor=0)`** -> `DataGridScope` (`if dg:`; `for r in dg.rows:`, `dg.row(r)`, `dg.cell_text(s)`, `dg.edit(val)`, `dg.selected`, `dg.sort`, `dg.cursor`).
-- **`filter_bar(id, fields: Sequence[FilterField], masks: Sequence[int], search: str = "", *, clearable=True, width=None) -> tuple[list[int], str]`**
-- **`code_block(id, source, *, lang="python", line_numbers=True, copyable=True, wrap=False, highlight_line=0, max_height=0, filename=None)`**
-- **`json_view(id, json_str, *, default_open_depth=2, max_height=0, copyable=True) -> bool`**
+- **`data_grid(id, columns: Sequence[GridColumn], row_count: int, *, width=None, height=None, row_height=0, selected=None, sort=None, striped=False, cursor=None, hide_checkboxes=False, anchor=None)`** -> `DataGridScope` (`if dg:`; `for r in dg.rows:`, `dg.row(r)`, `dg.cell_text(s)`, `dg.edit(val)`, `dg.selected`, `dg.sort`, `dg.cursor`, `dg.anchor`; `GridColumn(..., priority=0)` hides lower-priority columns gracefully).
+- **`tree_table(id, columns: Sequence[GridColumn], nodes: Sequence[TreeNode], *, width=None, height=None, row_height=0, root=0, sort=None, cursor=None, guides=True, labels=None, label_fn=None)`** -> `TreeTableScope` *(New in 1.1)* — Virtualized hierarchical tree-grid (`for idx in tt.rows(): tt.name(label, icon=...); tt.cell_text(...)`; synchronizes `TreeNode.flags` and exposes `tt.events: TreeTableEvents`) + **`tree_sort(nodes, root=-1, *, key=None, reverse=False) -> int`**.
+- **`filter_bar(id, fields: Sequence[FilterField], masks: Sequence[int], search: str = "") -> tuple[list[int], str]`**
+- **`code_block(id, source, *, lang="python", title=None, line_numbers=False, highlight_from=0, highlight_to=0, max_height=0, size=0, no_header=False)`**
+- **`code_editor(id, text: str, *, lang=None, width=None, height=320.0, size=0, tab_size=4, use_tabs=False, read_only=False, no_line_numbers=False, autofocus=False, placeholder=None) -> CodeEditorResult`** *(New in 1.1)* — Multi-line source editor with syntax highlighting, undo/redo, bracket matching & find bar (`text, changed = ui.code_editor(...)`), plus **`code_editor_goto(id, line, col=1)`**, **`code_editor_select(id, anchor, cursor)`**, and **`code_editor_find(id, query=None)`**.
+- **`diff_view(id, old_text, new_text, *, mode=DiffMode.SPLIT, language=None, old_title=None, new_title=None, current=None, context=3, no_fold=False, ignore_eol=False, width=None, height=340.0) -> DiffResult`** *(New in 1.1)* — Side-by-side or inline diff viewer with intraline word diffs & hunk folding, plus **`diff_view_rows(id)`** and context-free C99 **`diff_compute(old_text, new_text)`** / **`diff_words(old_line, new_line)`**.
+- **`markdown(id, text: str, *, width=None, fit_content=False, size=0, color=None, streaming=False, compact=False) -> MarkdownResult`** *(New in 1.1)* — Rich CommonMark + GFM renderer (headings, tables, fenced code, GitHub alerts, interactive task lists via `res.apply_task(text)`).
+- **`json_view(id, json_str, *, expand_depth=2, max_height=0) -> bool`**
 
 ---
 
-## 11. Charts & Data Visualization (`yapps.widgets.charts`)
+## 11. Charts & Data Visualization (`nexa.widgets.charts`)
 
 - **`line_chart(id, series: Sequence[Series], *, labels=None, height=200.0, width=None, smooth=False, area=False, show_points=False, show_grid=True, show_legend=False, y_min=0, y_max=0, reference_y=None, reference_label=None, y_format=None)`**
 - **`bar_chart(id, series: Sequence[Series], *, labels=None, stacked=False, horizontal=False, height=200.0, width=None, **opts)`**
@@ -193,11 +198,11 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
 
 ## 12–19. Planning, AI, Social, Media, Motion, Chrome, Tools & Node/Canvas
 
-- **Planning (`yapps.widgets.planning`)**:
+- **Planning (`nexa.widgets.planning`)**:
   - `kanban(id)` -> `KanbanScope` (`board.column(title, count, dot=..., width=...)`, `board.card(id)`, `board.move`)
   - `week_calendar(id, week_start: Date, events: Sequence[CalEvent], **opts) -> tuple[list[CalEvent], int]`
   - `gantt(id, tasks: Sequence[GanttTask], origin: Date, days: int, **opts) -> tuple[list[GanttTask], int]`
-- **AI & Agents (`yapps.widgets.ai`)**:
+- **AI & Agents (`nexa.widgets.ai`)**:
   - `reasoning(id, *, thinking=False, seconds=0, title=None, default_open=False)`
   - `tool_call(id, name, *, status=TaskStatus.DONE, detail=None, input_text=None, output_text=None, seconds=0)`
   - `agent_plan(id, steps: Sequence[PlanStep], *, title=None, width=None)` | `agent_status(label, *, detail=None, status=TaskStatus.RUNNING, seconds=0)`
@@ -208,9 +213,14 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
   - `model_picker(id, models: Sequence[Model], selected: int, *, ghost=False, size=ControlSize.SM) -> int`
   - `chat_composer(id, text: str, *, placeholder=..., busy=False, attachments=None, models=None, model=0, **opts) -> ComposerResult`
   - `voice_orb(id, state=VoiceState.IDLE, level=0.0, *, size=72.0, color=None) -> bool`
-- **Social (`yapps.widgets.social`)**: `chat_message`, `chat_divider`, `typing_indicator`, `comment`, `presence`.
-- **Media (`yapps.widgets.media`)**: `image_load`, `image_load_bytes`, `image_create`, `image_destroy`, `image`, `carousel`, `image_compare`, `card_stack`, `waveform`, `now_playing`, `counter`, `ticker`.
-- **Motion (`yapps.widgets.motion`)**: `shimmer_text`, `typewriter`, `text_reveal`, `word_rotate`, `number_roll`, `gradient_text`, `spotlight`, `animate`, `animate_spring`.
-- **Desktop Chrome (`yapps.widgets.chrome`)**: `menu_bar` + `menu_bar_menu`, `toolbar` + `toolbar_button` / `toolbar_toggle` / `toolbar_separator` / `toolbar_spacer`, `status_bar` + `status_bar_item` / `status_bar_text` / `status_bar_progress` / `status_bar_spacer`, `doc_tabs` (`DocTabsResult.apply_to(tabs)`).
-- **Developer Tools (`yapps.widgets.tools`)**: `inspector` + `inspector_group`, `prop_float`, `prop_int`, `prop_text`, `prop_bool`, `prop_enum`, `prop_color`, `prop_vec2/3/4`, `LogBuffer` + `log_view`.
-- **Node Editor & Vector Canvas (`yapps.widgets.nodes_canvas`)**: `node_editor` (`ed.node`, `ed.input`, `ed.output`, `ed.content`, `ed.link`, `ed.created_links`, `ed.removed_links`), `canvas(id, w, h, paint_fn)`, `draw_rect`, `draw_rect_border`, `draw_rect_gradient`, `draw_line`, `draw_polyline`, `draw_polygon`, `draw_circle`, `draw_arc`, `draw_bezier`, `draw_text`, `draw_image`, `clip_scope`, `state_buffer`.
+- **Social (`nexa.widgets.social`)**: `chat_message(..., markdown=False) -> Optional[MarkdownResult]`, `chat_divider`, `typing_indicator`, `comment`, `presence`.
+- **Media (`nexa.widgets.media`)**: `image_load`, `image_load_bytes`, `image_create`, `image_destroy`, `image`, `carousel`, `image_compare`, `card_stack`, `waveform`, `now_playing`, `counter`, `ticker`.
+- **Motion (`nexa.widgets.motion`)**: `shimmer_text`, `typewriter`, `text_reveal`, `word_rotate`, `number_roll`, `gradient_text`, `spotlight`, `animate`, `animate_spring`.
+- **Desktop Chrome & Docking (`nexa.widgets.chrome`)**: `menu_bar` + `menu_bar_menu`, `toolbar` + `toolbar_button` / `toolbar_toggle` / `toolbar_separator` / `toolbar_spacer`, `status_bar` + `status_bar_item` / `status_bar_text` / `status_bar_progress` / `status_bar_spacer`, `doc_tabs` (`DocTabsResult.apply_to(tabs)`), and *(New in 1.1)* **`dockspace(id, *, layout=None, width=None, height=None)`** + **`dock_panel(title, is_open=None, *, icon=None, dirty=False)`** + **`dock_save(id) -> str`** + **`dock_load(id, layout) -> bool`**.
+- **Developer & Creative Studio Tools (`nexa.widgets.tools`)**: `inspector` + `inspector_group`, `prop_float`, `prop_int`, `prop_text`, `prop_bool`, `prop_enum`, `prop_color`, `prop_vec2/3/4`, `LogBuffer` + `log_view`, plus *(New in 1.1)*:
+  - **`hex_view(id, data, selection=None, *, ranges=None, editable=False, base=0, bytes_per_row=16) -> HexResult`** + **`hex_view_goto(id, offset)`**
+  - **`flame_graph(id, spans, *, view=None, selected=None, height=240.0) -> FlameResult`** + **`flame_sort(spans)`** + **`flame_span_rect(flame_id, span)`**
+  - **`curve_editor(id, keys, *, x_min=0, x_max=1, y_min=0, y_max=1, show_playhead=False, playhead=0) -> CurveResult`** + **`curve_eval(keys, x) -> float`**
+  - **`gradient_editor(id, stops, *, selected=None) -> GradientResult`** + **`gradient_eval(stops, t) -> Color`**
+  - **`timeline_editor(id, tracks, time=0.0, *, start=0.0, end=10.0, fps=30.0, ruler=TimelineRuler.SECONDS) -> TimelineEditorResult`**
+- **Node Editor & Vector Canvas (`nexa.widgets.nodes_canvas`)**: `node_editor` (`ed.node`, `ed.input`, `ed.output`, `ed.content`, `ed.link`, `ed.created_links`, `ed.removed_links`), `canvas(id, w, h, paint_fn)`, `draw_rect`, `draw_rect_border`, `draw_rect_gradient`, `draw_line`, `draw_polyline`, `draw_polygon`, `draw_circle`, `draw_arc`, `draw_bezier`, `draw_text`, `draw_image`, `clip_scope`, `state_buffer`.

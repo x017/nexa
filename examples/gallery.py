@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import math
 
-import yapps as ui
+import nexa as ui
 
 
 def main() -> None:
     tabs = [
-        ui.DocTab("shader_graph.yapps", icon=ui.Icon.GIT_BRANCH, dirty=True),
+        ui.DocTab("shader_graph.nexa", icon=ui.Icon.GIT_BRANCH, dirty=True),
         ui.DocTab("vector_canvas.py", icon=ui.Icon.PALETTE),
         ui.DocTab("motion_fx.py", icon=ui.Icon.SPARKLES),
     ]
@@ -36,7 +36,7 @@ def main() -> None:
     blend_mode = 0
 
     log = ui.LogBuffer(max_lines=1024)
-    log.info("Initialized yapps Studio workspace")
+    log.info("Initialized nexa Studio workspace")
     log.debug("Loaded embedded Inter, Geist & Lucide font atlases")
     log.warn("Shader graph has unsaved edits")
 
@@ -167,7 +167,7 @@ def main() -> None:
                 ctx.status_bar_text(f"Nodes: {len(nodes)}  Links: {len(links)}")
                 ctx.status_bar_item("UTF-8")
 
-    with ui.App("Gallery & Studio — yapps", width=1200, height=780, theme=ui.ThemeMode.DARK) as app:
+    with ui.App("Gallery & Studio — nexa", width=1200, height=780, theme=ui.ThemeMode.DARK) as app:
         app.run(draw)
     log.close()
 

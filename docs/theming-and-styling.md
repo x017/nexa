@@ -1,6 +1,6 @@
 # Theming, Accents, Tones, Colors & Typography
 
-`yapps` ships with a perceptually calibrated **OKLCH / OKLab** design system out of the box—complete with smooth Light/Dark cross-fading, **8 built-in `Accent` palettes**, **9 semantic `Tone`s**, **34 live-editable `Token` slots**, embedded **Inter** & **Geist Mono** typography, and **168 Lucide vector icons**.
+`nexa` ships with a perceptually calibrated **OKLCH / OKLab** design system out of the box—complete with smooth Light/Dark cross-fading, **8 built-in `Accent` palettes**, **9 semantic `Tone`s**, **34 live-editable `Token` slots**, embedded **Inter** & **Geist Mono** typography, and **168 Lucide vector icons**.
 
 ---
 
@@ -9,7 +9,7 @@
 Switch between Light and Dark modes at startup or dynamically at runtime (surfaces and text smoothly interpolate across frames):
 
 ```python
-import yapps as ui
+import nexa as ui
 
 # At window creation:
 app = ui.App("Demo", theme=ui.ThemeMode.DARK, accent=ui.Accent.VIOLET)
@@ -73,7 +73,7 @@ While `ui.Accent` controls the *entire window's* primary highlight palette, **`u
 
 ## 4. Custom Brand Colors, Live `Token` Overrides & Perceptual OKLCH
 
-Every color in `yapps` can be passed as:
+Every color in `nexa` can be passed as:
 - A **`ui.Color(r, g, b, a=255)`** value
 - A hex string: **`"#10b981"`** or **`ui.Color.hex("#10b981")`** (6-digit `#RRGGBB` or 8-digit `#RRGGBBAA`)
 - An RGB/RGBA tuple: **`(16, 185, 129)`** or **`(16, 185, 129, 200)`**
@@ -118,7 +118,7 @@ translucent = ui.with_alpha(brand, 0.20)         # Multiply alpha by 0.20
 
 ## 5. Typography, Custom `.ttf` Fonts & International Fallback
 
-Out of the box, `yapps` embeds:
+Out of the box, `nexa` embeds:
 - **Inter** (`FontRole.BODY`, `FontRole.MEDIUM`, `FontRole.DISPLAY`)
 - **Geist Mono** (`FontRole.MONO`)
 - **Lucide** (`FontRole.ICONS` — `168` crisp vector icons)

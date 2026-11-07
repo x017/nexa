@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import yapps as ui
+import nexa as ui
 
 
 def main() -> None:
@@ -23,7 +23,7 @@ def main() -> None:
             "time": "09:15",
             "unread": False,
             "starred": False,
-            "body": "With -ffunction-sections and --gc-sections, libyapps_cui.so came in at 652 KB including fonts!",
+            "body": "With -ffunction-sections and --gc-sections, libnexa_cui.so came in at 652 KB including fonts!",
         },
         {
             "id": 3,
@@ -125,7 +125,7 @@ def main() -> None:
                         sh.open = False
         compose_open = sh.open
 
-    with ui.App("Mail — yapps", width=1060, height=680) as app:
+    with ui.App("Mail — nexa", width=1060, height=680) as app:
         app.run(draw)
 
 

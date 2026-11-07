@@ -4,4 +4,4 @@ include README.md
 include pyproject.toml
 include setup.py
 recursive-include csrc *.c *.h *.m *.txt
-recursive-include src/yapps *.py py.typed
+recursive-include src/nexa *.py py.typed

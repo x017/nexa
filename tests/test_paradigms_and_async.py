@@ -12,8 +12,8 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-import yapps as ui
-from yapps.aio import AsyncBridge
+import nexa as ui
+from nexa.aio import AsyncBridge
 
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -247,7 +247,7 @@ def test_all_examples_execute_cleanly(tmp_path: pathlib.Path) -> None:
         out_png = tmp_path / f"{ex.stem}.png"
         env = dict(
             os.environ,
-            YAPPS_HEADLESS="1",
+            NEXA_HEADLESS="1",
             CUI_SCREENSHOT=str(out_png),
             CUI_SCREENSHOT_FRAMES="4",
         )

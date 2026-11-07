@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import yapps as ui
+import nexa as ui
 
 
 def main() -> None:
@@ -80,7 +80,7 @@ def main() -> None:
                             net_worth += amount
                             ctx.toast("Transfer executed", description=f"Added ${amount:,.2f} to Cash Reserve.", tone=ui.Tone.SUCCESS)
 
-    with ui.App("Finance — yapps", width=1080, height=720, theme=ui.ThemeMode.DARK, accent=ui.Accent.GREEN) as app:
+    with ui.App("Finance — nexa", width=1080, height=720, theme=ui.ThemeMode.DARK, accent=ui.Accent.GREEN) as app:
         app.run(draw)
 
 

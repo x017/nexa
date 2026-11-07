@@ -1,16 +1,16 @@
 # Custom Canvas, Headless Testing, Custom GPU & Packaging
 
-Beyond its 150+ built-in components, `yapps` exposes every low-level primitive of the underlying C99 engine so you can build custom vector instruments, write deterministic CI tests, plug into Vulkan/Metal/Direct3D/`wgpu`, or ship tiny standalone binaries.
+Beyond its 150+ built-in components, `nexa` exposes every low-level primitive of the underlying C99 engine so you can build custom vector instruments, write deterministic CI tests, plug into Vulkan/Metal/Direct3D/`wgpu`, or ship tiny standalone binaries.
 
 ---
 
 ## 1. Custom Vector `canvas` & Persistent `state_buffer`
 
-Reserve layout space with `ctx.canvas(id, width, height, paint_fn)`—`yapps` runs flexbox layout first, then invokes `paint_fn(ctx, rect)` with the resolved screen `Rect(x, y, w, h)` and returns a `CanvasResult` (`rect`, `mouse`, `hovered`, `pressed`, `clicked`):
+Reserve layout space with `ctx.canvas(id, width, height, paint_fn)`—`nexa` runs flexbox layout first, then invokes `paint_fn(ctx, rect)` with the resolved screen `Rect(x, y, w, h)` and returns a `CanvasResult` (`rect`, `mouse`, `hovered`, `pressed`, `clicked`):
 
 ```python
 import math
-import yapps as ui
+import nexa as ui
 
 def main() -> None:
     def draw(ctx: ui.UI) -> None:
@@ -45,7 +45,7 @@ Need C-managed per-widget byte storage for a custom control? `mv = ctx.state_buf
 You can test **every click, keystroke, text edit, and file drop** in `pytest` at thousands of frames per second without opening an OS window:
 
 ```python
-import yapps as ui
+import nexa as ui
 
 def test_login_form(tmp_path):
     with ui.SoftwareRenderer(threads=2) as sw, ui.UI(width=480, height=320, renderer=sw) as ctx:
@@ -90,7 +90,7 @@ def test_login_form(tmp_path):
 
 ## 3. Custom GPU Backends (`CustomRenderer` & `DrawData`)
 
-Want to render `yapps` inside your own **Vulkan**, **Metal**, **Direct3D 12**, **`wgpu`**, or **`moderngl`** swapchain?
+Want to render `nexa` inside your own **Vulkan**, **Metal**, **Direct3D 12**, **`wgpu`**, or **`moderngl`** swapchain?
 
 1. Supply texture atlas callbacks via `ui.CustomRenderer(on_create=..., on_update=..., on_destroy=...)`.
 2. Call `ctx.set_viewport(w, h, dpi_scale)`, inject OS events via `ctx.input_*`, and run `dd = ctx.end_frame()`.
@@ -103,24 +103,27 @@ Want to render `yapps` inside your own **Vulkan**, **Metal**, **Direct3D 12**, *
 Compile a stripped custom shared library removing unused subsystems via CLI or environment variables:
 
 ```bash
-# Default full build (~652 KB: SW + GL 3.3 + OS Windowing + Embedded Fonts + PNG/JPEG)
-python3 -m yapps.build
+# Default full build (~820 KB: SW + GL 3.3 + OS Windowing + Embedded Fonts + PNG/JPEG + 160+ widgets)
+python3 -m nexa.build
 
-# Minimal LTO build with Software Renderer (~499 KB)
-python3 -m yapps.build --minimal --lto
+# Enable Unicode BiDi paragraphs & Arabic-script OpenType glyph shaping (CUI 1.1)
+python3 -m nexa.build --rtl
 
-# Ultra-minimal Core-Only LTO build for custom GPU engines (~487 KB)
-python3 -m yapps.build --minimal --no-sw --lto
+# Minimal LTO build with Software Renderer (~672 KB)
+python3 -m nexa.build --minimal --lto
+
+# Ultra-minimal Core-Only LTO build for custom GPU engines (~660 KB)
+python3 -m nexa.build --minimal --no-sw --lto
 ```
 
 ### Freezing with PyInstaller or Nuitka
 
-`yapps` registers an automatic PyInstaller hook (`yapps._pyinstaller`) that bundles `libyapps_cui` and excludes build-time compiler helpers (`yapps.build`, `setuptools`, `distutils`):
+`nexa` registers an automatic PyInstaller hook (`nexa._pyinstaller`) that bundles `libnexa_cui` and excludes build-time compiler helpers (`nexa.build`, `setuptools`, `distutils`):
 
 ```bash
 # PyInstaller single-file binary
-pyinstaller --onefile $(python3 -c "import yapps.build as b; print(' '.join(b.freeze_flags('pyinstaller')))") app.py
+pyinstaller --onefile $(python3 -c "import nexa.build as b; print(' '.join(b.freeze_flags('pyinstaller')))") app.py
 
 # Nuitka standalone native compilation
-python3 -m nuitka --onefile $(python3 -c "import yapps.build as b; print(' '.join(b.freeze_flags('nuitka')))") app.py
+python3 -m nuitka --onefile $(python3 -c "import nexa.build as b; print(' '.join(b.freeze_flags('nuitka')))") app.py
 ```

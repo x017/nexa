@@ -1,8 +1,8 @@
-"""Minimal functional yapps example (port of CUI's hello.c)."""
+"""Minimal functional nexa example (port of CUI's hello.c)."""
 
 from __future__ import annotations
 
-import yapps as ui
+import nexa as ui
 
 
 def main() -> None:
@@ -32,7 +32,7 @@ def main() -> None:
                     if count > 0:
                         ui.badge(f"{count}x", tone=ui.Tone.ACCENT)
 
-    ui.run(view, title="Hello — yapps", width=560, height=400)
+    ui.run(view, title="Hello — nexa", width=560, height=400)
 
 
 if __name__ == "__main__":

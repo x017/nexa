@@ -12,7 +12,7 @@ __pycache__/
 *.obj
 *.exp
 *.lib
-src/yapps/_native/
+src/nexa/_native/
 build/
 dist/
 *.egg-info/

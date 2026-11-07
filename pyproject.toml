@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "yapps"
-version = "1.0.0"
-description = "Fast, tiny, native immediate-mode UI components for Python — powered by CUI"
+name = "nexa"
+version = "1.1.0"
+description = "Fast, tiny, native immediate-mode UI components for Python — a Python port of CUI"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.8"
@@ -33,10 +33,10 @@ dependencies = []
 dev = ["pytest>=7.0"]
 
 [project.scripts]
-yapps-build = "yapps.build:main"
+nexa-build = "nexa.build:main"
 
 [project.entry-points.pyinstaller40]
-hook-dirs = "yapps._pyinstaller:get_hook_dirs"
+hook-dirs = "nexa._pyinstaller:get_hook_dirs"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -45,4 +45,4 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-yapps = ["py.typed", "_native/*"]
+nexa = ["py.typed", "_native/*"]

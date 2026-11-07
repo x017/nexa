@@ -1,9 +1,9 @@
 # Tutorial: Functional & Procedural Coding
 
-`yapps` lets you write clean, Pythonic desktop applications **without a single class** when you want speed, simplicity, and direct data flow.
+`nexa` lets you write clean, Pythonic desktop applications **without a single class** when you want speed, simplicity, and direct data flow.
 
-In fact, `yapps` supports **two closely related non-OOP styles**:
-1. **Top-Level Functional Style** (`import yapps as ui` + `ui.heading(...)`, `ui.button(...)`): Uses a lightweight `contextvars.ContextVar` under the hood so you don't even pass a context parameter around. Ideal for scripts, prototypes, and single-file tools.
+In fact, `nexa` supports **two closely related non-OOP styles**:
+1. **Top-Level Functional Style** (`import nexa as ui` + `ui.heading(...)`, `ui.button(...)`): Uses a lightweight `contextvars.ContextVar` under the hood so you don't even pass a context parameter around. Ideal for scripts, prototypes, and single-file tools.
 2. **Explicit Procedural Style** (`def render_sidebar(ctx: ui.UI, state: dict)`): Passes `ctx: ui.UI` explicitly as the first argument to plain Python functions. Ideal for larger procedural codebases, multi-window tools, and unit-tested UI modules.
 
 Let's master both step by step!
@@ -15,7 +15,7 @@ Let's master both step by step!
 With `ui.run(draw)`, your `draw` function takes **0 arguments** (or 1 `ctx: ui.UI` argument—`ui.run` inspects its signature automatically!).
 
 ```python
-import yapps as ui
+import nexa as ui
 
 def main() -> None:
     celsius = 22.0
@@ -55,7 +55,7 @@ Wait—notice how clean `nonlocal celsius` is for 1–3 variables. What when you
 
 ## Lesson 2: Mastering Flexbox, Sizing & Grids
 
-Every container in `yapps` (`box`, `row`, `column`, `stack`, `grid`, `card`, `scroll`) uses the same single-pass constraint layout system.
+Every container in `nexa` (`box`, `row`, `column`, `stack`, `grid`, `card`, `scroll`) uses the same single-pass constraint layout system.
 
 ### The 5 Sizing Primitives
 
@@ -70,7 +70,7 @@ Every container in `yapps` (`box`, `row`, `column`, `stack`, `grid`, `card`, `sc
 ### Classic Desktop Shell Recipe (Sidebar + Header + Scrollable Content + Status Bar)
 
 ```python
-import yapps as ui
+import nexa as ui
 
 def main() -> None:
     state = {"nav": 0, "search": ""}
@@ -161,7 +161,7 @@ def draw_item_list(ctx: ui.UI, state: dict) -> None:
 `app.run(draw)` is simply a convenience loop around `app.frame()`. Whenever you want explicit per-frame control—for example, draining a network queue, stepping a physics simulation, or driving custom frame timing—write the `while app.frame():` loop directly:
 
 ```python
-import yapps as ui
+import nexa as ui
 
 with ui.App("Manual Loop", width=520, height=320, theme=ui.ThemeMode.DARK, accent=ui.Accent.AMBER) as app:
     ctx = app.ui
@@ -189,7 +189,7 @@ Below is a complete, 100% standalone procedural application combining **split pa
 """Complete procedural project: Personal Expense & Budget Tracker."""
 
 from __future__ import annotations
-import yapps as ui
+import nexa as ui
 
 CATEGORIES = ["Housing", "Food", "Transport", "Software"]
 CAT_TONES = [ui.Tone.VIOLET, ui.Tone.SUCCESS, ui.Tone.INFO, ui.Tone.WARNING]
@@ -296,7 +296,7 @@ def main() -> None:
         elif picked == 1:
             ctx.theme_mode = ui.ThemeMode.LIGHT if ctx.theme_mode == ui.ThemeMode.DARK else ui.ThemeMode.DARK
 
-    with ui.App("Budget Ledger — yapps", width=1020, height=660, theme=ui.ThemeMode.DARK, accent=ui.Accent.GREEN) as app:
+    with ui.App("Budget Ledger — nexa", width=1020, height=660, theme=ui.ThemeMode.DARK, accent=ui.Accent.GREEN) as app:
         app.run(draw)
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pathlib
 
-import yapps as ui
+import nexa as ui
 
 
 def test_software_renderer_and_png_roundtrip(tmp_path: pathlib.Path) -> None:

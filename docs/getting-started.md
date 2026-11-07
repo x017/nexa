@@ -1,12 +1,12 @@
 # Getting Started & Core Mental Model
 
-Welcome to **yapps**! Whether you have built desktop UIs with Tkinter, PyQt, Dear ImGui, or React—or this is your very first Python GUI library—this guide walks you from zero to building fast, polished desktop tools in minutes.
+Welcome to **nexa**—a Python port of [CUI](https://github.com/yappologistic/CUI)! Whether you have built desktop UIs with Tkinter, PyQt, Dear ImGui, or React—or this is your very first Python GUI library—this guide walks you from zero to building fast, polished desktop tools in minutes.
 
 ---
 
 ## 1. Installation & Requirements
 
-Install `yapps` from the repository root:
+Install `nexa` from the repository root:
 
 ```bash
 pip install .
@@ -15,12 +15,12 @@ pip install .
 ### What you need (and what you *don't* need)
 - **Python 3.9+** (zero third-party runtime Python packages—pure standard library).
 - **Any C99 compiler** when installing from source (`gcc` or `clang` on Linux/macOS, MSVC `cl` or MinGW `gcc` on Windows).
-- **No `python3-dev` headers, no CMake, and no `libx11-dev` packages required!** On Linux, `yapps` dynamically loads `libX11.so.6` via `dlopen` at runtime, and automatically falls back to its built-in multi-threaded CPU `SoftwareRenderer` when running on headless servers or CI.
+- **No `python3-dev` headers, no CMake, and no `libx11-dev` packages required!** On Linux, `nexa` dynamically loads `libX11.so.6` via `dlopen` at runtime, and automatically falls back to its built-in multi-threaded CPU `SoftwareRenderer` when running on headless servers or CI.
 
-To manually rebuild the native shared library (`libyapps_cui.so` / `.dylib` / `.dll`) at any time:
+To manually rebuild the native shared library (`libnexa_cui.so` / `.dylib` / `.dll`) at any time:
 
 ```bash
-python3 -m yapps.build
+python3 -m nexa.build
 ```
 
 ---
@@ -30,7 +30,7 @@ python3 -m yapps.build
 Create a file named `first_app.py` and run `python3 first_app.py`:
 
 ```python
-import yapps as ui
+import nexa as ui
 
 count = 0
 name = "world"
@@ -46,25 +46,25 @@ def draw() -> None:
                 count += 1
             ui.badge(f"Clicked {count}x", tone=ui.Tone.ACCENT)
 
-ui.run(draw, title="My First yapps Window", width=520, height=300)
+ui.run(draw, title="My First nexa Window", width=520, height=300)
 ```
 
 ### Headless Screenshot Mode (Servers, Containers & CI)
-Don't have a display attached right now? Every `yapps` app can render pixel-identical frames off-screen and save a PNG screenshot via environment variables:
+Don't have a display attached right now? Every `nexa` app can render pixel-identical frames off-screen and save a PNG screenshot via environment variables:
 
 ```bash
-YAPPS_HEADLESS=1 CUI_SCREENSHOT=preview.png CUI_SCREENSHOT_FRAMES=10 python3 first_app.py
+NEXA_HEADLESS=1 CUI_SCREENSHOT=preview.png CUI_SCREENSHOT_FRAMES=10 python3 first_app.py
 ```
 
 ---
 
-## 3. How `yapps` Thinks: Value-Returning Immediate Mode
+## 3. How `nexa` Thinks: Value-Returning Immediate Mode
 
 Traditional retained-mode toolkits (Tkinter, Qt, GTK) force you to keep **two copies of your state** synchronized:
 1. Your Python data (`user.name`), and
 2. Hidden state inside widget objects (`name_entry.setText(...)`, `on_text_changed` callbacks, signals/slots).
 
-`yapps` uses an **event-driven, value-returning immediate-mode** architecture:
+`nexa` uses an **event-driven, value-returning immediate-mode** architecture:
 
 1. **Your Python variables are the single source of truth.** You pass the current value into a widget, and the widget returns the new value:
    ```python
@@ -88,13 +88,13 @@ Traditional retained-mode toolkits (Tkinter, Qt, GTK) force you to keep **two co
        port = int(ui.number("port", port, 1024, 65535, step=1, decimals=0))
    ```
    Want to render a list of items? Use a regular `for` loop!
-3. **0% CPU when idle, 60–120 fps spring physics when active.** Unlike game-engine immediate-mode GUIs that burn 100% of a core spinning in `while True`, `yapps` blocks inside the OS event loop (`select` / `GetMessageW` / `NSApp`) consuming **0% CPU** until mouse/keyboard input arrives, a spring animation is in flight, or a background thread calls `app.wake()`.
+3. **0% CPU when idle, 60–120 fps spring physics when active.** Unlike game-engine immediate-mode GUIs that burn 100% of a core spinning in `while True`, `nexa` blocks inside the OS event loop (`select` / `GetMessageW` / `NSApp`) consuming **0% CPU** until mouse/keyboard input arrives, a spring animation is in flight, or a background thread calls `app.wake()`.
 
 ---
 
 ## 4. Widget Identity (`id` & `id_scope`)
 
-To animate hover states, track keyboard focus, and remember scroll offsets across frames, `yapps` hashes an ID string for every interactive widget:
+To animate hover states, track keyboard focus, and remember scroll offsets across frames, `nexa` hashes an ID string for every interactive widget:
 
 - **Controls with a unique key parameter** (`input("email", ...)`, `tabs("main_tabs", ...)`, `slider("Volume", ...)`) hash that first string argument.
 - **Buttons & toggles** (`button("Save")`, `checkbox("Agree", ...)`) hash their label string.
@@ -114,13 +114,13 @@ for idx, task in enumerate(tasks):
                 break
 ```
 
-> **Tip:** When using the OOP API (`ui.Component`), `yapps` pushes `component.key` onto the ID stack **automatically**—you don't even need manual `id_scope` calls between component instances!
+> **Tip:** When using the OOP API (`ui.Component`), `nexa` pushes `component.key` onto the ID stack **automatically**—you don't even need manual `id_scope` calls between component instances!
 
 ---
 
 ## 5. Unconditional vs. Conditional `with` Scopes
 
-`yapps` uses Python `with` statements so you can never forget a `*_end()` call. There are two kinds of scopes:
+`nexa` uses Python `with` statements so you can never forget a `*_end()` call. There are two kinds of scopes:
 
 ### A. Unconditional Layout Scopes (always render children)
 Containers that always open and close cleanly:
@@ -142,6 +142,7 @@ Overlays, disclosures, menus, and popups only build their children when open or 
 - Structured Views: `table`, `data_grid`, `inspector`, `node_editor`
 
 ```python
+# Declare `is_open = False` OUTSIDE `draw()`, with `nonlocal is_open` inside `draw()`:
 with ui.dialog("Confirm Reset", is_open, description="Reset all settings to defaults?") as dlg:
     if dlg:
         with ui.dialog_footer():
@@ -150,7 +151,7 @@ with ui.dialog("Confirm Reset", is_open, description="Reset all settings to defa
             if ui.button("Reset", variant=ui.ButtonVariant.DANGER):
                 reset_all()
                 dlg.open = False
-is_open = dlg.open  # Also catches Escape key or backdrop click!
+is_open = dlg.open  # Syncs Cancel/Reset, header X, Escape key & backdrop click!
 ```
 
 ---

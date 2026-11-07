@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import yapps as ui
+import nexa as ui
 
 
 class SectionRow(ui.Component):
@@ -119,7 +119,7 @@ class SecurityView(ui.View):
 
 
 class SettingsApp(ui.Application):
-    title = "Settings — yapps OOP"
+    title = "Settings — nexa OOP"
     width = 980
     height = 680
 

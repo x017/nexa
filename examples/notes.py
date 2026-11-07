@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import yapps as ui
+import nexa as ui
 
 TAGS = ("Personal", "Work", "Ideas")
 TAG_TONES = (ui.Tone.TEAL, ui.Tone.INFO, ui.Tone.VIOLET)
@@ -169,7 +169,7 @@ def main() -> None:
         elif cmd_idx == 3:
             ctx.theme_mode = ui.ThemeMode.LIGHT if ctx.theme_mode == ui.ThemeMode.DARK else ui.ThemeMode.DARK
 
-    with ui.App("Notes — yapps", width=1020, height=680) as app:
+    with ui.App("Notes — nexa", width=1020, height=680) as app:
         app.run(draw)
 
 

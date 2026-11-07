@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect x="1" y="1" width="30" height="30" rx="8" fill="#0d0d11" stroke="#282833" stroke-width="1.25"/>
+  <!-- Outer 45-degree nexus lattice -->
+  <path d="M16 5.5 L26.5 16 L16 26.5 L5.5 16 Z" stroke="#f3f2ee" stroke-opacity="0.32" stroke-width="1.35" stroke-linejoin="round"/>
+  <!-- Concave 4-point star-cross core with center diamond aperture -->
+  <path fill-rule="evenodd" clip-rule="evenodd"
+        d="M16 7.4 C16 12.6 19.4 16 24.6 16 C19.4 16 16 19.4 16 24.6 C16 19.4 12.6 16 7.4 16 C12.6 16 16 12.6 16 7.4 Z M16 13.4 L18.6 16 L16 18.6 L13.4 16 Z"
+        fill="#f3f2ee"/>
+  <!-- Four cardinal nexus nodes (north node accented) -->
+  <circle cx="16" cy="5.5" r="2.2" fill="#a78bff"/>
+  <circle cx="26.5" cy="16" r="2.0" fill="#f3f2ee"/>
+  <circle cx="16" cy="26.5" r="2.0" fill="#f3f2ee"/>
+  <circle cx="5.5" cy="16" r="2.0" fill="#f3f2ee"/>
+</svg>

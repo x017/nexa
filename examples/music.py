@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 
-import yapps as ui
+import nexa as ui
 
 
 def main() -> None:
@@ -88,7 +88,7 @@ def main() -> None:
                                     progress = 0.0
                     order = ro.order
 
-    with ui.App("Music — yapps", width=1020, height=720, theme=ui.ThemeMode.DARK, accent=ui.Accent.CORAL) as app:
+    with ui.App("Music — nexa", width=1020, height=720, theme=ui.ThemeMode.DARK, accent=ui.Accent.CORAL) as app:
         app.run(draw)
 
 

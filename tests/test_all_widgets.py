@@ -1,8 +1,8 @@
-"""Comprehensive widget parity & interaction tests covering all ~150 yapps components."""
+"""Comprehensive widget parity & interaction tests covering all ~150 nexa components."""
 
 from __future__ import annotations
 
-import yapps as ui
+import nexa as ui
 
 
 def test_interactive_widget_value_returns_and_events() -> None:
@@ -333,7 +333,7 @@ def test_all_150_components_full_render_and_keepalive() -> None:
                     with ctx.kanban("kb") as kb:
                         with kb.column("Todo", 1):
                             with kb.card(1):
-                                ctx.text("Ship yapps")
+                                ctx.text("Ship nexa")
                     ctx.week_calendar("wcal", ui.Date(2026, 11, 2), [ui.CalEvent("Sync", 0, 9.0, 10.0)], height=180)
                     ctx.gantt("gnt", [ui.GanttTask("Build", 0, 5, 0.5)], ui.Date(2026, 11, 2), 10, height=140)
 
@@ -371,7 +371,7 @@ def test_all_150_components_full_render_and_keepalive() -> None:
                     ctx.waveform("wf1", [0.2, 0.6, 0.9, 0.4], 0.5, height=48)
                     ctx.now_playing("np1", ui.NowPlaying("Song", "Artist", position=12.0, duration=180.0, playing=True))
                     ctx.counter("cnt1", 12345.67)
-                    ctx.ticker("tkr1", [ui.TickerItem("YAPPS", "1.0.0", 100.0)])
+                    ctx.ticker("tkr1", [ui.TickerItem("NEXA", "1.0.0", 100.0)])
 
                     ctx.shimmer_text("Shimmer")
                     ctx.typewriter("tw1", "Typed text")
@@ -436,3 +436,61 @@ def test_all_150_components_full_render_and_keepalive() -> None:
     assert len(canvas_rects) == 3
     assert canvas_rects[-1].w == 260.0 and canvas_rects[-1].h == 90.0
     log.close()
+
+
+def test_dialog_close_interactions() -> None:
+    with ui.SoftwareRenderer() as sw, ui.UI(width=600, height=400, renderer=sw) as ctx:
+        is_open = True
+        force_close = False
+        close_btn_id = 0
+
+        def step() -> None:
+            nonlocal is_open, force_close, close_btn_id
+            with ctx.frame():
+                with ctx.dialog("Confirm", is_open) as dlg:
+                    if dlg:
+                        if ctx.button("Close") or force_close:
+                            dlg.open = False
+                            force_close = False
+                        close_btn_id = ctx.last_id
+                is_open = dlg.open
+
+        # 1. Close via inner "Close" button click
+        for _ in range(30):
+            step()
+        r = ctx.get_rect(close_btn_id)
+        ctx.input_click(r.x + r.w * 0.5, r.y + r.h * 0.5)
+        step()
+        ctx.input_mouse_button(ui.MouseButton.LEFT, False)
+        step()
+        assert is_open is False
+
+        # 2. Close via single-frame trackpad tap on backdrop scrim
+        is_open = True
+        for _ in range(30):
+            step()
+        ctx.input_mouse_move(10.0, 10.0)
+        ctx.input_mouse_button(ui.MouseButton.LEFT, True)
+        ctx.input_mouse_button(ui.MouseButton.LEFT, False)
+        step()
+        assert is_open is False
+
+        # 3. Close via Escape key
+        is_open = True
+        for _ in range(30):
+            step()
+        ctx.input_key(ui.Key.ESCAPE, True)
+        step()
+        ctx.input_key(ui.Key.ESCAPE, False)
+        assert is_open is False
+
+        # 4. Programmatic dlg.open = False on an idle settled frame schedules redraw
+        is_open = True
+        for _ in range(120):
+            step()
+        assert ctx.needs_redraw is False
+        force_close = True
+        step()
+        assert is_open is False
+        assert ctx.needs_redraw is True
+

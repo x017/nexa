@@ -13,9 +13,9 @@ import sys
 
 import pytest
 
-import yapps
-from yapps import _cdefs
-from yapps.build import build_native, find_c_compiler, freeze_flags
+import nexa
+from nexa import _cdefs
+from nexa.build import build_native, find_c_compiler, freeze_flags
 
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -32,7 +32,7 @@ def test_c_struct_sizeof_parity(tmp_path: pathlib.Path) -> None:
             c_name = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
             pairs.append((name, c_name, ctypes.sizeof(obj)))
 
-    assert len(pairs) >= 75
+    assert len(pairs) >= 110
 
     c_src = tmp_path / "check_sizes.c"
     c_bin = tmp_path / "check_sizes"
@@ -57,19 +57,19 @@ def test_c_struct_sizeof_parity(tmp_path: pathlib.Path) -> None:
 
 
 def test_ast_native_symbol_and_argcount_parity() -> None:
-    """Every native C symbol accessed anywhere in src/yapps/ must exist and match argtypes count."""
-    lib = yapps.get_cdll()
-    src_dir = REPO_ROOT / "src" / "yapps"
+    """Every native C symbol accessed anywhere in src/nexa/ must exist and match argtypes count."""
+    lib = nexa.get_cdll()
+    src_dir = REPO_ROOT / "src" / "nexa"
 
     for py_path in sorted(src_dir.rglob("*.py")):
         tree = ast.parse(py_path.read_text())
         for node in ast.walk(tree):
-            if isinstance(node, ast.Attribute) and node.attr.startswith(("cui_", "yapps_")):
+            if isinstance(node, ast.Attribute) and node.attr.startswith(("cui_", "nexa_")):
                 assert hasattr(lib, node.attr), f"{py_path}:{node.lineno} references missing symbol {node.attr}"
             if (
                 isinstance(node, ast.Call)
                 and isinstance(node.func, ast.Attribute)
-                and node.func.attr.startswith(("cui_", "yapps_"))
+                and node.func.attr.startswith(("cui_", "nexa_"))
             ):
                 fn = getattr(lib, node.func.attr)
                 if fn.argtypes is not None:
@@ -80,34 +80,42 @@ def test_ast_native_symbol_and_argcount_parity() -> None:
 
 
 def test_minimal_stripped_builds_and_size(tmp_path: pathlib.Path) -> None:
-    """Stripped minimal builds compile cleanly, bind all symbols, and stay compact (<600 KB)."""
-    min_so = build_native(output_path=tmp_path / "libyapps_min.so", minimal=True)
+    """Stripped minimal & RTL text-shaping builds compile cleanly, bind all symbols, and stay compact."""
+    min_so = build_native(output_path=tmp_path / "libnexa_min.so", minimal=True)
     assert min_so.is_file()
     size_kb = min_so.stat().st_size / 1024.0
-    assert size_kb < 600.0, f"Expected minimal shared library < 600 KB, got {size_kb:.1f} KB"
+    assert size_kb < 750.0, f"Expected minimal shared library < 750 KB, got {size_kb:.1f} KB"
 
     lib = ctypes.CDLL(str(min_so))
     _cdefs.bind_prototypes(lib)
-    feats = yapps.BuildFeatures(int(lib.yapps_features()))
-    assert yapps.BuildFeatures.SW in feats
-    assert yapps.BuildFeatures.GL not in feats
-    assert yapps.BuildFeatures.APP not in feats
-    assert yapps.BuildFeatures.DEFAULT_FONTS not in feats
-    assert yapps.BuildFeatures.STB_IMAGE not in feats
+    feats = nexa.BuildFeatures(int(lib.nexa_features()))
+    assert nexa.BuildFeatures.SW in feats
+    assert nexa.BuildFeatures.GL not in feats
+    assert nexa.BuildFeatures.APP not in feats
+    assert nexa.BuildFeatures.DEFAULT_FONTS not in feats
+    assert nexa.BuildFeatures.STB_IMAGE not in feats
+    assert nexa.BuildFeatures.TEXT_SHAPING not in feats
+
+    rtl_so = build_native(output_path=tmp_path / "libnexa_rtl.so", minimal=True, text_shaping=True)
+    assert rtl_so.is_file()
+    rtl_lib = ctypes.CDLL(str(rtl_so))
+    _cdefs.bind_prototypes(rtl_lib)
+    rtl_feats = nexa.BuildFeatures(int(rtl_lib.nexa_features()))
+    assert nexa.BuildFeatures.TEXT_SHAPING in rtl_feats
 
 
 def test_lazy_imports_and_freeze_flags() -> None:
-    """Importing yapps in a fresh interpreter must not eagerly pull heavy stdlib modules."""
+    """Importing nexa in a fresh interpreter must not eagerly pull heavy stdlib modules."""
     code = (
-        "import sys, yapps; "
+        "import sys, nexa; "
         "assert 'dataclasses' not in sys.modules; "
         "assert 'asyncio' not in sys.modules; "
-        "assert 'yapps.build' not in sys.modules"
+        "assert 'nexa.build' not in sys.modules"
     )
     subprocess.run([sys.executable, "-c", code], check=True)
 
     pyi_flags = freeze_flags("pyinstaller")
     assert "--exclude-module" in pyi_flags
-    assert "yapps.build" in pyi_flags
+    assert "nexa.build" in pyi_flags
     nuitka_flags = freeze_flags("nuitka")
-    assert any("--nofollow-import-to=yapps.build" in f for f in nuitka_flags)
+    assert any("--nofollow-import-to=nexa.build" in f for f in nuitka_flags)

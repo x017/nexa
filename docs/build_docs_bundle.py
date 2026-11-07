@@ -15,13 +15,14 @@ import re
 DOCS_DIR = pathlib.Path(__file__).resolve().parent
 
 CHAPTERS = [
+    ("zero-to-hero", "0 to Hero: Full Tutorial", "Start Here", "zero-to-hero.md"),
     ("getting-started", "Getting Started", "Start Here", "getting-started.md"),
     ("tutorial-functional", "Functional & Procedural", "Tutorials", "tutorial-functional.md"),
     ("tutorial-oop", "Object-Oriented (OOP)", "Tutorials", "tutorial-oop.md"),
-    ("theming-and-styling", "Theming, Accents & Icons", "Core Guides", "theming-and-styling.md"),
-    ("concurrency-and-async", "Concurrency & Asyncio", "Core Guides", "concurrency-and-async.md"),
-    ("components-reference", "150+ Components Reference", "API Reference", "components-reference.md"),
-    ("advanced-rendering-and-packaging", "Canvas, GPU & Packaging", "Advanced", "advanced-rendering-and-packaging.md"),
+    ("theming-and-styling", "Theming, Accents & Icons", "Tutorials", "theming-and-styling.md"),
+    ("concurrency-and-async", "Concurrency & Asyncio", "Tutorials", "concurrency-and-async.md"),
+    ("advanced-rendering-and-packaging", "Canvas, GPU & Packaging", "Tutorials", "advanced-rendering-and-packaging.md"),
+    ("components-reference", "160+ Components Reference", "API Reference", "components-reference.md"),
 ]
 
 PY_KW = {
@@ -147,8 +148,24 @@ def markdown_to_html(md: str) -> tuple[str, list[dict[str, str]], list[dict[str,
             i += 1
             continue
 
-        # Headings
-        hm = re.match(r"^(#{1,3})\s+(.+)$", line)
+        # Standalone Markdown Image ![alt](src)
+        img_m = re.match(r"^\s*!\[([^\]]*)\]\(([^)]+)\)\s*$", line)
+        if img_m:
+            alt_txt = html.escape(img_m.group(1).strip())
+            src_url = html.escape(img_m.group(2).strip())
+            html_parts.append(
+                f'<figure class="doc-figure">'
+                f'<div class="window-frame">'
+                f'<div class="window-bar"><div class="window-dots"><i></i><i></i><i></i></div>'
+                f'<span>{alt_txt}</span><span style="width: 42px;"></span></div>'
+                f'<img src="{src_url}" alt="{alt_txt}" loading="lazy" decoding="async" />'
+                f"</div></figure>"
+            )
+            i += 1
+            continue
+
+        # Headings (H1 - H4)
+        hm = re.match(r"^(#{1,4})\s+(.+)$", line)
         if hm:
             _flush_section()
             lvl = len(hm.group(1))
@@ -178,7 +195,7 @@ def markdown_to_html(md: str) -> tuple[str, list[dict[str, str]], list[dict[str,
             html_parts.append(f"<table><thead><tr>{th_html}</tr></thead><tbody>{tr_html}</tbody></table>")
             continue
 
-        # Blockquote
+        # Blockquote / Callout
         if line.lstrip().startswith(">"):
             q_lines: list[str] = []
             while i < n and lines[i].lstrip().startswith(">"):
@@ -186,7 +203,12 @@ def markdown_to_html(md: str) -> tuple[str, list[dict[str, str]], list[dict[str,
                 i += 1
             q_body = " ".join(x.strip() for x in q_lines if x.strip())
             current_text.append(q_body)
-            html_parts.append(f"<blockquote><p>{render_inline(q_body)}</p></blockquote>")
+            cls_attr = ""
+            if q_body.startswith("**Pitfall"):
+                cls_attr = ' class="callout-warn"'
+            elif q_body.startswith("**Pro Tip"):
+                cls_attr = ' class="callout-tip"'
+            html_parts.append(f"<blockquote{cls_attr}><p>{render_inline(q_body)}</p></blockquote>")
             continue
 
         # Unordered or Ordered List
@@ -221,7 +243,7 @@ def markdown_to_html(md: str) -> tuple[str, list[dict[str, str]], list[dict[str,
 
         # Paragraph
         p_lines: list[str] = []
-        while i < n and lines[i].strip() and not re.match(r"^(#{1,3}\s|```|---|\s*[-*]\s|\s*\d+\.\s|\s*>)", lines[i]):
+        while i < n and lines[i].strip() and not re.match(r"^(#{1,4}\s|```|---|\s*!\[|\s*[-*]\s|\s*\d+\.\s|\s*>)", lines[i]):
             p_lines.append(lines[i].strip())
             i += 1
         para = " ".join(p_lines)
@@ -263,7 +285,8 @@ def build_bundle() -> pathlib.Path:
     }
     out_path.write_text(
         "/* Auto-generated from docs/*.md by docs/build_docs_bundle.py */\n"
-        f"window.YAPPS_DOCS = {json.dumps(payload, ensure_ascii=False)};\n",
+        f"window.NEXA_DOCS = {json.dumps(payload, ensure_ascii=False)};\n"
+        "window.YAPPS_DOCS = window.NEXA_DOCS;\n",
         encoding="utf-8",
     )
     return out_path
