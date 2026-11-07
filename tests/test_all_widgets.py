@@ -1,8 +1,8 @@
-"""Comprehensive widget parity & interaction tests covering all ~150 yapps components."""
+"""Comprehensive widget parity & interaction tests covering all ~150 nexa components."""
 
 from __future__ import annotations
 
-import yapps as ui
+import nexa as ui
 
 
 def test_interactive_widget_value_returns_and_events() -> None:
@@ -333,7 +333,7 @@ def test_all_150_components_full_render_and_keepalive() -> None:
                     with ctx.kanban("kb") as kb:
                         with kb.column("Todo", 1):
                             with kb.card(1):
-                                ctx.text("Ship yapps")
+                                ctx.text("Ship nexa")
                     ctx.week_calendar("wcal", ui.Date(2026, 11, 2), [ui.CalEvent("Sync", 0, 9.0, 10.0)], height=180)
                     ctx.gantt("gnt", [ui.GanttTask("Build", 0, 5, 0.5)], ui.Date(2026, 11, 2), 10, height=140)
 
@@ -371,7 +371,7 @@ def test_all_150_components_full_render_and_keepalive() -> None:
                     ctx.waveform("wf1", [0.2, 0.6, 0.9, 0.4], 0.5, height=48)
                     ctx.now_playing("np1", ui.NowPlaying("Song", "Artist", position=12.0, duration=180.0, playing=True))
                     ctx.counter("cnt1", 12345.67)
-                    ctx.ticker("tkr1", [ui.TickerItem("YAPPS", "1.0.0", 100.0)])
+                    ctx.ticker("tkr1", [ui.TickerItem("NEXA", "1.0.0", 100.0)])
 
                     ctx.shimmer_text("Shimmer")
                     ctx.typewriter("tw1", "Typed text")

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   yapps Procedural 3D Topographic Woodcut & Stipple Engraving Engine
+   nexa Procedural 3D Topographic Woodcut & Stipple Engraving Engine
    100% original generative printmaking (zero external images):
    - Projects a 3D ridged-multifractal alpine amphitheater & winding S-curve
      river via smooth floating-horizon occlusion.

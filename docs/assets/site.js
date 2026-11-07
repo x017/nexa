@@ -1,5 +1,5 @@
 /* ==========================================================================
-   yapps Interactive Theme, Accent, Ordered-Bayer Dither & Docs Controller
+   nexa Interactive Theme, Accent, Ordered-Bayer Dither & Docs Controller
    ========================================================================== */
 
 (function () {
@@ -24,7 +24,7 @@
     {
       id: "gallery",
       label: "Editor & Nodes",
-      title: "Gallery & Studio — yapps (1200×780)",
+      title: "Gallery & Studio — nexa (1200×780)",
       img: "assets/screenshots/gallery.png",
       caption: "Desktop menu bar, toolbar, dirty document tabs, Bezier node graph, typed property inspector & C-backed log console.",
       file: "examples/gallery.py",
@@ -32,7 +32,7 @@
     {
       id: "dashboard",
       label: "Data & Analytics",
-      title: "Larkspur Analytics — yapps (1140×740)",
+      title: "Larkspur Analytics — nexa (1140×740)",
       img: "assets/screenshots/dashboard.png",
       caption: "Animated rolling KPIs, sparklines, smooth cubic area chart, donut breakdown, filter bar & 250-row virtualized data grid.",
       file: "examples/dashboard.py",
@@ -40,7 +40,7 @@
     {
       id: "tracker",
       label: "Planning",
-      title: "Tracker — yapps (1100×700)",
+      title: "Tracker — nexa (1100×700)",
       img: "assets/screenshots/tracker.png",
       caption: "Light-mode drag-and-drop Kanban board, interactive Gantt timeline, 7-day week schedule & live team presence rings.",
       file: "examples/tracker.py",
@@ -48,7 +48,7 @@
     {
       id: "assistant",
       label: "Assistant",
-      title: "Muse AI — yapps (1160×740)",
+      title: "Muse AI — nexa (1160×740)",
       img: "assets/screenshots/assistant.png",
       caption: "Non-blocking BackgroundRunner token streaming, model picker, context ring meter, execution plan & procedural voice orb.",
       file: "examples/assistant.py",
@@ -56,7 +56,7 @@
     {
       id: "finance",
       label: "Charts & Finance",
-      title: "Finance — yapps (1080×720)",
+      title: "Finance — nexa (1080×720)",
       img: "assets/screenshots/finance.png",
       caption: "Live scrolling market ticker, rolling odometer counter, proportional Treemap, split bar, Sankey diagram & trading heatmap.",
       file: "examples/finance.py",
@@ -64,7 +64,7 @@
     {
       id: "settings",
       label: "OOP & 8 Accents",
-      title: "Settings — yapps OOP (980×680)",
+      title: "Settings — nexa OOP (980×680)",
       img: "assets/screenshots/settings.png",
       caption: "Object-oriented Application + Router + View + Component architecture showcasing all 8 built-in OKLCH Accent presets.",
       file: "examples/settings.py",
@@ -76,7 +76,7 @@
       file: "hello_functional.py",
       guideLink: "guide.html#tutorial-functional",
       guideLabel: "Read Functional Tutorial →",
-      code: `<span class="tok-kw">import</span> <span class="tok-cls">yapps</span> <span class="tok-kw">as</span> ui
+      code: `<span class="tok-kw">import</span> <span class="tok-cls">nexa</span> <span class="tok-kw">as</span> ui
 
 <span class="tok-kw">def</span> main() -> <span class="tok-kw">None</span>:
     count = <span class="tok-num">0</span>
@@ -102,7 +102,7 @@
       file: "ledger_procedural.py",
       guideLink: "guide.html#tutorial-functional",
       guideLabel: "Read Procedural Guide →",
-      code: `<span class="tok-kw">import</span> <span class="tok-cls">yapps</span> <span class="tok-kw">as</span> ui
+      code: `<span class="tok-kw">import</span> <span class="tok-cls">nexa</span> <span class="tok-kw">as</span> ui
 
 <span class="tok-kw">def</span> render_sidebar(ctx: ui.<span class="tok-cls">UI</span>, st: dict) -> <span class="tok-kw">None</span>:
     <span class="tok-kw">with</span> ctx.column(width=<span class="tok-num">210</span>, height=ui.<span class="tok-cls">FILL</span>, bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">SURFACE_MUTED</span>, pad=<span class="tok-num">12</span>, gap=<span class="tok-num">4</span>):
@@ -127,7 +127,7 @@
       file: "studio_oop.py",
       guideLink: "guide.html#tutorial-oop",
       guideLabel: "Read OOP Architecture Tutorial →",
-      code: `<span class="tok-kw">import</span> <span class="tok-cls">yapps</span> <span class="tok-kw">as</span> ui
+      code: `<span class="tok-kw">import</span> <span class="tok-cls">nexa</span> <span class="tok-kw">as</span> ui
 
 <span class="tok-kw">class</span> <span class="tok-cls">PipelineCard</span>(ui.<span class="tok-cls">Component</span>):
     <span class="tok-kw">def</span> __init__(self, key: str, title: str) -> <span class="tok-kw">None</span>:
@@ -168,14 +168,14 @@
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
-  const savedTheme = localStorage.getItem("yapps_theme");
+  const savedTheme = localStorage.getItem("nexa_theme");
   let currentTheme =
     savedTheme === "dark" || savedTheme === "light"
       ? savedTheme
       : matchMedia("(prefers-color-scheme: dark)").matches
       ? "dark"
       : "light";
-  let currentAccent = localStorage.getItem("yapps_accent") || "BLUE";
+  let currentAccent = localStorage.getItem("nexa_accent") || "BLUE";
   if (!ACCENTS.some((a) => a.key === currentAccent)) currentAccent = "BLUE";
 
   function applyThemeAndAccent() {
@@ -233,7 +233,7 @@
         const btn = ev.target.closest(".accent-dot");
         if (!btn) return;
         currentAccent = btn.dataset.accent;
-        localStorage.setItem("yapps_accent", currentAccent);
+        localStorage.setItem("nexa_accent", currentAccent);
         applyThemeAndAccent();
       });
     }
@@ -242,7 +242,7 @@
     if (themeBtn) {
       themeBtn.addEventListener("click", () => {
         currentTheme = currentTheme === "dark" ? "light" : "dark";
-        localStorage.setItem("yapps_theme", currentTheme);
+        localStorage.setItem("nexa_theme", currentTheme);
         applyThemeAndAccent();
       });
     }
@@ -433,7 +433,7 @@
         const card = ev.target.closest(".accent-card");
         if (!card) return;
         currentAccent = card.dataset.accent;
-        localStorage.setItem("yapps_accent", currentAccent);
+        localStorage.setItem("nexa_accent", currentAccent);
         applyThemeAndAccent();
       });
     }
@@ -441,7 +441,7 @@
 
   // ---- Documentation Portal (`guide.html`) Initializer ----
   function initDocsPortal() {
-    const docsData = window.YAPPS_DOCS;
+    const docsData = window.NEXA_DOCS;
     const navRoot = document.getElementById("docs-sidebar-nav");
     const articleRoot = document.getElementById("docs-article");
     const tocRoot = document.getElementById("docs-toc-links");
@@ -505,7 +505,7 @@
         </div>`;
 
         articleRoot.innerHTML = ch.html + pagerHtml;
-        document.title = `${ch.title} — yapps Documentation`;
+        document.title = `${ch.title} — nexa Documentation`;
 
         navRoot.querySelectorAll(".sidebar-link").forEach((el) => {
           el.classList.toggle("active", el.dataset.chapter === ch.slug);

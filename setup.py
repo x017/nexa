@@ -1,8 +1,8 @@
-"""Setuptools build integration for yapps.
+"""Setuptools build integration for nexa.
 
-Compiles the pure-C99 shared library ``libyapps_cui`` (.so/.dylib/.dll) during
+Compiles the pure-C99 shared library ``libnexa_cui`` (.so/.dylib/.dll) during
 package build and marks wheels as Python-ABI-independent (``py3-none-<plat>``)
-since yapps binds through ctypes without linking against libpython.
+since nexa binds through ctypes without linking against libpython.
 """
 
 from __future__ import annotations
@@ -18,14 +18,14 @@ sys.path.insert(0, str(ROOT / "src"))
 
 class build_py(_build_py):
     def run(self) -> None:
-        from yapps.build import build_native, shared_lib_filename
+        from nexa.build import build_native, shared_lib_filename
 
         csrc = ROOT / "csrc"
-        # Build into build_lib/yapps/_native AND into src/yapps/_native for editable installs
-        src_native = ROOT / "src" / "yapps" / "_native" / shared_lib_filename()
+        # Build into build_lib/nexa/_native AND into src/nexa/_native for editable installs
+        src_native = ROOT / "src" / "nexa" / "_native" / shared_lib_filename()
         build_native(csrc_dir=csrc, output_path=src_native)
         super().run()
-        out_native = Path(self.build_lib) / "yapps" / "_native" / shared_lib_filename()
+        out_native = Path(self.build_lib) / "nexa" / "_native" / shared_lib_filename()
         out_native.parent.mkdir(parents=True, exist_ok=True)
         if src_native.resolve() != out_native.resolve():
             import shutil

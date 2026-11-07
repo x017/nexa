@@ -11,7 +11,7 @@ import subprocess
 import sys
 import textwrap
 
-import yapps as ui
+import nexa as ui
 
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -98,8 +98,8 @@ def test_all_markdown_python_blocks_parse_and_standalone_tutorials_run() -> None
 
     env = {
         **os.environ,
-        "YAPPS_HEADLESS": "1",
-        "YAPPS_MAX_FRAMES": "3",
+        "NEXA_HEADLESS": "1",
+        "NEXA_MAX_FRAMES": "3",
         "PYTHONPATH": str(ROOT / "src"),
     }
     for label, code in standalone_blocks:
@@ -115,7 +115,7 @@ def test_all_markdown_python_blocks_parse_and_standalone_tutorials_run() -> None
 
 
 def test_multi_view_examples_exercise_every_route_and_tab() -> None:
-    os.environ["YAPPS_HEADLESS"] = "1"
+    os.environ["NEXA_HEADLESS"] = "1"
 
     def _load_example(name: str):
         path = ROOT / "examples" / name
@@ -141,8 +141,8 @@ def test_multi_view_examples_exercise_every_route_and_tab() -> None:
     # 2. Tracker & Gallery: rewrite initial tab index in source and execute all 3 tabs
     env = {
         **os.environ,
-        "YAPPS_HEADLESS": "1",
-        "YAPPS_MAX_FRAMES": "3",
+        "NEXA_HEADLESS": "1",
+        "NEXA_MAX_FRAMES": "3",
         "PYTHONPATH": str(ROOT / "src"),
     }
     tracker_src = (ROOT / "examples" / "tracker.py").read_text(encoding="utf-8")

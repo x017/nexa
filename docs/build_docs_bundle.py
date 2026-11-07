@@ -263,7 +263,7 @@ def build_bundle() -> pathlib.Path:
     }
     out_path.write_text(
         "/* Auto-generated from docs/*.md by docs/build_docs_bundle.py */\n"
-        f"window.YAPPS_DOCS = {json.dumps(payload, ensure_ascii=False)};\n",
+        f"window.NEXA_DOCS = {json.dumps(payload, ensure_ascii=False)};\n",
         encoding="utf-8",
     )
     return out_path

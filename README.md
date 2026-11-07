@@ -1,21 +1,21 @@
-# yapps
+# nexa
 
-**yapps** is a lightweight, high-performance immediate-mode desktop UI library for Python, powered by the zero-dependency C99 [CUI](https://github.com/yappologistic/CUI) layout, spring-animation, and SDF rendering engine.
+**nexa** is a lightweight, high-performance immediate-mode desktop UI library for Python, powered by the zero-dependency C99 [CUI](https://github.com/yappologistic/CUI) layout, spring-animation, and SDF rendering engine.
 
-![yapps Studio IDE & Node Editor](docs/assets/screenshots/gallery.png)
+![nexa Studio IDE & Node Editor](docs/assets/screenshots/gallery.png)
 
-- **Sub-megabyte native core**: **652 KB** stripped shared library (`libyapps_cui`, **498 KB** compressed wheel) including embedded **Inter**, **Geist Mono**, **168 Lucide icons**, OpenGL 3.3 + multi-threaded CPU software rasterizer, PNG/JPEG loader, and OS windowing (**487 KB** in minimal LTO builds).
+- **Sub-megabyte native core**: **652 KB** stripped shared library (`libnexa_cui`, **498 KB** compressed wheel) including embedded **Inter**, **Geist Mono**, **168 Lucide icons**, OpenGL 3.3 + multi-threaded CPU software rasterizer, PNG/JPEG loader, and OS windowing (**487 KB** in minimal LTO builds).
 - **Zero runtime Python dependencies**: Pure Python standard library (`ctypes` ABI releasing the GIL on every native call, `__slots__` value types, ~48 ms warm import).
 - **150+ components across 19 domains**: Flexbox & grid layouts, buttons & actions, inputs, date/time/color pickers, navigation, popovers/dialogs/sheets, virtualized 1M-row lists & editable data grids, 16 chart types, Kanban/Gantt/week calendars, AI agent/chat widgets, media, motion text, IDE chrome, property inspector, Bezier node editor, and custom vector canvas.
 - **Value-returning Pythonic API with full control**: Widgets accept and return plain Python values (`str`, `bool`, `int`, `float`, `Color`, `Date`) while exposing transition flags (`changed`, `submitted`, `focused`, `blurred`), hit rects, persistent `state_buffer`, custom `Platform` hooks, and `CustomRenderer` GPU callbacks.
-- **Functional, Procedural, and OOP styles**: Write concise scripts with `import yapps as ui`, modular procedural apps with `ctx: ui.UI`, or multi-screen architectures with `Application`, `Router`, `View`, `Component`, and `Store`.
+- **Functional, Procedural, and OOP styles**: Write concise scripts with `import nexa as ui`, modular procedural apps with `ctx: ui.UI`, or multi-screen architectures with `Application`, `Router`, `View`, `Component`, and `Store`.
 - **First-class Concurrency, `asyncio`, & Networking**: 0%-CPU idle sleep with OS-level cross-thread `app.wake()`, `BackgroundRunner` (`submit`, `stream`, `fetch_json`, `fetch_bytes`), MPSC `Channel`, cooperative `await app.run_async(...)`, and threaded `AsyncBridge`.
 
 ---
 
 ## Documentation & Step-by-Step Guides
 
-Learn `yapps` from scratch in [`docs/`](docs/):
+Learn `nexa` from scratch in [`docs/`](docs/):
 
 1. **[Getting Started & Core Mental Model](docs/getting-started.md)** — Installation, value-returning immediate mode, widget IDs & `id_scope`, conditional vs. unconditional `with` scopes, and transition flags.
 2. **[Tutorial: Functional & Procedural Coding](docs/tutorial-functional.md)** — Top-level `ui.run(draw)`, flexbox/grid sizing (`FIT`, `FILL`, `GROW`, `PX`, `PCT`), procedural helper decomposition, manual `while app.frame():` loops, and a complete Budget Tracker project.
@@ -44,7 +44,7 @@ Every snippet below is 100% standalone and runnable as-is.
 ### 1. Functional / Procedural Style
 
 ```python
-import yapps as ui
+import nexa as ui
 
 def main() -> None:
     count = 0
@@ -60,7 +60,7 @@ def main() -> None:
                     count += 1
                 ui.badge(f"Count: {count}", tone=ui.Tone.ACCENT)
 
-    ui.run(draw, title="Hello — yapps", width=560, height=340, accent=ui.Accent.BLUE)
+    ui.run(draw, title="Hello — nexa", width=560, height=340, accent=ui.Accent.BLUE)
 
 if __name__ == "__main__":
     main()
@@ -69,7 +69,7 @@ if __name__ == "__main__":
 ### 2. Object-Oriented Style (`Application`, `Router`, `View`, `Component`, `Store`)
 
 ```python
-import yapps as ui
+import nexa as ui
 
 class CounterCard(ui.Component):
     def __init__(self, key: str, title: str) -> None:
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 ### 3. Explicit Headless / Custom GPU Control
 
 ```python
-import yapps as ui
+import nexa as ui
 
 with ui.SoftwareRenderer(threads=4) as sw:
     with ui.UI(width=800, height=450, theme=ui.ThemeMode.DARK, accent=ui.Accent.VIOLET, renderer=sw) as ctx:
@@ -123,7 +123,7 @@ with ui.SoftwareRenderer(threads=4) as sw:
 
 ## Built-In Theme Accents (`ui.Accent`)
 
-`yapps` includes **8 perceptually balanced OKLCH accents** (`ThemeMode.LIGHT` & `ThemeMode.DARK`):
+`nexa` includes **8 perceptually balanced OKLCH accents** (`ThemeMode.LIGHT` & `ThemeMode.DARK`):
 
 | Accent Enum | Dark Hex | Light Hex |
 |---|---|---|
@@ -146,7 +146,7 @@ Need a custom hex or OKLCH brand accent? Set `ctx.theme[ui.Token.ACCENT] = ui.Co
 
 ```python
 import asyncio
-import yapps as ui
+import nexa as ui
 
 async def main() -> None:
     status = "Connecting..."
@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
 ```python
 import time
-import yapps as ui
+import nexa as ui
 
 def main() -> None:
     app = ui.App("Streaming Demo", width=640, height=320, theme=ui.ThemeMode.DARK)
@@ -225,7 +225,7 @@ Run any of the **11 complete example apps** in [`examples/`](examples/):
 Render headless screenshots on any machine or CI runner:
 
 ```bash
-YAPPS_HEADLESS=1 CUI_SCREENSHOT=dashboard.png CUI_SCREENSHOT_FRAMES=12 python3 examples/dashboard.py
+NEXA_HEADLESS=1 CUI_SCREENSHOT=dashboard.png CUI_SCREENSHOT_FRAMES=12 python3 examples/dashboard.py
 ```
 
 Run the test suite:

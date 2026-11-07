@@ -2,7 +2,7 @@
 
 Desktop GUIs freeze the moment you run a slow HTTP request, SQLite query, or LLM stream on the UI thread.
 
-`yapps` is engineered from the C99 layer up for responsive, zero-CPU-idle concurrency:
+`nexa` is engineered from the C99 layer up for responsive, zero-CPU-idle concurrency:
 1. **Every native C call releases Python's GIL**, so background Python threads run in parallel during layout and software rasterization.
 2. **Cross-thread OS wakeup (`app.wake()`)**: When your app is idle, it sleeps inside the OS event queue at **0% CPU**. Calling `app.wake()` from *any* thread writes to a wakeup pipe (`X11`), posts `WM_NULL` (`Win32`), or posts an `NSEvent` (`Cocoa`) to render a new frame immediately.
 3. **UI-thread callback marshaling (`app.call_soon_threadsafe(fn)`)**: Schedules state mutations to execute cleanly on the UI thread right before the next frame—eliminating race conditions without manual locks!
@@ -18,7 +18,7 @@ Desktop GUIs freeze the moment you run a slow HTTP request, SQLite query, or LLM
 ```python
 import time
 from typing import Iterator
-import yapps as ui
+import nexa as ui
 
 def main() -> None:
     app = ui.App("Background Workers", width=680, height=440, theme=ui.ThemeMode.DARK, accent=ui.Accent.VIOLET)
@@ -112,11 +112,11 @@ When a long-lived background thread (e.g., a WebSocket listener, serial port rea
 
 ## Pattern 3: Cooperative Single-Thread `asyncio` (`await app.run_async(...)`)
 
-Already using `httpx.AsyncClient`, `aiohttp`, `websockets`, or `asyncio.StreamReader`? Run `yapps` **cooperatively inside your existing `asyncio` event loop**—zero extra threads, zero locks!
+Already using `httpx.AsyncClient`, `aiohttp`, `websockets`, or `asyncio.StreamReader`? Run `nexa` **cooperatively inside your existing `asyncio` event loop**—zero extra threads, zero locks!
 
 ```python
 import asyncio
-import yapps as ui
+import nexa as ui
 
 async def main() -> None:
     app = ui.App("Asyncio Cooperative UI", width=560, height=320, theme=ui.ThemeMode.DARK, accent=ui.Accent.BLUE)
@@ -135,7 +135,7 @@ async def main() -> None:
 
     def draw(ctx: ui.UI) -> None:
         with ctx.column(width=ui.FILL, height=ui.FILL, pad=24, gap=12, bg=ui.Color.BACKGROUND):
-            ctx.heading("Cooperative asyncio + yapps", level=2)
+            ctx.heading("Cooperative asyncio + nexa", level=2)
             ctx.badge(status, tone=ui.Tone.INFO, dot=True)
 
     try:
@@ -154,10 +154,10 @@ OOP `ui.Application` subclasses also support `await MyApp().run_async()` out of 
 
 ## Pattern 4: Dedicated-Thread `AsyncBridge`
 
-If your main thread runs synchronous `app.run(draw)` (ensuring the OS window loop never waits on a slow coroutine) while third-party `async def` coroutines or async generators run on a dedicated background `asyncio` event loop thread, use `yapps.aio.AsyncBridge`:
+If your main thread runs synchronous `app.run(draw)` (ensuring the OS window loop never waits on a slow coroutine) while third-party `async def` coroutines or async generators run on a dedicated background `asyncio` event loop thread, use `nexa.aio.AsyncBridge`:
 
 ```python
-from yapps.aio import AsyncBridge
+from nexa.aio import AsyncBridge
 
 bridge = AsyncBridge.for_app(app)  # Or `self.async_bridge` on any `ui.Application`!
 

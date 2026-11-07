@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import yapps as ui
+import nexa as ui
 
 
 def main() -> None:
@@ -103,7 +103,7 @@ def main() -> None:
                         start_hour=8.0, end_hour=18.0, height=ui.FILL,
                     )
 
-    with ui.App("Tracker — yapps", width=1100, height=700) as app:
+    with ui.App("Tracker — nexa", width=1100, height=700) as app:
         app.run(draw)
 
 

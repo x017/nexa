@@ -1,4 +1,4 @@
-/* Headless stub backend (used when YAPPS_WITH_APP=0 or YAPPS_PLATFORM=headless). */
+/* Headless stub backend (used when NEXA_WITH_APP=0 or NEXA_PLATFORM=headless). */
 #include "cui_platform.h"
 #include <time.h>
 

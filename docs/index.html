@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>yapps — Native UI Components for Python</title>
+  <title>nexa — Native UI Components for Python</title>
   <meta name="description" content="Zero-dependency, C99-backed immediate-mode UI framework for Python. 150+ components, Functional & OOP paradigms, OKLCH design system, asyncio & threading, in a ~652 KB native core." />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="assets/styles.css" />
   <script>
     // Apply saved or system theme before first paint so dither & surfaces never flash
     try {
-      const saved = localStorage.getItem("yapps_theme");
+      const saved = localStorage.getItem("nexa_theme");
       const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
       document.documentElement.dataset.theme = dark ? "dark" : "light";
     } catch (e) {}
@@ -22,18 +23,19 @@
       <a class="brand" href="index.html">
         <svg class="brand-mark-svg" viewBox="0 0 200 200" fill="currentColor" aria-hidden="true" focusable="false">
           <g>
-            <rect x="45" y="0" width="20" height="20" rx="4" fill-opacity="0.3"/><rect x="67.5" y="0" width="20" height="20" rx="4" fill-opacity="0.67"/><rect x="90" y="0" width="20" height="20" rx="4" fill-opacity="0.75"/><rect x="112.5" y="0" width="20" height="20" rx="4" fill-opacity="0.67"/><rect x="135" y="0" width="20" height="20" rx="4" fill-opacity="0.3"/>
-            <rect x="22.5" y="22.5" width="20" height="20" rx="4" fill-opacity="0.56"/><rect x="45" y="22.5" width="20" height="20" rx="4"/><rect x="67.5" y="22.5" width="20" height="20" rx="4"/><rect x="90" y="22.5" width="20" height="20" rx="4"/><rect x="112.5" y="22.5" width="20" height="20" rx="4"/><rect x="135" y="22.5" width="20" height="20" rx="4"/><rect x="157.5" y="22.5" width="20" height="20" rx="4" fill-opacity="0.42"/>
-            <rect x="0" y="45" width="20" height="20" rx="4" fill-opacity="0.3"/><rect x="22.5" y="45" width="20" height="20" rx="4"/><rect x="45" y="45" width="20" height="20" rx="4" fill-opacity="0.95"/><rect x="67.5" y="45" width="20" height="20" rx="4" fill-opacity="0.45"/><rect x="90" y="45" width="20" height="20" rx="4" fill-opacity="0.25"/><rect x="112.5" y="45" width="20" height="20" rx="4" fill-opacity="0.45"/><rect x="135" y="45" width="20" height="20" rx="4" fill-opacity="0.62"/>
-            <rect x="0" y="67.5" width="20" height="20" rx="4" fill-opacity="0.67"/><rect x="22.5" y="67.5" width="20" height="20" rx="4"/><rect x="45" y="67.5" width="20" height="20" rx="4" fill-opacity="0.45"/>
-            <rect x="0" y="90" width="20" height="20" rx="4" fill-opacity="0.75"/><rect x="22.5" y="90" width="20" height="20" rx="4"/><rect x="45" y="90" width="20" height="20" rx="4" fill-opacity="0.25"/>
-            <rect x="0" y="112.5" width="20" height="20" rx="4" fill-opacity="0.67"/><rect x="22.5" y="112.5" width="20" height="20" rx="4"/><rect x="45" y="112.5" width="20" height="20" rx="4" fill-opacity="0.45"/>
-            <rect x="0" y="135" width="20" height="20" rx="4" fill-opacity="0.3"/><rect x="22.5" y="135" width="20" height="20" rx="4"/><rect x="45" y="135" width="20" height="20" rx="4" fill-opacity="0.95"/><rect x="67.5" y="135" width="20" height="20" rx="4" fill-opacity="0.45"/><rect x="90" y="135" width="20" height="20" rx="4" fill-opacity="0.25"/><rect x="112.5" y="135" width="20" height="20" rx="4" fill-opacity="0.45"/><rect x="135" y="135" width="20" height="20" rx="4" fill-opacity="0.62"/>
-            <rect x="22.5" y="157.5" width="20" height="20" rx="4" fill-opacity="0.56"/><rect x="45" y="157.5" width="20" height="20" rx="4"/><rect x="67.5" y="157.5" width="20" height="20" rx="4"/><rect x="90" y="157.5" width="20" height="20" rx="4"/><rect x="112.5" y="157.5" width="20" height="20" rx="4"/><rect x="135" y="157.5" width="20" height="20" rx="4"/><rect x="157.5" y="157.5" width="20" height="20" rx="4" fill-opacity="0.42"/>
-            <rect x="45" y="180" width="20" height="20" rx="4" fill-opacity="0.3"/><rect x="67.5" y="180" width="20" height="20" rx="4" fill-opacity="0.67"/><rect x="90" y="180" width="20" height="20" rx="4" fill-opacity="0.75"/><rect x="112.5" y="180" width="20" height="20" rx="4" fill-opacity="0.67"/><rect x="135" y="180" width="20" height="20" rx="4" fill-opacity="0.3"/>
+            <rect x="22.5" y="0" width="20" height="20" rx="4" fill-opacity="0.82"/><rect x="45" y="0" width="20" height="20" rx="4" fill-opacity="0.55"/><rect x="157.5" y="0" width="20" height="20" rx="4" fill-opacity="0.82"/>
+            <rect x="0" y="22.5" width="20" height="20" rx="4" fill-opacity="0.38"/><rect x="22.5" y="22.5" width="20" height="20" rx="4"/><rect x="45" y="22.5" width="20" height="20" rx="4"/><rect x="67.5" y="22.5" width="20" height="20" rx="4" fill-opacity="0.48"/><rect x="157.5" y="22.5" width="20" height="20" rx="4"/><rect x="180" y="22.5" width="20" height="20" rx="4" fill-opacity="0.38"/>
+            <rect x="0" y="45" width="20" height="20" rx="4" fill-opacity="0.52"/><rect x="22.5" y="45" width="20" height="20" rx="4"/><rect x="45" y="45" width="20" height="20" rx="4" fill-opacity="0.92"/><rect x="67.5" y="45" width="20" height="20" rx="4"/><rect x="90" y="45" width="20" height="20" rx="4" fill-opacity="0.36"/><rect x="157.5" y="45" width="20" height="20" rx="4"/><rect x="180" y="45" width="20" height="20" rx="4" fill-opacity="0.52"/>
+            <rect x="0" y="67.5" width="20" height="20" rx="4" fill-opacity="0.58"/><rect x="22.5" y="67.5" width="20" height="20" rx="4"/><rect x="45" y="67.5" width="20" height="20" rx="4" fill-opacity="0.32"/><rect x="67.5" y="67.5" width="20" height="20" rx="4" fill-opacity="0.95"/><rect x="90" y="67.5" width="20" height="20" rx="4"/><rect x="112.5" y="67.5" width="20" height="20" rx="4" fill-opacity="0.32"/><rect x="157.5" y="67.5" width="20" height="20" rx="4"/><rect x="180" y="67.5" width="20" height="20" rx="4" fill-opacity="0.58"/>
+            <rect x="0" y="90" width="20" height="20" rx="4" fill-opacity="0.62"/><rect x="22.5" y="90" width="20" height="20" rx="4"/><rect x="67.5" y="90" width="20" height="20" rx="4" fill-opacity="0.42"/><rect x="112.5" y="90" width="20" height="20" rx="4" fill-opacity="0.42"/><rect x="157.5" y="90" width="20" height="20" rx="4"/><rect x="180" y="90" width="20" height="20" rx="4" fill-opacity="0.62"/>
+            <rect x="0" y="112.5" width="20" height="20" rx="4" fill-opacity="0.58"/><rect x="22.5" y="112.5" width="20" height="20" rx="4"/><rect x="67.5" y="112.5" width="20" height="20" rx="4" fill-opacity="0.32"/><rect x="90" y="112.5" width="20" height="20" rx="4"/><rect x="112.5" y="112.5" width="20" height="20" rx="4" fill-opacity="0.95"/><rect x="135" y="112.5" width="20" height="20" rx="4" fill-opacity="0.32"/><rect x="157.5" y="112.5" width="20" height="20" rx="4"/><rect x="180" y="112.5" width="20" height="20" rx="4" fill-opacity="0.58"/>
+            <rect x="0" y="135" width="20" height="20" rx="4" fill-opacity="0.52"/><rect x="22.5" y="135" width="20" height="20" rx="4"/><rect x="90" y="135" width="20" height="20" rx="4" fill-opacity="0.36"/><rect x="112.5" y="135" width="20" height="20" rx="4"/><rect x="135" y="135" width="20" height="20" rx="4" fill-opacity="0.92"/><rect x="157.5" y="135" width="20" height="20" rx="4"/><rect x="180" y="135" width="20" height="20" rx="4" fill-opacity="0.52"/>
+            <rect x="0" y="157.5" width="20" height="20" rx="4" fill-opacity="0.38"/><rect x="22.5" y="157.5" width="20" height="20" rx="4"/><rect x="112.5" y="157.5" width="20" height="20" rx="4" fill-opacity="0.48"/><rect x="135" y="157.5" width="20" height="20" rx="4"/><rect x="157.5" y="157.5" width="20" height="20" rx="4"/><rect x="180" y="157.5" width="20" height="20" rx="4" fill-opacity="0.38"/>
+            <rect x="22.5" y="180" width="20" height="20" rx="4" fill-opacity="0.82"/><rect x="135" y="180" width="20" height="20" rx="4" fill-opacity="0.55"/><rect x="157.5" y="180" width="20" height="20" rx="4" fill-opacity="0.82"/>
           </g>
+          <rect x="90" y="90" width="20" height="20" rx="4" fill="var(--accent)"/>
         </svg>
-        <span>yapps</span>
+        <span>nexa</span>
         <span class="brand-badge">Python · CUI</span>
       </a>
       <nav class="nav-links" aria-label="Primary">
@@ -81,8 +83,8 @@
 
         <div class="hero-cmd">
           <span class="cmd-prompt">$</span>
-          <code>pip install git+https://github.com/x017/yapps.git</code>
-          <button class="copy-mini" type="button" data-copy-text="pip install git+https://github.com/x017/yapps.git">Copy</button>
+          <code>pip install nexa</code>
+          <button class="copy-mini" type="button" data-copy-text="pip install nexa">Copy</button>
         </div>
       </section>
 
@@ -92,10 +94,10 @@
         <div class="window-frame">
           <div class="window-bar">
             <div class="window-dots"><i></i><i></i><i></i></div>
-            <span id="showcase-win-title">Gallery &amp; Studio — yapps</span>
+            <span id="showcase-win-title">Gallery &amp; Studio — nexa</span>
             <span style="width: 42px;"></span>
           </div>
-          <img id="showcase-img" src="assets/screenshots/gallery.png" alt="yapps Studio &amp; Node Editor screenshot" loading="eager" />
+          <img id="showcase-img" src="assets/screenshots/gallery.png" alt="nexa Studio &amp; Node Editor screenshot" loading="eager" />
         </div>
         <div class="showcase-caption">
           <span id="showcase-caption-text"></span>
@@ -232,7 +234,7 @@
           </li>
           <li>
             <h3>Headless pytest ready</h3>
-            <p>Pass <code>headless=True</code> or set <code>YAPPS_HEADLESS=1</code> to drive inputs and capture pixel-exact PNGs in CI.</p>
+            <p>Pass <code>headless=True</code> or set <code>NEXA_HEADLESS=1</code> to drive inputs and capture pixel-exact PNGs in CI.</p>
           </li>
           <li>
             <h3>Bring your own GPU</h3>
@@ -281,7 +283,7 @@
             <a class="guide-card" href="guide.html#getting-started">
               <span class="gc-num">01</span>
               <span class="gc-title">Getting started</span>
-              <span class="gc-text">Install yapps, open your first window, and master the value-returning frame loop &amp; ID scopes.</span>
+              <span class="gc-text">Install nexa, open your first window, and master the value-returning frame loop &amp; ID scopes.</span>
               <span class="gc-go">Read →</span>
             </a>
           </li>
@@ -332,7 +334,7 @@
       <section class="home-cta" id="home-cta-band">
         <div class="home-cta-body">
           <h2>Start with one window</h2>
-          <p>Install yapps, open a native window, and draw your first Python components in a few minutes.</p>
+          <p>Install nexa, open a native window, and draw your first Python components in a few minutes.</p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="guide.html#getting-started">
               Get started
@@ -348,7 +350,7 @@
   <footer class="footer">
     <div class="footer-inner">
       <div>
-        <strong>yapps</strong> · Python bindings &amp; architecture powered by <a href="https://github.com/yappologistic/CUI" target="_blank" rel="noopener">CUI</a> · MIT License
+        <strong>nexa</strong> · Python bindings &amp; architecture powered by <a href="https://github.com/yappologistic/CUI" target="_blank" rel="noopener">CUI</a> · MIT License
       </div>
       <nav style="display: flex; flex-wrap: wrap; gap: 18px;">
         <a href="guide.html#getting-started">Getting Started</a>

@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from typing import Iterator
 
-import yapps as ui
+import nexa as ui
 
 
 MODELS = [
@@ -28,14 +28,14 @@ SOURCES = [
 ]
 
 SUGGESTIONS = [
-    ui.PromptSuggestion("Explain why yapps binaries stay under 1 MB", detail="Architecture & linker GC", icon=ui.Icon.ZAP),
+    ui.PromptSuggestion("Explain why nexa binaries stay under 1 MB", detail="Architecture & linker GC", icon=ui.Icon.ZAP),
     ui.PromptSuggestion("Draft an asyncio streaming WebSocket client", detail="Python concurrency pattern", icon=ui.Icon.CODE),
     ui.PromptSuggestion("Compare software vs OpenGL 3.3 rasterizer", detail="Rendering pipeline", icon=ui.Icon.LAYERS),
 ]
 
 
 def main() -> None:
-    app = ui.App("Muse AI — yapps", width=1160, height=740, theme=ui.ThemeMode.DARK, accent=ui.Accent.VIOLET)
+    app = ui.App("Muse AI — nexa", width=1160, height=740, theme=ui.ThemeMode.DARK, accent=ui.Accent.VIOLET)
     runner = ui.BackgroundRunner.for_app(app)
 
     draft = ""
@@ -119,7 +119,7 @@ def main() -> None:
                                 ctx.tool_call(
                                     "search_repo", "workspace.search",
                                     status=turn["tool_status"],
-                                    detail="csrc/yapps_bridge.c",
+                                    detail="csrc/nexa_bridge.c",
                                     input_text='{"query": "cui_app_wake"}',
                                     output_text='{"matches": 6, "latency_ms": 4}',
                                     seconds=0.12,

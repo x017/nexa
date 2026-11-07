@@ -1,10 +1,10 @@
 # Complete Component Reference (150+ Widgets Across 19 Domains)
 
-Every widget method below is available **both** on `ctx: ui.UI` (`ctx.button(...)`) **and** as a top-level function when inside an active frame (`import yapps as ui; ui.button(...)`).
+Every widget method below is available **both** on `ctx: ui.UI` (`ctx.button(...)`) **and** as a top-level function when inside an active frame (`import nexa as ui; ui.button(...)`).
 
 ---
 
-## 1. Layout & Containers (`yapps.widgets.layout`)
+## 1. Layout & Containers (`nexa.widgets.layout`)
 
 All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
@@ -22,7 +22,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ---
 
-## 2. Text & Typography (`yapps.widgets.text`)
+## 2. Text & Typography (`nexa.widgets.text`)
 
 - **`text(content, *, font=FontRole.BODY, size=0, color=None, align=TextAlign.LEFT, max_lines=0, selectable=False, strikethrough=False, underline=False, nowrap=False, width=None)`**
 - **`heading(content, level=2)`** (`level` in `1..4`)
@@ -34,7 +34,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ---
 
-## 3. Buttons & Actions (`yapps.widgets.actions`)
+## 3. Buttons & Actions (`nexa.widgets.actions`)
 
 - **`button(label, *, variant=ButtonVariant.DEFAULT, size=ControlSize.MD, icon=None, icon_right=None, disabled=False, loading=False, full_width=False, selected=False, tooltip=None, shortcut=None, width=None, color=None) -> bool`**
   - `ButtonVariant`: `DEFAULT`, `PRIMARY`, `SECONDARY`, `OUTLINE`, `GHOST`, `DANGER`, `LINK`.
@@ -55,7 +55,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ---
 
-## 4. Selection Controls (`yapps.widgets.selection`)
+## 4. Selection Controls (`nexa.widgets.selection`)
 
 - **`checkbox(label, checked: bool, *, description=None, indeterminate=False, disabled=False) -> bool`**
 - **`switch(label, on: bool, *, description=None, disabled=False) -> bool`**
@@ -70,7 +70,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ---
 
-## 5. Text & Specialized Inputs (`yapps.widgets.inputs`)
+## 5. Text & Specialized Inputs (`nexa.widgets.inputs`)
 
 - **`input(id, value: str, *, max_bytes=512, label=None, placeholder=None, icon=None, hint=None, error=None, password=False, disabled=False, clearable=False, autofocus=False, read_only=False, size=ControlSize.MD, width=None, prefix=None, suffix=None) -> str`**
 - **`search(id, value: str, *, placeholder="Search...", size=ControlSize.MD, width=None) -> str`**
@@ -88,7 +88,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ---
 
-## 6. Pickers (`yapps.widgets.pickers`)
+## 6. Pickers (`nexa.widgets.pickers`)
 
 - **`select(id, options, selected: int, *, label=None, placeholder=None, width=None, size=ControlSize.MD) -> int`**
 - **`combobox(id, options, selected: int, *, label=None, placeholder="Search...", width=None) -> int`**
@@ -106,7 +106,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ---
 
-## 7. Navigation (`yapps.widgets.navigation`)
+## 7. Navigation (`nexa.widgets.navigation`)
 
 - **`tabs(id, labels, selected: int, *, variant=TabsVariant.LINE, icons=None, badges=None) -> int`** (`TabsVariant`: `LINE`, `PILL`, `ENCLOSED`)
 - **`nav_section(title)`** | **`nav_item(label, *, icon=None, badge=None, selected=False, disabled=False, group=None) -> bool`**
@@ -119,7 +119,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ---
 
-## 8. Overlays, Menus & Disclosure (`yapps.widgets.overlays`)
+## 8. Overlays, Menus & Disclosure (`nexa.widgets.overlays`)
 
 All popup/overlay scopes are **conditional**—always write `with ui.dialog(...) as d: if d: ...`!
 
@@ -137,7 +137,7 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
 
 ---
 
-## 9. Feedback, Status & Badges (`yapps.widgets.feedback`)
+## 9. Feedback, Status & Badges (`nexa.widgets.feedback`)
 
 - **`toast(title, *, description=None, tone=Tone.NEUTRAL, duration=4.0, action=None, dismissible=True) -> int`** (+ `toast_action_clicked(h)`, `toast_dismiss(h)`)
 - **`alert(title, *, description=None, tone=Tone.INFO, icon=None, action=None, dismissible=False) -> tuple[bool, bool]`**
@@ -155,7 +155,7 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
 
 ---
 
-## 10. Data, Virtual Lists, Tables, Grids & Code (`yapps.widgets.data`)
+## 10. Data, Virtual Lists, Tables, Grids & Code (`nexa.widgets.data`)
 
 - **`tree(label, expanded=False, *, icon=None, badge=None, leaf=False, selected=False)`** -> `TreeScope` (`if tr:` for children; `tr.expanded`, `tr.clicked`).
 - **`list_item(title, *, subtitle=None, trailing=None, icon=None, avatar=None, badge=None, badge_tone=Tone.NEUTRAL, chevron=False, selected=False, active=False) -> bool`**
@@ -170,7 +170,7 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
 
 ---
 
-## 11. Charts & Data Visualization (`yapps.widgets.charts`)
+## 11. Charts & Data Visualization (`nexa.widgets.charts`)
 
 - **`line_chart(id, series: Sequence[Series], *, labels=None, height=200.0, width=None, smooth=False, area=False, show_points=False, show_grid=True, show_legend=False, y_min=0, y_max=0, reference_y=None, reference_label=None, y_format=None)`**
 - **`bar_chart(id, series: Sequence[Series], *, labels=None, stacked=False, horizontal=False, height=200.0, width=None, **opts)`**
@@ -193,11 +193,11 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
 
 ## 12–19. Planning, AI, Social, Media, Motion, Chrome, Tools & Node/Canvas
 
-- **Planning (`yapps.widgets.planning`)**:
+- **Planning (`nexa.widgets.planning`)**:
   - `kanban(id)` -> `KanbanScope` (`board.column(title, count, dot=..., width=...)`, `board.card(id)`, `board.move`)
   - `week_calendar(id, week_start: Date, events: Sequence[CalEvent], **opts) -> tuple[list[CalEvent], int]`
   - `gantt(id, tasks: Sequence[GanttTask], origin: Date, days: int, **opts) -> tuple[list[GanttTask], int]`
-- **AI & Agents (`yapps.widgets.ai`)**:
+- **AI & Agents (`nexa.widgets.ai`)**:
   - `reasoning(id, *, thinking=False, seconds=0, title=None, default_open=False)`
   - `tool_call(id, name, *, status=TaskStatus.DONE, detail=None, input_text=None, output_text=None, seconds=0)`
   - `agent_plan(id, steps: Sequence[PlanStep], *, title=None, width=None)` | `agent_status(label, *, detail=None, status=TaskStatus.RUNNING, seconds=0)`
@@ -208,9 +208,9 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
   - `model_picker(id, models: Sequence[Model], selected: int, *, ghost=False, size=ControlSize.SM) -> int`
   - `chat_composer(id, text: str, *, placeholder=..., busy=False, attachments=None, models=None, model=0, **opts) -> ComposerResult`
   - `voice_orb(id, state=VoiceState.IDLE, level=0.0, *, size=72.0, color=None) -> bool`
-- **Social (`yapps.widgets.social`)**: `chat_message`, `chat_divider`, `typing_indicator`, `comment`, `presence`.
-- **Media (`yapps.widgets.media`)**: `image_load`, `image_load_bytes`, `image_create`, `image_destroy`, `image`, `carousel`, `image_compare`, `card_stack`, `waveform`, `now_playing`, `counter`, `ticker`.
-- **Motion (`yapps.widgets.motion`)**: `shimmer_text`, `typewriter`, `text_reveal`, `word_rotate`, `number_roll`, `gradient_text`, `spotlight`, `animate`, `animate_spring`.
-- **Desktop Chrome (`yapps.widgets.chrome`)**: `menu_bar` + `menu_bar_menu`, `toolbar` + `toolbar_button` / `toolbar_toggle` / `toolbar_separator` / `toolbar_spacer`, `status_bar` + `status_bar_item` / `status_bar_text` / `status_bar_progress` / `status_bar_spacer`, `doc_tabs` (`DocTabsResult.apply_to(tabs)`).
-- **Developer Tools (`yapps.widgets.tools`)**: `inspector` + `inspector_group`, `prop_float`, `prop_int`, `prop_text`, `prop_bool`, `prop_enum`, `prop_color`, `prop_vec2/3/4`, `LogBuffer` + `log_view`.
-- **Node Editor & Vector Canvas (`yapps.widgets.nodes_canvas`)**: `node_editor` (`ed.node`, `ed.input`, `ed.output`, `ed.content`, `ed.link`, `ed.created_links`, `ed.removed_links`), `canvas(id, w, h, paint_fn)`, `draw_rect`, `draw_rect_border`, `draw_rect_gradient`, `draw_line`, `draw_polyline`, `draw_polygon`, `draw_circle`, `draw_arc`, `draw_bezier`, `draw_text`, `draw_image`, `clip_scope`, `state_buffer`.
+- **Social (`nexa.widgets.social`)**: `chat_message`, `chat_divider`, `typing_indicator`, `comment`, `presence`.
+- **Media (`nexa.widgets.media`)**: `image_load`, `image_load_bytes`, `image_create`, `image_destroy`, `image`, `carousel`, `image_compare`, `card_stack`, `waveform`, `now_playing`, `counter`, `ticker`.
+- **Motion (`nexa.widgets.motion`)**: `shimmer_text`, `typewriter`, `text_reveal`, `word_rotate`, `number_roll`, `gradient_text`, `spotlight`, `animate`, `animate_spring`.
+- **Desktop Chrome (`nexa.widgets.chrome`)**: `menu_bar` + `menu_bar_menu`, `toolbar` + `toolbar_button` / `toolbar_toggle` / `toolbar_separator` / `toolbar_spacer`, `status_bar` + `status_bar_item` / `status_bar_text` / `status_bar_progress` / `status_bar_spacer`, `doc_tabs` (`DocTabsResult.apply_to(tabs)`).
+- **Developer Tools (`nexa.widgets.tools`)**: `inspector` + `inspector_group`, `prop_float`, `prop_int`, `prop_text`, `prop_bool`, `prop_enum`, `prop_color`, `prop_vec2/3/4`, `LogBuffer` + `log_view`.
+- **Node Editor & Vector Canvas (`nexa.widgets.nodes_canvas`)**: `node_editor` (`ed.node`, `ed.input`, `ed.output`, `ed.content`, `ed.link`, `ed.created_links`, `ed.removed_links`), `canvas(id, w, h, paint_fn)`, `draw_rect`, `draw_rect_border`, `draw_rect_gradient`, `draw_line`, `draw_polyline`, `draw_polygon`, `draw_circle`, `draw_arc`, `draw_bezier`, `draw_text`, `draw_image`, `clip_scope`, `state_buffer`.

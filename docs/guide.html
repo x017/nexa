@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Documentation &amp; Tutorials — yapps</title>
-  <meta name="description" content="Complete step-by-step tutorials (Functional, Procedural, and OOP), theming guide, concurrency guide, and 150+ component API reference for yapps." />
+  <title>Documentation &amp; Tutorials — nexa</title>
+  <meta name="description" content="Complete step-by-step tutorials (Functional, Procedural, and OOP), theming guide, concurrency guide, and 150+ component API reference for nexa." />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <link rel="stylesheet" href="assets/styles.css" />
   <script>
     try {
-      const saved = localStorage.getItem("yapps_theme");
+      const saved = localStorage.getItem("nexa_theme");
       const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
       document.documentElement.dataset.theme = dark ? "dark" : "light";
     } catch (e) {}
@@ -21,18 +22,19 @@
       <a class="brand" href="index.html">
         <svg class="brand-mark-svg" viewBox="0 0 200 200" fill="currentColor" aria-hidden="true" focusable="false">
           <g>
-            <rect x="45" y="0" width="20" height="20" rx="4" fill-opacity="0.3"/><rect x="67.5" y="0" width="20" height="20" rx="4" fill-opacity="0.67"/><rect x="90" y="0" width="20" height="20" rx="4" fill-opacity="0.75"/><rect x="112.5" y="0" width="20" height="20" rx="4" fill-opacity="0.67"/><rect x="135" y="0" width="20" height="20" rx="4" fill-opacity="0.3"/>
-            <rect x="22.5" y="22.5" width="20" height="20" rx="4" fill-opacity="0.56"/><rect x="45" y="22.5" width="20" height="20" rx="4"/><rect x="67.5" y="22.5" width="20" height="20" rx="4"/><rect x="90" y="22.5" width="20" height="20" rx="4"/><rect x="112.5" y="22.5" width="20" height="20" rx="4"/><rect x="135" y="22.5" width="20" height="20" rx="4"/><rect x="157.5" y="22.5" width="20" height="20" rx="4" fill-opacity="0.42"/>
-            <rect x="0" y="45" width="20" height="20" rx="4" fill-opacity="0.3"/><rect x="22.5" y="45" width="20" height="20" rx="4"/><rect x="45" y="45" width="20" height="20" rx="4" fill-opacity="0.95"/><rect x="67.5" y="45" width="20" height="20" rx="4" fill-opacity="0.45"/><rect x="90" y="45" width="20" height="20" rx="4" fill-opacity="0.25"/><rect x="112.5" y="45" width="20" height="20" rx="4" fill-opacity="0.45"/><rect x="135" y="45" width="20" height="20" rx="4" fill-opacity="0.62"/>
-            <rect x="0" y="67.5" width="20" height="20" rx="4" fill-opacity="0.67"/><rect x="22.5" y="67.5" width="20" height="20" rx="4"/><rect x="45" y="67.5" width="20" height="20" rx="4" fill-opacity="0.45"/>
-            <rect x="0" y="90" width="20" height="20" rx="4" fill-opacity="0.75"/><rect x="22.5" y="90" width="20" height="20" rx="4"/><rect x="45" y="90" width="20" height="20" rx="4" fill-opacity="0.25"/>
-            <rect x="0" y="112.5" width="20" height="20" rx="4" fill-opacity="0.67"/><rect x="22.5" y="112.5" width="20" height="20" rx="4"/><rect x="45" y="112.5" width="20" height="20" rx="4" fill-opacity="0.45"/>
-            <rect x="0" y="135" width="20" height="20" rx="4" fill-opacity="0.3"/><rect x="22.5" y="135" width="20" height="20" rx="4"/><rect x="45" y="135" width="20" height="20" rx="4" fill-opacity="0.95"/><rect x="67.5" y="135" width="20" height="20" rx="4" fill-opacity="0.45"/><rect x="90" y="135" width="20" height="20" rx="4" fill-opacity="0.25"/><rect x="112.5" y="135" width="20" height="20" rx="4" fill-opacity="0.45"/><rect x="135" y="135" width="20" height="20" rx="4" fill-opacity="0.62"/>
-            <rect x="22.5" y="157.5" width="20" height="20" rx="4" fill-opacity="0.56"/><rect x="45" y="157.5" width="20" height="20" rx="4"/><rect x="67.5" y="157.5" width="20" height="20" rx="4"/><rect x="90" y="157.5" width="20" height="20" rx="4"/><rect x="112.5" y="157.5" width="20" height="20" rx="4"/><rect x="135" y="157.5" width="20" height="20" rx="4"/><rect x="157.5" y="157.5" width="20" height="20" rx="4" fill-opacity="0.42"/>
-            <rect x="45" y="180" width="20" height="20" rx="4" fill-opacity="0.3"/><rect x="67.5" y="180" width="20" height="20" rx="4" fill-opacity="0.67"/><rect x="90" y="180" width="20" height="20" rx="4" fill-opacity="0.75"/><rect x="112.5" y="180" width="20" height="20" rx="4" fill-opacity="0.67"/><rect x="135" y="180" width="20" height="20" rx="4" fill-opacity="0.3"/>
+            <rect x="22.5" y="0" width="20" height="20" rx="4" fill-opacity="0.82"/><rect x="45" y="0" width="20" height="20" rx="4" fill-opacity="0.55"/><rect x="157.5" y="0" width="20" height="20" rx="4" fill-opacity="0.82"/>
+            <rect x="0" y="22.5" width="20" height="20" rx="4" fill-opacity="0.38"/><rect x="22.5" y="22.5" width="20" height="20" rx="4"/><rect x="45" y="22.5" width="20" height="20" rx="4"/><rect x="67.5" y="22.5" width="20" height="20" rx="4" fill-opacity="0.48"/><rect x="157.5" y="22.5" width="20" height="20" rx="4"/><rect x="180" y="22.5" width="20" height="20" rx="4" fill-opacity="0.38"/>
+            <rect x="0" y="45" width="20" height="20" rx="4" fill-opacity="0.52"/><rect x="22.5" y="45" width="20" height="20" rx="4"/><rect x="45" y="45" width="20" height="20" rx="4" fill-opacity="0.92"/><rect x="67.5" y="45" width="20" height="20" rx="4"/><rect x="90" y="45" width="20" height="20" rx="4" fill-opacity="0.36"/><rect x="157.5" y="45" width="20" height="20" rx="4"/><rect x="180" y="45" width="20" height="20" rx="4" fill-opacity="0.52"/>
+            <rect x="0" y="67.5" width="20" height="20" rx="4" fill-opacity="0.58"/><rect x="22.5" y="67.5" width="20" height="20" rx="4"/><rect x="45" y="67.5" width="20" height="20" rx="4" fill-opacity="0.32"/><rect x="67.5" y="67.5" width="20" height="20" rx="4" fill-opacity="0.95"/><rect x="90" y="67.5" width="20" height="20" rx="4"/><rect x="112.5" y="67.5" width="20" height="20" rx="4" fill-opacity="0.32"/><rect x="157.5" y="67.5" width="20" height="20" rx="4"/><rect x="180" y="67.5" width="20" height="20" rx="4" fill-opacity="0.58"/>
+            <rect x="0" y="90" width="20" height="20" rx="4" fill-opacity="0.62"/><rect x="22.5" y="90" width="20" height="20" rx="4"/><rect x="67.5" y="90" width="20" height="20" rx="4" fill-opacity="0.42"/><rect x="112.5" y="90" width="20" height="20" rx="4" fill-opacity="0.42"/><rect x="157.5" y="90" width="20" height="20" rx="4"/><rect x="180" y="90" width="20" height="20" rx="4" fill-opacity="0.62"/>
+            <rect x="0" y="112.5" width="20" height="20" rx="4" fill-opacity="0.58"/><rect x="22.5" y="112.5" width="20" height="20" rx="4"/><rect x="67.5" y="112.5" width="20" height="20" rx="4" fill-opacity="0.32"/><rect x="90" y="112.5" width="20" height="20" rx="4"/><rect x="112.5" y="112.5" width="20" height="20" rx="4" fill-opacity="0.95"/><rect x="135" y="112.5" width="20" height="20" rx="4" fill-opacity="0.32"/><rect x="157.5" y="112.5" width="20" height="20" rx="4"/><rect x="180" y="112.5" width="20" height="20" rx="4" fill-opacity="0.58"/>
+            <rect x="0" y="135" width="20" height="20" rx="4" fill-opacity="0.52"/><rect x="22.5" y="135" width="20" height="20" rx="4"/><rect x="90" y="135" width="20" height="20" rx="4" fill-opacity="0.36"/><rect x="112.5" y="135" width="20" height="20" rx="4"/><rect x="135" y="135" width="20" height="20" rx="4" fill-opacity="0.92"/><rect x="157.5" y="135" width="20" height="20" rx="4"/><rect x="180" y="135" width="20" height="20" rx="4" fill-opacity="0.52"/>
+            <rect x="0" y="157.5" width="20" height="20" rx="4" fill-opacity="0.38"/><rect x="22.5" y="157.5" width="20" height="20" rx="4"/><rect x="112.5" y="157.5" width="20" height="20" rx="4" fill-opacity="0.48"/><rect x="135" y="157.5" width="20" height="20" rx="4"/><rect x="157.5" y="157.5" width="20" height="20" rx="4"/><rect x="180" y="157.5" width="20" height="20" rx="4" fill-opacity="0.38"/>
+            <rect x="22.5" y="180" width="20" height="20" rx="4" fill-opacity="0.82"/><rect x="135" y="180" width="20" height="20" rx="4" fill-opacity="0.55"/><rect x="157.5" y="180" width="20" height="20" rx="4" fill-opacity="0.82"/>
           </g>
+          <rect x="90" y="90" width="20" height="20" rx="4" fill="var(--accent)"/>
         </svg>
-        <span>yapps</span>
+        <span>nexa</span>
         <span class="brand-badge">Guide</span>
       </a>
       <nav class="nav-links" aria-label="Primary">

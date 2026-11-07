@@ -1,7 +1,7 @@
 """Asyncio + Loopback HTTP Networking Example.
 
 Spins up a zero-dependency local HTTP JSON/stream endpoint on 127.0.0.1:0 and
-drives a yapps UI cooperatively inside ``asyncio`` via ``await app.run_async(...)``
+drives a nexa UI cooperatively inside ``asyncio`` via ``await app.run_async(...)``
 alongside a ``Channel`` and ``LogBuffer``.
 """
 
@@ -13,7 +13,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-import yapps as ui
+import nexa as ui
 
 
 class _LocalMetricsHandler(BaseHTTPRequestHandler):
@@ -43,7 +43,7 @@ async def async_main(max_frames: int | None = None) -> None:
     srv_thread = threading.Thread(target=server.serve_forever, daemon=True)
     srv_thread.start()
 
-    app = ui.App("Async Networking — yapps", width=920, height=620, theme=ui.ThemeMode.DARK)
+    app = ui.App("Async Networking — nexa", width=920, height=620, theme=ui.ThemeMode.DARK)
     runner = ui.BackgroundRunner.for_app(app)
     channel: ui.Channel[dict] = ui.Channel(wake=app.wake)
     log = ui.LogBuffer(max_lines=512)
