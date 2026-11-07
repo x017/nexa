@@ -180,6 +180,7 @@
 
   function applyThemeAndAccent() {
     document.documentElement.setAttribute("data-theme", currentTheme);
+    document.documentElement.setAttribute("data-accent", currentAccent);
     const acc = ACCENTS.find((a) => a.key === currentAccent) || ACCENTS[2];
     const hex = currentTheme === "dark" ? acc.dark : acc.light;
     const fg = currentTheme === "dark" ? acc.darkFg : acc.lightFg;
@@ -270,22 +271,19 @@
     });
   }
 
-  // Mount Ordered 8x8 Bayer Dithered Landscape Art on both Landing & Guide pages
+  // Mount Procedural 3D Topographic Woodcut & Stipple Engraving on Landing & Guide pages
   function initDitherBackgrounds() {
     if (typeof window.ditherArt !== "function") return;
-    const ART_SRC = "assets/tetons.jpg";
 
     const homeHeroArt = document.getElementById("home-hero-art");
     if (homeHeroArt) {
       const heroDither = window.ditherArt({
-        src: ART_SRC,
-        focusY: 0.3,
-        gamma: 1.25,
+        scene: "horizon",
         loop: true,
       });
       homeHeroArt.appendChild(heroDither);
 
-      // Gentle 0.35x scroll drift + fade, matching CUI's homeMotion()
+      // Gentle 0.35x scroll drift + fade
       if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
         let ticking = false;
         window.addEventListener(
@@ -309,9 +307,7 @@
     if (homeCtaBand) {
       homeCtaBand.prepend(
         window.ditherArt({
-          src: ART_SRC,
-          focusY: 0.95,
-          gamma: 1.15,
+          scene: "basin",
           reveal: "view",
           loop: true,
         })
@@ -322,9 +318,7 @@
     if (docsHeroArt) {
       docsHeroArt.appendChild(
         window.ditherArt({
-          src: ART_SRC,
-          focusY: 0.3,
-          gamma: 1.28,
+          scene: "horizon",
           loop: true,
         })
       );
@@ -334,9 +328,7 @@
     if (docsCtaBand) {
       docsCtaBand.prepend(
         window.ditherArt({
-          src: ART_SRC,
-          focusY: 0.95,
-          gamma: 1.18,
+          scene: "basin",
           reveal: "view",
           loop: true,
         })
