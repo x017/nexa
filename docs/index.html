@@ -4,11 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>nexa — Native UI Components for Python</title>
-  <meta name="description" content="Zero-dependency, C99-backed immediate-mode UI framework for Python. 150+ components, Functional & OOP paradigms, OKLCH design system, asyncio & threading, in a ~652 KB native core." />
-  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
-  <link rel="stylesheet" href="assets/styles.css" />
+  <meta name="description" content="Zero-dependency, C99-backed immediate-mode UI framework for Python. 160+ components, multi-split docking, code &amp; diff editors, Functional &amp; OOP paradigms, OKLCH design system, asyncio &amp; threading." />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.1.0" />
+  <link rel="stylesheet" href="assets/styles.css?v=1.1.0" />
   <script>
-    // Apply saved or system theme before first paint so dither & surfaces never flash
     try {
       const saved = localStorage.getItem("nexa_theme");
       const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
@@ -21,29 +20,25 @@
   <header class="topbar">
     <div class="topbar-inner">
       <a class="brand" href="index.html">
-        <svg class="brand-mark-svg" viewBox="0 0 200 200" fill="currentColor" aria-hidden="true" focusable="false">
-          <g>
-            <rect x="22.5" y="0" width="20" height="20" rx="4" fill-opacity="0.82"/><rect x="45" y="0" width="20" height="20" rx="4" fill-opacity="0.55"/><rect x="157.5" y="0" width="20" height="20" rx="4" fill-opacity="0.82"/>
-            <rect x="0" y="22.5" width="20" height="20" rx="4" fill-opacity="0.38"/><rect x="22.5" y="22.5" width="20" height="20" rx="4"/><rect x="45" y="22.5" width="20" height="20" rx="4"/><rect x="67.5" y="22.5" width="20" height="20" rx="4" fill-opacity="0.48"/><rect x="157.5" y="22.5" width="20" height="20" rx="4"/><rect x="180" y="22.5" width="20" height="20" rx="4" fill-opacity="0.38"/>
-            <rect x="0" y="45" width="20" height="20" rx="4" fill-opacity="0.52"/><rect x="22.5" y="45" width="20" height="20" rx="4"/><rect x="45" y="45" width="20" height="20" rx="4" fill-opacity="0.92"/><rect x="67.5" y="45" width="20" height="20" rx="4"/><rect x="90" y="45" width="20" height="20" rx="4" fill-opacity="0.36"/><rect x="157.5" y="45" width="20" height="20" rx="4"/><rect x="180" y="45" width="20" height="20" rx="4" fill-opacity="0.52"/>
-            <rect x="0" y="67.5" width="20" height="20" rx="4" fill-opacity="0.58"/><rect x="22.5" y="67.5" width="20" height="20" rx="4"/><rect x="45" y="67.5" width="20" height="20" rx="4" fill-opacity="0.32"/><rect x="67.5" y="67.5" width="20" height="20" rx="4" fill-opacity="0.95"/><rect x="90" y="67.5" width="20" height="20" rx="4"/><rect x="112.5" y="67.5" width="20" height="20" rx="4" fill-opacity="0.32"/><rect x="157.5" y="67.5" width="20" height="20" rx="4"/><rect x="180" y="67.5" width="20" height="20" rx="4" fill-opacity="0.58"/>
-            <rect x="0" y="90" width="20" height="20" rx="4" fill-opacity="0.62"/><rect x="22.5" y="90" width="20" height="20" rx="4"/><rect x="67.5" y="90" width="20" height="20" rx="4" fill-opacity="0.42"/><rect x="112.5" y="90" width="20" height="20" rx="4" fill-opacity="0.42"/><rect x="157.5" y="90" width="20" height="20" rx="4"/><rect x="180" y="90" width="20" height="20" rx="4" fill-opacity="0.62"/>
-            <rect x="0" y="112.5" width="20" height="20" rx="4" fill-opacity="0.58"/><rect x="22.5" y="112.5" width="20" height="20" rx="4"/><rect x="67.5" y="112.5" width="20" height="20" rx="4" fill-opacity="0.32"/><rect x="90" y="112.5" width="20" height="20" rx="4"/><rect x="112.5" y="112.5" width="20" height="20" rx="4" fill-opacity="0.95"/><rect x="135" y="112.5" width="20" height="20" rx="4" fill-opacity="0.32"/><rect x="157.5" y="112.5" width="20" height="20" rx="4"/><rect x="180" y="112.5" width="20" height="20" rx="4" fill-opacity="0.58"/>
-            <rect x="0" y="135" width="20" height="20" rx="4" fill-opacity="0.52"/><rect x="22.5" y="135" width="20" height="20" rx="4"/><rect x="90" y="135" width="20" height="20" rx="4" fill-opacity="0.36"/><rect x="112.5" y="135" width="20" height="20" rx="4"/><rect x="135" y="135" width="20" height="20" rx="4" fill-opacity="0.92"/><rect x="157.5" y="135" width="20" height="20" rx="4"/><rect x="180" y="135" width="20" height="20" rx="4" fill-opacity="0.52"/>
-            <rect x="0" y="157.5" width="20" height="20" rx="4" fill-opacity="0.38"/><rect x="22.5" y="157.5" width="20" height="20" rx="4"/><rect x="112.5" y="157.5" width="20" height="20" rx="4" fill-opacity="0.48"/><rect x="135" y="157.5" width="20" height="20" rx="4"/><rect x="157.5" y="157.5" width="20" height="20" rx="4"/><rect x="180" y="157.5" width="20" height="20" rx="4" fill-opacity="0.38"/>
-            <rect x="22.5" y="180" width="20" height="20" rx="4" fill-opacity="0.82"/><rect x="135" y="180" width="20" height="20" rx="4" fill-opacity="0.55"/><rect x="157.5" y="180" width="20" height="20" rx="4" fill-opacity="0.82"/>
-          </g>
-          <rect x="90" y="90" width="20" height="20" rx="4" fill="var(--accent)"/>
+        <svg class="brand-mark-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+          <path d="M12 3.4 L20.6 12 L12 20.6 L3.4 12 Z" stroke="currentColor" stroke-opacity="0.34" stroke-width="1.35" stroke-linejoin="round"/>
+          <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M12 5.2 C12 9.4 14.6 12 18.8 12 C14.6 12 12 14.6 12 18.8 C12 14.6 9.4 12 5.2 12 C9.4 12 12 9.4 12 5.2 Z M12 9.8 L14.2 12 L12 14.2 L9.8 12 Z"
+                fill="currentColor"/>
+          <circle cx="12" cy="3.4" r="1.9" fill="var(--accent)"/>
+          <circle cx="20.6" cy="12" r="1.7" fill="currentColor"/>
+          <circle cx="12" cy="20.6" r="1.7" fill="currentColor"/>
+          <circle cx="3.4" cy="12" r="1.7" fill="currentColor"/>
         </svg>
         <span>nexa</span>
-        <span class="brand-badge">Python · CUI</span>
+        <span class="brand-badge">v1.1</span>
       </a>
       <nav class="nav-links" aria-label="Primary">
         <a class="nav-link active" href="index.html">Overview</a>
         <a class="nav-link" href="guide.html#getting-started">Guide</a>
-        <a class="nav-link" href="guide.html#tutorial-functional">Functional</a>
-        <a class="nav-link" href="guide.html#tutorial-oop">OOP</a>
-        <a class="nav-link" href="guide.html#components-reference">Components</a>
+        <a class="nav-link" href="guide.html#tutorials">Tutorials</a>
+        <a class="nav-link" href="guide.html#components">Components</a>
+        <a class="nav-link" href="guide.html#changelog">Changelog</a>
       </nav>
       <div class="topbar-right">
         <div class="accent-strip" id="header-accent-strip" title="Switch live OKLCH accent"></div>
@@ -56,21 +51,21 @@
   </header>
 
   <div class="home-shell">
-    <!-- Ordered 8x8 Bayer Dithered Grand Tetons Backdrop -->
+    <!-- Procedural 3D Topographic Woodcut Backdrop -->
     <div class="home-art" id="home-hero-art"></div>
 
     <main class="page-home">
       <!-- Centered Hero -->
       <section class="hero">
-        <a class="hero-badge" href="guide.html#getting-started">
+        <a class="hero-badge" href="guide.html#changelog">
           <span class="dot"></span>
-          <span>C99 Engine + Pure Pythonic API</span> · <strong>Zero Dependencies</strong>
+          <span>New in v1.1: Dockspace, Code &amp; Diff Editors, Flame &amp; Timeline</span> · <strong>Zero Dependencies</strong>
         </a>
         <h1>
           Native UI components for <span class="accent-word">Python</span>
         </h1>
         <p class="hero-sub">
-          Spring motion, keyboard support, and 150+ finished components—from one C99 engine in a ~652 KB native library.
+          Spring motion, full keyboard control, and 160+ finished desktop components—powered by one zero-dependency C99 engine in an ~820 KB native library.
         </p>
 
         <div class="hero-actions">
@@ -78,7 +73,8 @@
             Get started
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </a>
-          <a class="btn" href="guide.html#components-reference">Browse components</a>
+          <a class="btn" href="guide.html#tutorials">Step-by-step tutorials</a>
+          <a class="btn" href="guide.html#components">Browse 160+ components</a>
         </div>
 
         <div class="hero-cmd">
@@ -89,26 +85,26 @@
       </section>
 
       <!-- Showcase Window Stage -->
-      <section class="home-show" aria-label="Application showcase">
+      <section class="home-show" id="showcase" aria-label="Application showcase">
         <div class="showcase-tabs" id="showcase-tabs"></div>
         <div class="window-frame">
           <div class="window-bar">
             <div class="window-dots"><i></i><i></i><i></i></div>
-            <span id="showcase-win-title">Gallery &amp; Studio — nexa</span>
+            <span id="showcase-win-title">Workbench Studio — nexa 1.1 (1240×855)</span>
             <span style="width: 42px;"></span>
           </div>
-          <img id="showcase-img" src="assets/screenshots/gallery.png" alt="nexa Studio &amp; Node Editor screenshot" loading="eager" />
+          <img id="showcase-img" src="assets/screenshots/workbench.png" width="1240" height="855" decoding="async" fetchpriority="high" alt="nexa 1.1 Workbench Studio screenshot" />
         </div>
         <div class="showcase-caption">
           <span id="showcase-caption-text"></span>
-          <a class="text-link" id="showcase-source-link" href="https://github.com/x017/yapps/blob/main/examples/gallery.py" target="_blank" rel="noopener">Source: examples/gallery.py →</a>
+          <a class="text-link" id="showcase-source-link" href="https://github.com/x017/yapps/blob/main/examples/workbench.py" target="_blank" rel="noopener">Source: examples/workbench.py →</a>
         </div>
       </section>
 
       <!-- Monospace Metrics Strip -->
       <ul class="home-strip" aria-label="At a glance">
-        <li><span class="strip-v">150+</span><span class="strip-k">components</span></li>
-        <li><span class="strip-v">652 KB</span><span class="strip-k">native core + fonts</span></li>
+        <li><span class="strip-v">160+</span><span class="strip-k">components</span></li>
+        <li><span class="strip-v">660 KB</span><span class="strip-k">minimal LTO core</span></li>
         <li><span class="strip-v">&lt; 0.25 ms</span><span class="strip-k">layout &amp; draw pass</span></li>
         <li><span class="strip-v">Win · Mac · Linux</span><span class="strip-k">OpenGL &amp; SIMD SW</span></li>
         <li><span class="strip-v">0</span><span class="strip-k">runtime dependencies</span></li>
@@ -120,35 +116,35 @@
           <span class="feature-num">01</span>
           <h2>Everything a desktop app needs</h2>
           <p>
-            Not a box of primitives: complete components designed together across 19 domains—virtualized grids, charts, Kanban boards, Bezier node graphs, and AI chat streams—ready without styling.
+            Not a box of primitives: 160+ cohesive components across 20 domains—multi-split docking workspaces, code &amp; diff editors, tree tables, flame profilers, timelines, charts, and AI streams—ready out of the box.
           </p>
-          <a class="text-link" href="guide.html#components-reference">Browse all 150+ components →</a>
+          <a class="text-link" href="guide.html#components">Explore all 160+ components →</a>
         </div>
 
         <div class="bento-grid">
-          <a class="bento-card" href="guide.html#components-reference">
-            <h3><span>Data &amp; Virtual Grids</span> <span class="bento-tag">10k+ rows</span></h3>
-            <p>Virtualized sortable tables, KPI cards with sparklines, rolling odometer counters, treemaps, Sankey diagrams &amp; heatmaps.</p>
+          <a class="bento-card" href="guide.html#components">
+            <h3><span>Dockspace &amp; IDE Chrome</span> <span class="bento-tag">New in 1.1</span></h3>
+            <p>Interactive drag-to-dock split panes, serializable layouts, menu bars, toolbars, editable path bars &amp; dirty document tabs.</p>
           </a>
-          <a class="bento-card" href="guide.html#components-reference">
-            <h3><span>Charts &amp; Sparklines</span> <span class="bento-tag">Charts</span></h3>
-            <p>Smooth cubic area/line charts, grouped &amp; stacked bars, donut breakdowns, radar charts, funnels &amp; inline sparklines.</p>
+          <a class="bento-card" href="guide.html#components">
+            <h3><span>Code, Diff &amp; Markdown</span> <span class="bento-tag">New in 1.1</span></h3>
+            <p>Multi-line syntax code editor with undo &amp; find, split/inline Myers diff viewer with word highlights, and CommonMark + GFM.</p>
           </a>
-          <a class="bento-card" href="guide.html#components-reference">
-            <h3><span>Node Editor &amp; Studio</span> <span class="bento-tag">Tools</span></h3>
-            <p>Pannable Bezier node graphs, typed property grids, C-backed ring-buffer log viewer, code blocks &amp; diff views.</p>
+          <a class="bento-card" href="guide.html#components">
+            <h3><span>Studio, Hex &amp; Timeline</span> <span class="bento-tag">New in 1.1</span></h3>
+            <p>Profiler flame graphs, binary hex editor, Bezier curve &amp; OKLab gradient editors, NLE clip timelines &amp; node graphs.</p>
           </a>
-          <a class="bento-card" href="guide.html#components-reference">
-            <h3><span>AI &amp; Chat Primitives</span> <span class="bento-tag">Streaming</span></h3>
-            <p>Chat bubbles, prompt composer with attachments, model selector, token ring meters, artifacts, citations &amp; voice orb.</p>
+          <a class="bento-card" href="guide.html#components">
+            <h3><span>Data Grids &amp; Tree Tables</span> <span class="bento-tag">1M+ rows</span></h3>
+            <p>Virtualized hierarchical tree tables, priority-responsive editable data grids, filter bars, KPIs, treemaps &amp; Sankey diagrams.</p>
           </a>
-          <a class="bento-card" href="guide.html#components-reference">
-            <h3><span>Kanban, Gantt &amp; Dates</span> <span class="bento-tag">Planning</span></h3>
-            <p>Drag-and-drop Kanban columns, interactive Gantt timelines, 7-day week schedules, calendars &amp; date range pickers.</p>
+          <a class="bento-card" href="guide.html#components">
+            <h3><span>16 Native Chart Types</span> <span class="bento-tag">Charts</span></h3>
+            <p>Smooth cubic area/line charts, stacked bars, scatter plots, donuts, radar charts, funnels, activity rings &amp; sparklines.</p>
           </a>
           <a class="bento-card" href="guide.html#concurrency-and-async">
-            <h3><span>Asyncio &amp; Threading</span> <span class="bento-tag">GIL-Free</span></h3>
-            <p><code>BackgroundRunner</code>, <code>AsyncBridge</code>, thread-safe <code>Channel[T]</code>, <code>LogBuffer</code> &amp; <code>app.wake()</code> from any worker.</p>
+            <h3><span>AI, Asyncio &amp; Threading</span> <span class="bento-tag">GIL-Free</span></h3>
+            <p>Streaming chat &amp; voice orb paired with <code>BackgroundRunner</code>, <code>AsyncBridge</code>, <code>Channel[T]</code>, <code>LogBuffer</code> &amp; <code>app.wake()</code>.</p>
           </a>
         </div>
       </section>
@@ -159,7 +155,7 @@
           <span class="feature-num">02</span>
           <h2>Your interface is plain Python</h2>
           <p>
-            Every widget is a function or <code>with</code> scope that draws itself and returns what happened. Start with a 20-line functional closure, pass explicit procedural dicts, or scale into isolated <code>Component</code>, <code>View</code>, and <code>Router</code> classes.
+            Every widget is a function or <code>with</code> scope that draws itself and returns plain Python values. Start with a 20-line functional closure, pass explicit procedural state, or scale into isolated <code>Component</code>, <code>View</code>, and <code>Router</code> classes.
           </p>
           <a class="text-link" id="paradigm-guide-link" href="guide.html#tutorial-functional">Read Functional Tutorial →</a>
         </div>
@@ -196,7 +192,7 @@
           <span class="feature-num">03</span>
           <h2>Make it yours</h2>
           <p>
-            Light and dark themes, eight calibrated perceptual OKLCH accents, and 34 semantic tokens your own custom canvas drawing follows automatically. Click any swatch to try it live.
+            Light and dark themes, eight calibrated perceptual OKLCH accents, and 34 semantic tokens your own custom canvas drawing follows automatically. Click any swatch to recolor this page live.
           </p>
           <a class="text-link" href="guide.html#theming-and-styling">Theming &amp; custom brand tokens →</a>
         </div>
@@ -208,7 +204,7 @@
             <span>Selected Python configuration</span>
             <a class="text-link" href="guide.html#theming-and-styling" style="font-family: var(--font);">All 34 theme tokens →</a>
           </div>
-          <pre><code id="active-accent-code">accent=ui.Accent.BLUE  # #0562ef (light mode)</code></pre>
+          <pre><code id="active-accent-code">accent=ui.Accent.VIOLET  # #a78bff (dark mode)</code></pre>
         </div>
       </section>
 
@@ -218,9 +214,9 @@
           <span class="feature-num">04</span>
           <h2>Small, fast and careful</h2>
           <p>
-            Native Python desktop apps should open instantaneously, sleep at 0% CPU when idle, and run identically inside headless Linux CI containers without Xvfb.
+            Native Python desktop apps should open instantaneously, sleep at 0% CPU when idle, support optional BiDi &amp; Arabic shaping, and run identically inside headless Linux CI containers without Xvfb.
           </p>
-          <a class="text-link" href="guide.html#advanced-rendering-and-packaging">Custom GPU backends &amp; LTO builds →</a>
+          <a class="text-link" href="guide.html#advanced-rendering-and-packaging">Custom GPU backends, --rtl &amp; LTO builds →</a>
         </div>
 
         <ul class="facts">
@@ -229,102 +225,110 @@
             <p>Releases the Python GIL while sleeping on OS window events and wakes only on input, springs, or <code>app.wake()</code>.</p>
           </li>
           <li>
-            <h3>~498 KB wheel</h3>
-            <p>Includes the compiled C99 core, OpenGL 3.3 + SIMD software renderer, Inter, Geist Mono, and 168 Lucide icons.</p>
+            <h3>Sub-MB native core</h3>
+            <p>Includes all 160+ C99 widgets, OpenGL 3.3 + SIMD software renderer, Inter, Geist Mono, and 168 Lucide icons.</p>
           </li>
           <li>
             <h3>Headless pytest ready</h3>
-            <p>Pass <code>headless=True</code> or set <code>NEXA_HEADLESS=1</code> to drive inputs and capture pixel-exact PNGs in CI.</p>
+            <p>Pass <code>headless=True</code> or set <code>NEXA_HEADLESS=1</code> to drive synthetic inputs and capture pixel-exact PNGs in CI.</p>
           </li>
           <li>
-            <h3>Bring your own GPU</h3>
-            <p>Consume flat <code>DrawData</code> vertex/index buffers directly in Vulkan, Metal, DirectX 12, or ModernGL.</p>
+            <h3>BiDi &amp; BYO GPU</h3>
+            <p>Enable UAX #9 BiDi &amp; Arabic OpenType shaping via <code>--rtl</code>, or feed <code>DrawData</code> into Vulkan, Metal, or DX12.</p>
           </li>
         </ul>
 
         <div class="size-bars">
           <div>
             <div class="size-row-top">
-              <span>Default Full Build (OpenGL 3.3 + SIMD Software Fallback + 4 Embedded Fonts)</span>
-              <code>652.1 KB</code>
+              <span>Default Full Build (160+ Widgets + OpenGL 3.3 + SIMD SW + 4 Embedded Fonts)</span>
+              <code>820.4 KB</code>
             </div>
             <div class="size-track"><div class="size-fill" style="width: 100%;"></div></div>
           </div>
           <div>
             <div class="size-row-top">
               <span>Minimal + Software Renderer (LTO, Custom Runtime Fonts)</span>
-              <code>499.5 KB</code>
+              <code>671.8 KB</code>
             </div>
-            <div class="size-track"><div class="size-fill" style="width: 76.6%;"></div></div>
+            <div class="size-track"><div class="size-fill" style="width: 81.9%;"></div></div>
           </div>
           <div>
             <div class="size-row-top">
               <span>Ultra-Minimal Core Only (LTO, Bring-Your-Own GPU Backend)</span>
-              <code>487.4 KB</code>
+              <code>659.7 KB</code>
             </div>
-            <div class="size-track"><div class="size-fill" style="width: 74.7%;"></div></div>
+            <div class="size-track"><div class="size-fill" style="width: 80.4%;"></div></div>
           </div>
         </div>
       </section>
 
-      <!-- 05: Learn it from scratch to mastery -->
-      <section class="home-feature">
+      <!-- 05: Complete Step-by-Step Tutorials & Reference (All 7 Chapters) -->
+      <section class="home-feature" id="tutorials">
         <div class="feature-head">
           <span class="feature-num">05</span>
-          <h2>Learn it in an afternoon</h2>
+          <h2>Step-by-step tutorials</h2>
           <p>
-            Seven step-by-step guides take you from your first window to complete Functional/Procedural and Object-Oriented desktop applications.
+            Seven hands-on chapters—every snippet tested in CI—take you from your first window to complete Functional/Procedural and Object-Oriented desktop apps, async worker streams, and standalone binaries.
           </p>
-          <a class="text-link" href="guide.html#getting-started">Start with Getting Started →</a>
+          <a class="text-link" href="guide.html#tutorials">Open Tutorials Hub →</a>
         </div>
 
         <ul class="guide-cards">
           <li>
             <a class="guide-card" href="guide.html#getting-started">
-              <span class="gc-num">01</span>
+              <span class="gc-num">01 · START HERE</span>
               <span class="gc-title">Getting started</span>
-              <span class="gc-text">Install nexa, open your first window, and master the value-returning frame loop &amp; ID scopes.</span>
-              <span class="gc-go">Read →</span>
+              <span class="gc-text">Install nexa, open your first native window, and master value-returning widgets &amp; ID scopes.</span>
+              <span class="gc-go">Start tutorial →</span>
             </a>
           </li>
           <li>
             <a class="guide-card" href="guide.html#tutorial-functional">
-              <span class="gc-num">02</span>
+              <span class="gc-num">02 · TUTORIAL</span>
               <span class="gc-title">Functional &amp; Procedural</span>
-              <span class="gc-text">Build closures, flexbox shells, overlays, and a full Personal Budget Tracker step by step.</span>
-              <span class="gc-go">Read →</span>
+              <span class="gc-text">Build closures with ui.run(draw), flexbox shells, overlays, and a full Personal Budget Tracker.</span>
+              <span class="gc-go">Start tutorial →</span>
             </a>
           </li>
           <li>
             <a class="guide-card" href="guide.html#tutorial-oop">
-              <span class="gc-num">03</span>
+              <span class="gc-num">03 · TUTORIAL</span>
               <span class="gc-title">Object-Oriented (OOP)</span>
-              <span class="gc-text">Structure large apps with Application, Component, View, Router, Store &amp; an Incident Console.</span>
-              <span class="gc-go">Read →</span>
+              <span class="gc-text">Structure multi-screen apps with Application, Component, View, Router, Store &amp; an Incident Console.</span>
+              <span class="gc-go">Start tutorial →</span>
             </a>
           </li>
           <li>
             <a class="guide-card" href="guide.html#theming-and-styling">
-              <span class="gc-num">04</span>
+              <span class="gc-num">04 · TUTORIAL</span>
               <span class="gc-title">Theming, Accents &amp; Icons</span>
-              <span class="gc-text">Light &amp; dark mode, all 8 OKLCH accents, 34 theme tokens, custom .ttf fonts, and 168 icons.</span>
-              <span class="gc-go">Read →</span>
+              <span class="gc-text">Light &amp; dark mode, all 8 OKLCH accents, 34 theme tokens, custom .ttf fonts, and 168 Lucide icons.</span>
+              <span class="gc-go">Start tutorial →</span>
             </a>
           </li>
           <li>
             <a class="guide-card" href="guide.html#concurrency-and-async">
-              <span class="gc-num">05</span>
+              <span class="gc-num">05 · TUTORIAL</span>
               <span class="gc-title">Concurrency &amp; Asyncio</span>
-              <span class="gc-text">Stream background tasks, threads, channels, and asyncio coroutines without freezing 60fps UI.</span>
-              <span class="gc-go">Read →</span>
+              <span class="gc-text">Stream background tasks, threads, Channel[T], LogBuffer, and asyncio coroutines at 60fps.</span>
+              <span class="gc-go">Start tutorial →</span>
+            </a>
+          </li>
+          <li>
+            <a class="guide-card" href="guide.html#advanced-rendering-and-packaging">
+              <span class="gc-num">06 · TUTORIAL</span>
+              <span class="gc-title">Canvas, GPU &amp; Packaging</span>
+              <span class="gc-text">Vector canvas, headless pytest PNG checks, custom GPU backends, --rtl shaping &amp; PyInstaller/Nuitka.</span>
+              <span class="gc-go">Start tutorial →</span>
             </a>
           </li>
           <li>
             <a class="guide-card" href="guide.html#components-reference">
-              <span class="gc-num">06</span>
-              <span class="gc-title">150+ Components Reference</span>
-              <span class="gc-text">Complete Python signatures and scope rules across all 19 built-in widget domains.</span>
-              <span class="gc-go">Read →</span>
+              <span class="gc-num">07 · REFERENCE</span>
+              <span class="gc-title">160+ Components Reference</span>
+              <span class="gc-text">Complete Python signatures, result types, and scope rules across all 20 built-in widget domains.</span>
+              <span class="gc-go">Browse API →</span>
             </a>
           </li>
         </ul>
@@ -340,6 +344,7 @@
               Get started
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
             </a>
+            <a class="btn" href="guide.html#tutorials">Read Tutorials</a>
             <a class="btn" href="https://github.com/x017/yapps" target="_blank" rel="noopener">Source on GitHub</a>
           </div>
         </div>
@@ -350,19 +355,21 @@
   <footer class="footer">
     <div class="footer-inner">
       <div>
-        <strong>nexa</strong> · Python bindings &amp; architecture powered by <a href="https://github.com/yappologistic/CUI" target="_blank" rel="noopener">CUI</a> · MIT License
+        <strong>nexa v1.1</strong> · Python bindings &amp; architecture powered by <a href="https://github.com/yappologistic/CUI" target="_blank" rel="noopener">CUI</a> · MIT License
       </div>
       <nav style="display: flex; flex-wrap: wrap; gap: 18px;">
         <a href="guide.html#getting-started">Getting Started</a>
-        <a href="guide.html#tutorial-functional">Functional Tutorial</a>
-        <a href="guide.html#tutorial-oop">OOP Tutorial</a>
-        <a href="guide.html#components-reference">Components</a>
+        <a href="guide.html#tutorials">Tutorials</a>
+        <a href="guide.html#tutorial-functional">Functional</a>
+        <a href="guide.html#tutorial-oop">OOP</a>
+        <a href="guide.html#components">Components</a>
+        <a href="guide.html#changelog">Changelog</a>
         <a href="https://github.com/x017/yapps" target="_blank" rel="noopener">GitHub</a>
       </nav>
     </div>
   </footer>
 
-  <script src="assets/dither.js"></script>
-  <script src="assets/site.js"></script>
+  <script src="assets/dither.js?v=1.1.0" defer></script>
+  <script src="assets/site.js?v=1.1.0" defer></script>
 </body>
 </html>

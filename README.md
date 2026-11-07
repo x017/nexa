@@ -2,11 +2,11 @@
 
 **nexa** is a lightweight, high-performance immediate-mode desktop UI library for Python, powered by the zero-dependency C99 [CUI](https://github.com/yappologistic/CUI) layout, spring-animation, and SDF rendering engine.
 
-![nexa Studio IDE & Node Editor](docs/assets/screenshots/gallery.png)
+![nexa 1.1 Workbench Studio — Dockspace, TreeTable, CodeEditor, FlameGraph & Timeline](docs/assets/screenshots/workbench.png)
 
-- **Sub-megabyte native core**: **652 KB** stripped shared library (`libnexa_cui`, **498 KB** compressed wheel) including embedded **Inter**, **Geist Mono**, **168 Lucide icons**, OpenGL 3.3 + multi-threaded CPU software rasterizer, PNG/JPEG loader, and OS windowing (**487 KB** in minimal LTO builds).
+- **Sub-megabyte native core**: **820 KB** stripped shared library (`libnexa_cui`) including embedded **Inter**, **Geist Mono**, **168 Lucide icons**, OpenGL 3.3 + multi-threaded CPU software rasterizer, PNG/JPEG loader, optional **BiDi & Arabic OpenType text shaping** (`--rtl`), and OS windowing (**660 KB** in minimal LTO builds).
 - **Zero runtime Python dependencies**: Pure Python standard library (`ctypes` ABI releasing the GIL on every native call, `__slots__` value types, ~48 ms warm import).
-- **150+ components across 19 domains**: Flexbox & grid layouts, buttons & actions, inputs, date/time/color pickers, navigation, popovers/dialogs/sheets, virtualized 1M-row lists & editable data grids, 16 chart types, Kanban/Gantt/week calendars, AI agent/chat widgets, media, motion text, IDE chrome, property inspector, Bezier node editor, and custom vector canvas.
+- **160+ components across 20 domains (synced with CUI v1.1)**: Flexbox & grid layouts, multi-split **docking workspaces** (`dockspace`), hierarchical **`tree_table`** & **`path_bar`**, rich CommonMark/GFM **`markdown`**, multi-line **`code_editor`**, side-by-side **`diff_view`**, **`hex_view`**, profiler **`flame_graph`**, **`curve_editor`**, OKLab **`gradient_editor`**, NLE **`timeline_editor`**, virtualized 1M-row lists & editable data grids, 16 chart types, Kanban/Gantt/week calendars, AI agent/chat widgets, media, motion text, property inspector, Bezier node editor, and custom vector canvas.
 - **Value-returning Pythonic API with full control**: Widgets accept and return plain Python values (`str`, `bool`, `int`, `float`, `Color`, `Date`) while exposing transition flags (`changed`, `submitted`, `focused`, `blurred`), hit rects, persistent `state_buffer`, custom `Platform` hooks, and `CustomRenderer` GPU callbacks.
 - **Functional, Procedural, and OOP styles**: Write concise scripts with `import nexa as ui`, modular procedural apps with `ctx: ui.UI`, or multi-screen architectures with `Application`, `Router`, `View`, `Component`, and `Store`.
 - **First-class Concurrency, `asyncio`, & Networking**: 0%-CPU idle sleep with OS-level cross-thread `app.wake()`, `BackgroundRunner` (`submit`, `stream`, `fetch_json`, `fetch_bytes`), MPSC `Channel`, cooperative `await app.run_async(...)`, and threaded `AsyncBridge`.
@@ -206,10 +206,11 @@ if __name__ == "__main__":
 
 ## Examples & Tests
 
-Run any of the **11 complete example apps** in [`examples/`](examples/):
+Run any of the **12 complete example apps** in [`examples/`](examples/):
 
 | Example | Highlights |
 |---|---|
+| [`examples/workbench.py`](examples/workbench.py) | **New in 1.1**: Multi-split `dockspace`, `path_bar`, `tree_table`, `code_editor`, `diff_view`, `markdown`, `flame_graph`, `curve_editor`, `gradient_editor`, `timeline_editor` & `hex_view` |
 | [`examples/hello.py`](examples/hello.py) | Functional quickstart, `input`, `switch`, `toast`, `theme_toggle` |
 | [`examples/notes.py`](examples/notes.py) | Split-view notes editor, search, tags, `dialog`, `command_palette` (`Ctrl+K`) |
 | [`examples/settings.py`](examples/settings.py) | OOP `Application` + `Router` + `View` + `Component` + all 8 `Accent` presets |

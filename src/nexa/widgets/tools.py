@@ -5,23 +5,127 @@ from __future__ import annotations
 import ctypes
 import threading
 import time
-from ctypes import c_bool, c_char_p, c_double, c_float, c_int, c_uint32
-from typing import Optional, Sequence, Tuple
+from ctypes import c_bool, c_char_p, c_double, c_float, c_int, c_uint8, c_uint32
+from typing import List, Optional, Sequence, Tuple, Union
 
 from .._cdefs import (
+    CuiCurveKey,
+    CuiCurveOpts,
+    CuiCurveResult,
+    CuiFlameOpts,
+    CuiFlameResult,
+    CuiFlameSpan,
+    CuiFlameView,
+    CuiGradientOpts,
+    CuiGradientResult,
+    CuiGradientStop,
+    CuiHexRange,
+    CuiHexResult,
+    CuiHexSelection,
+    CuiHexViewOpts,
     CuiInspectorOpts,
     CuiLogViewOpts,
     CuiPropOpts,
+    CuiTimelineClip,
+    CuiTimelineEditorOpts,
+    CuiTimelineEditorResult,
+    CuiTimelineTrack,
+    CuiTimelineView,
     encode_opt,
     encode_str,
     encode_str_array,
     make_text_buffer,
+    to_c_color,
     to_c_size,
     to_packed_color,
 )
 from .._lib import get_cdll
 from ..scopes import ConditionalScope
-from ..types import Color, ColorLike, LogLevel, Size, SizeKind, SizeLike
+from ..types import (
+    Color,
+    ColorLike,
+    CurveKey,
+    CurveMode,
+    CurveResult,
+    FlameResult,
+    FlameSpan,
+    FlameView,
+    GradientResult,
+    GradientStop,
+    HexRange,
+    HexResult,
+    HexSelection,
+    LogLevel,
+    Rect,
+    Size,
+    SizeKind,
+    SizeLike,
+    TimelineClip,
+    TimelineEditorResult,
+    TimelineRuler,
+    TimelineTrack,
+    TimelineView,
+)
+
+
+def flame_sort(spans: List[FlameSpan]) -> List[FlameSpan]:
+    """Sort ``spans`` in-place by ``(depth, start)`` via CUI's C99 ``cui_flame_sort``."""
+    n = len(spans)
+    if n <= 1:
+        return spans
+    lib = get_cdll()
+    keep: list = []
+    c_spans = (CuiFlameSpan * n)()
+    for i, sp in enumerate(spans):
+        c_spans[i].name = encode_str(sp.name, keep)
+        c_spans[i].start = float(sp.start)
+        c_spans[i].end = float(sp.end)
+        c_spans[i].depth = int(sp.depth)
+        c_spans[i].color_key = int(sp.color_key) & 0xFFFFFFFF
+    lib.cui_flame_sort(c_spans, n)
+    spans[:] = [
+        FlameSpan(
+            c_spans[i].name.decode("utf-8", errors="replace") if c_spans[i].name else "",
+            float(c_spans[i].start),
+            float(c_spans[i].end),
+            int(c_spans[i].depth),
+            int(c_spans[i].color_key),
+        )
+        for i in range(n)
+    ]
+    return spans
+
+
+def curve_eval(keys: Sequence[CurveKey], x: float) -> float:
+    """Evaluate cubic Bezier / linear / step keyframe curve at ``x`` via C99 ``cui_curve_eval``."""
+    n = len(keys)
+    if n == 0:
+        return 0.0
+    lib = get_cdll()
+    c_keys = (CuiCurveKey * n)()
+    for i, k in enumerate(keys):
+        c_keys[i].x = float(k.x)
+        c_keys[i].y = float(k.y)
+        c_keys[i].in_dx = float(k.in_dx)
+        c_keys[i].in_dy = float(k.in_dy)
+        c_keys[i].out_dx = float(k.out_dx)
+        c_keys[i].out_dy = float(k.out_dy)
+        c_keys[i].mode = int(k.mode)
+    return float(lib.cui_curve_eval(c_keys, n, float(x)))
+
+
+def gradient_eval(stops: Sequence[GradientStop], t: float) -> Color:
+    """Evaluate perceptual OKLab color ramp at ``t`` in ``[0, 1]`` via C99 ``cui_gradient_eval``."""
+    n = len(stops)
+    if n == 0:
+        return Color(0, 0, 0, 255)
+    lib = get_cdll()
+    c_stops = (CuiGradientStop * n)()
+    for i, st in enumerate(stops):
+        c_stops[i].pos = float(st.pos)
+        c_stops[i].color = to_c_color(st.color)
+    packed = int(lib.nexa_gradient_eval(c_stops, n, float(t)))
+    return Color._from_packed(packed)
 
 
 class LogBuffer:
@@ -280,3 +384,516 @@ class ToolsMixin:
                 self._lib.cui_log_view_ex(
                     self._ctx, encode_str(id, keep), buffer._handle, ctypes.byref(opts)
                 )
+
+    # ---- CUI 1.1.0: Hex Viewer, Flame Graph, Curves, Gradient & Timeline ----
+
+    def hex_view(
+        self,
+        id: str,
+        data: Union[bytes, bytearray, memoryview],
+        selection: Optional[HexSelection] = None,
+        *,
+        width: SizeLike = None,
+        height: float = 280.0,
+        base: int = 0,
+        bytes_per_row: int = 16,
+        ranges: Optional[Sequence[HexRange]] = None,
+        editable: bool = False,
+        no_ascii: bool = False,
+        no_header: bool = False,
+        size: float = 0.0,
+    ) -> HexResult:
+        """Virtualized hex + ASCII inspector/editor.
+
+        Pass a mutable ``bytearray`` with ``editable=True`` for zero-copy in-place nibble/ASCII edits.
+        """
+        keep = self._frame_keepalive
+        nbytes = len(data)
+        c_buf = (c_uint8 * max(nbytes, 1))()
+        if nbytes > 0:
+            ctypes.memmove(c_buf, bytes(data) if not isinstance(data, bytes) else data, nbytes)
+
+        c_sel = None
+        if selection is not None:
+            c_sel = CuiHexSelection(int(selection.start), int(selection.length), int(selection.cursor))
+            keep.append(c_sel)
+
+        opts = CuiHexViewOpts()
+        opts.width = to_c_size(width)
+        opts.height = float(height)
+        opts.base = int(base) & 0xFFFFFFFFFFFFFFFF
+        opts.bytes_per_row = int(bytes_per_row)
+        opts.no_ascii = bool(no_ascii)
+        opts.no_header = bool(no_header)
+        opts.size = float(size)
+        if editable and nbytes > 0:
+            opts.edit = c_buf
+
+        if ranges:
+            nr = len(ranges)
+            c_ranges = (CuiHexRange * nr)()
+            for i, rg in enumerate(ranges):
+                c_ranges[i].offset = int(rg.offset)
+                c_ranges[i].length = int(rg.length)
+                c_ranges[i].tone = int(rg.tone)
+                c_ranges[i].label = encode_opt(rg.label, keep)
+            opts.ranges = c_ranges
+            opts.range_count = nr
+            keep.append(c_ranges)
+
+        out = CuiHexResult()
+        keep.extend((c_buf, opts, out))
+        self._lib.nexa_hex_view_ex(
+            self._ctx,
+            encode_str(id, keep),
+            ctypes.cast(c_buf, ctypes.c_void_p) if nbytes > 0 else None,
+            nbytes,
+            ctypes.byref(c_sel) if c_sel is not None else None,
+            ctypes.byref(opts),
+            ctypes.byref(out),
+        )
+        if bool(out.edited) and editable and isinstance(data, (bytearray, memoryview)) and nbytes > 0:
+            data[:] = bytes(c_buf)[:nbytes]
+        new_sel = HexSelection(
+            int(out.selection.start), int(out.selection.length), int(out.selection.cursor)
+        )
+        if selection is not None:
+            selection.start = new_sel.start
+            selection.length = new_sel.length
+            selection.cursor = new_sel.cursor
+        res = HexResult(
+            selection=new_sel,
+            selection_changed=bool(out.selection_changed),
+            edited=bool(out.edited),
+            edit_offset=int(out.edit_offset),
+            edit_length=int(out.edit_length),
+            hovered=int(out.hovered),
+            copied=bool(out.copied),
+        )
+        self._record_change(bool(res))
+        return res
+
+    def hex_view_goto(self, id: str, offset: int) -> None:
+        keep = self._frame_keepalive
+        self._lib.cui_hex_view_goto(self._ctx, encode_str(id, keep), int(offset))
+
+    def flame_graph(
+        self,
+        id: str,
+        spans: Sequence[FlameSpan],
+        *,
+        view: Optional[FlameView] = None,
+        selected: Optional[int] = None,
+        width: SizeLike = None,
+        height: float = 240.0,
+        row_height: float = 0.0,
+        min_range: float = 0.0,
+    ) -> FlameResult:
+        """Interactive profiler flame graph / icicle chart with wheel zoom, drag pan, and span selection."""
+        keep = self._frame_keepalive
+        n = len(spans)
+        c_spans = (CuiFlameSpan * max(n, 1))()
+        for i, sp in enumerate(spans):
+            c_spans[i].name = encode_str(sp.name, keep)
+            c_spans[i].start = float(sp.start)
+            c_spans[i].end = float(sp.end)
+            c_spans[i].depth = int(sp.depth)
+            c_spans[i].color_key = int(sp.color_key) & 0xFFFFFFFF
+
+        c_view = CuiFlameView(
+            float(view.start) if view is not None else 0.0,
+            float(view.end) if view is not None else 0.0,
+            float(view.scroll) if view is not None else 0.0,
+        )
+        c_sel = c_int(int(selected) if selected is not None else -1)
+        opts = CuiFlameOpts()
+        opts.width = to_c_size(width)
+        opts.height = float(height)
+        opts.row_height = float(row_height)
+        opts.min_range = float(min_range)
+        out = CuiFlameResult()
+        keep.extend((c_spans, c_view, c_sel, opts, out))
+        self._lib.nexa_flame_graph_ex(
+            self._ctx,
+            encode_str(id, keep),
+            c_spans if n > 0 else None,
+            n,
+            ctypes.byref(c_view) if view is not None else None,
+            ctypes.byref(c_sel),
+            ctypes.byref(opts),
+            ctypes.byref(out),
+        )
+        new_view = FlameView(float(c_view.start), float(c_view.end), float(c_view.scroll))
+        if view is not None:
+            view.start = new_view.start
+            view.end = new_view.end
+            view.scroll = new_view.scroll
+        res = FlameResult(
+            selected=int(c_sel.value),
+            view=new_view,
+            selection_changed=bool(out.selection_changed),
+            view_changed=bool(out.view_changed),
+            hovered=int(out.hovered),
+            zoomed=int(out.zoomed),
+        )
+        self._record_change(bool(res))
+        return res
+
+    def flame_sort(self, spans: List[FlameSpan]) -> List[FlameSpan]:
+        return flame_sort(spans)
+
+    def flame_span_rect(self, flame_id: int, span: FlameSpan) -> Rect:
+        keep = self._frame_keepalive
+        c_sp = CuiFlameSpan(
+            encode_str(span.name, keep),
+            float(span.start),
+            float(span.end),
+            int(span.depth),
+            int(span.color_key) & 0xFFFFFFFF,
+        )
+        out4 = (c_float * 4)()
+        self._lib.nexa_flame_span_rect(self._ctx, int(flame_id) & 0xFFFFFFFF, ctypes.byref(c_sp), out4)
+        return Rect(float(out4[0]), float(out4[1]), float(out4[2]), float(out4[3]))
+
+    def curve_editor(
+        self,
+        id: str,
+        keys: Sequence[CurveKey],
+        *,
+        capacity: int = 64,
+        x_min: float = 0.0,
+        x_max: float = 1.0,
+        y_min: float = 0.0,
+        y_max: float = 1.0,
+        width: SizeLike = None,
+        height: float = 200.0,
+        x_format: Optional[str] = None,
+        y_format: Optional[str] = None,
+        x_label: Optional[str] = None,
+        y_label: Optional[str] = None,
+        selected: Optional[int] = None,
+        snap: bool = False,
+        show_playhead: bool = False,
+        playhead: float = 0.0,
+    ) -> CurveResult:
+        """2D Bezier / linear / step curve editor; updates ``keys`` in-place if a ``list`` is passed."""
+        keep = self._frame_keepalive
+        n = len(keys)
+        cap = max(int(capacity), n + 8)
+        c_keys = (CuiCurveKey * cap)()
+        for i, k in enumerate(keys):
+            c_keys[i].x = float(k.x)
+            c_keys[i].y = float(k.y)
+            c_keys[i].in_dx = float(k.in_dx)
+            c_keys[i].in_dy = float(k.in_dy)
+            c_keys[i].out_dx = float(k.out_dx)
+            c_keys[i].out_dy = float(k.out_dy)
+            c_keys[i].mode = int(k.mode)
+        c_count = c_int(n)
+        opts = CuiCurveOpts()
+        opts.x_min = float(x_min)
+        opts.x_max = float(x_max)
+        opts.y_min = float(y_min)
+        opts.y_max = float(y_max)
+        opts.width = to_c_size(width)
+        opts.height = float(height)
+        opts.x_format = encode_opt(x_format, keep)
+        opts.y_format = encode_opt(y_format, keep)
+        opts.x_label = encode_opt(x_label, keep)
+        opts.y_label = encode_opt(y_label, keep)
+        opts.snap = bool(snap)
+        opts.show_playhead = bool(show_playhead)
+        opts.playhead = float(playhead)
+        if selected is not None:
+            c_sel = c_int(int(selected))
+            opts.selected = ctypes.pointer(c_sel)
+            keep.append(c_sel)
+
+        out = CuiCurveResult()
+        keep.extend((c_keys, c_count, opts, out))
+        self._lib.nexa_curve_editor_ex(
+            self._ctx, encode_str(id, keep), c_keys, ctypes.byref(c_count), cap, ctypes.byref(opts), ctypes.byref(out)
+        )
+        new_n = max(0, min(cap, int(c_count.value)))
+        new_keys = [
+            CurveKey(
+                float(c_keys[i].x),
+                float(c_keys[i].y),
+                float(c_keys[i].in_dx),
+                float(c_keys[i].in_dy),
+                float(c_keys[i].out_dx),
+                float(c_keys[i].out_dy),
+                CurveMode(int(c_keys[i].mode)),
+            )
+            for i in range(new_n)
+        ]
+        if bool(out.changed) and isinstance(keys, list):
+            keys[:] = new_keys
+        self._record_change(bool(out.changed))
+        return CurveResult(
+            keys=new_keys,
+            changed=bool(out.changed),
+            added=int(out.added),
+            removed=int(out.removed),
+            selected=int(out.selected),
+            hovered=bool(out.hovered),
+            hover_x=float(out.hover_x),
+            hover_y=float(out.hover_y),
+        )
+
+    def curve_eval(self, keys: Sequence[CurveKey], x: float) -> float:
+        return curve_eval(keys, x)
+
+    def gradient_editor(
+        self,
+        id: str,
+        stops: Sequence[GradientStop],
+        *,
+        capacity: int = 32,
+        width: SizeLike = None,
+        height: float = 0.0,
+        selected: Optional[int] = None,
+    ) -> GradientResult:
+        """OKLab multi-stop color ramp editor; updates ``stops`` in-place if a ``list`` is passed."""
+        keep = self._frame_keepalive
+        n = len(stops)
+        cap = max(int(capacity), n + 8)
+        c_stops = (CuiGradientStop * cap)()
+        for i, st in enumerate(stops):
+            c_stops[i].pos = float(st.pos)
+            c_stops[i].color = to_c_color(st.color)
+        c_count = c_int(n)
+        opts = CuiGradientOpts()
+        opts.width = to_c_size(width)
+        opts.height = float(height)
+        if selected is not None:
+            c_sel = c_int(int(selected))
+            opts.selected = ctypes.pointer(c_sel)
+            keep.append(c_sel)
+
+        out = CuiGradientResult()
+        keep.extend((c_stops, c_count, opts, out))
+        self._lib.nexa_gradient_editor_ex(
+            self._ctx, encode_str(id, keep), c_stops, ctypes.byref(c_count), cap, ctypes.byref(opts), ctypes.byref(out)
+        )
+        new_n = max(0, min(cap, int(c_count.value)))
+        new_stops = [
+            GradientStop(
+                float(c_stops[i].pos),
+                Color(int(c_stops[i].color.r), int(c_stops[i].color.g), int(c_stops[i].color.b), int(c_stops[i].color.a)),
+            )
+            for i in range(new_n)
+        ]
+        if bool(out.changed) and isinstance(stops, list):
+            stops[:] = new_stops
+        self._record_change(bool(out.changed))
+        return GradientResult(
+            stops=new_stops,
+            changed=bool(out.changed),
+            added=int(out.added),
+            removed=int(out.removed),
+            selected=int(out.selected),
+        )
+
+    def gradient_eval(self, stops: Sequence[GradientStop], t: float) -> Color:
+        return gradient_eval(stops, t)
+
+    def timeline_editor(
+        self,
+        id: str,
+        tracks: Sequence[TimelineTrack],
+        time: float = 0.0,
+        *,
+        start: float = 0.0,
+        end: float = 10.0,
+        fps: float = 30.0,
+        ruler: TimelineRuler = TimelineRuler.SECONDS,
+        view: Optional[TimelineView] = None,
+        in_point: Optional[float] = None,
+        out_point: Optional[float] = None,
+        current_track: Optional[int] = None,
+        current_key: Optional[int] = None,
+        width: SizeLike = None,
+        height: float = 260.0,
+        row_height: float = 0.0,
+        track_width: float = 0.0,
+        toggles: bool = True,
+        free_drag: bool = False,
+        key_headroom: int = 16,
+    ) -> TimelineEditorResult:
+        """Multi-track keyframe dope sheet & NLE clip timeline editor.
+
+        Synchronizes track toggles, keyframe edits/additions/deletions, and clip trims back into ``tracks``.
+        """
+        keep = self._frame_keepalive
+        nt = len(tracks)
+        c_tracks = (CuiTimelineTrack * max(nt, 1))()
+        track_buffers = []
+
+        for i, tr in enumerate(tracks):
+            c_tracks[i].name = encode_str(tr.name, keep)
+            c_tracks[i].icon = encode_opt(tr.icon, keep)
+            c_tracks[i].depth = int(tr.depth)
+            c_tracks[i].collapsed = bool(tr.collapsed)
+            c_tracks[i].muted = bool(tr.muted)
+            c_tracks[i].locked = bool(tr.locked)
+            c_tracks[i].color = int(tr.color) & 0xFF
+
+            nk = len(tr.keys)
+            kcap = max(nk + max(4, int(key_headroom)), 8)
+            c_keys = (CuiCurveKey * kcap)()
+            for ki, k in enumerate(tr.keys):
+                c_keys[ki].x = float(k.x)
+                c_keys[ki].y = float(k.y)
+                c_keys[ki].in_dx = float(k.in_dx)
+                c_keys[ki].in_dy = float(k.in_dy)
+                c_keys[ki].out_dx = float(k.out_dx)
+                c_keys[ki].out_dy = float(k.out_dy)
+                c_keys[ki].mode = int(k.mode)
+            c_tracks[i].keys = c_keys
+            c_tracks[i].key_count = nk
+            c_tracks[i].key_capacity = kcap
+
+            c_ksel = None
+            if tr.key_selected is not None:
+                c_ksel = (c_bool * kcap)(
+                    *(bool(tr.key_selected[ki]) if ki < len(tr.key_selected) else False for ki in range(kcap))
+                )
+                c_tracks[i].key_selected = c_ksel
+
+            nc = len(tr.clips)
+            c_clips = None
+            if nc > 0:
+                c_clips = (CuiTimelineClip * nc)()
+                for ci, cl in enumerate(tr.clips):
+                    c_clips[ci].start = float(cl.start)
+                    c_clips[ci].end = float(cl.end)
+                    c_clips[ci].offset = float(cl.offset)
+                    c_clips[ci].name = encode_opt(cl.name, keep)
+                    c_clips[ci].selected = bool(cl.selected)
+                c_tracks[i].clips = c_clips
+                c_tracks[i].clip_count = nc
+
+            track_buffers.append((c_keys, kcap, c_ksel, c_clips))
+            keep.extend((c_keys, c_ksel, c_clips))
+
+        c_time = c_float(float(time))
+        opts = CuiTimelineEditorOpts()
+        opts.start = float(start)
+        opts.end = float(end)
+        opts.fps = float(fps)
+        opts.ruler = int(ruler)
+        opts.width = to_c_size(width)
+        opts.height = float(height)
+        opts.row_height = float(row_height)
+        opts.track_width = float(track_width)
+        opts.toggles = bool(toggles)
+        opts.free_drag = bool(free_drag)
+
+        c_view = None
+        if view is not None:
+            c_view = CuiTimelineView(float(view.start), float(view.end), float(view.scroll))
+            opts.view = ctypes.pointer(c_view)
+            keep.append(c_view)
+
+        c_in = None
+        if in_point is not None:
+            c_in = c_float(float(in_point))
+            opts.in_ = ctypes.pointer(c_in)
+            keep.append(c_in)
+
+        c_out = None
+        if out_point is not None:
+            c_out = c_float(float(out_point))
+            opts.out = ctypes.pointer(c_out)
+            keep.append(c_out)
+
+        if current_track is not None:
+            c_ct = c_int(int(current_track))
+            opts.current_track = ctypes.pointer(c_ct)
+            keep.append(c_ct)
+
+        if current_key is not None:
+            c_ck = c_int(int(current_key))
+            opts.current_key = ctypes.pointer(c_ck)
+            keep.append(c_ck)
+
+        out = CuiTimelineEditorResult()
+        keep.extend((c_tracks, c_time, opts, out))
+        self._lib.nexa_timeline_editor_ex(
+            self._ctx,
+            encode_str(id, keep),
+            c_tracks if nt > 0 else None,
+            nt,
+            ctypes.byref(c_time),
+            ctypes.byref(opts),
+            ctypes.byref(out),
+        )
+
+        # Write back track state
+        for i, tr in enumerate(tracks):
+            c_keys, kcap, c_ksel, c_clips = track_buffers[i]
+            tr.collapsed = bool(c_tracks[i].collapsed)
+            tr.muted = bool(c_tracks[i].muted)
+            tr.locked = bool(c_tracks[i].locked)
+            new_nk = max(0, min(kcap, int(c_tracks[i].key_count)))
+            tr.keys = [
+                CurveKey(
+                    float(c_keys[ki].x),
+                    float(c_keys[ki].y),
+                    float(c_keys[ki].in_dx),
+                    float(c_keys[ki].in_dy),
+                    float(c_keys[ki].out_dx),
+                    float(c_keys[ki].out_dy),
+                    CurveMode(int(c_keys[ki].mode)),
+                )
+                for ki in range(new_nk)
+            ]
+            if c_ksel is not None:
+                tr.key_selected = [bool(c_ksel[ki]) for ki in range(new_nk)]
+            if c_clips is not None:
+                new_nc = max(0, min(len(tr.clips), int(c_tracks[i].clip_count)))
+                tr.clips = [
+                    TimelineClip(
+                        float(c_clips[ci].start),
+                        float(c_clips[ci].end),
+                        float(c_clips[ci].offset),
+                        c_clips[ci].name.decode("utf-8", errors="replace") if c_clips[ci].name else None,
+                        bool(c_clips[ci].selected),
+                    )
+                    for ci in range(new_nc)
+                ]
+
+        new_view = None
+        if c_view is not None and view is not None:
+            new_view = TimelineView(float(c_view.start), float(c_view.end), float(c_view.scroll))
+            view.start = new_view.start
+            view.end = new_view.end
+            view.scroll = new_view.scroll
+
+        res = TimelineEditorResult(
+            float(c_time.value),
+            changed=bool(out.changed),
+            time_changed=bool(out.time_changed),
+            scrubbing=bool(out.scrubbing),
+            play_toggled=bool(out.play_toggled),
+            selection_changed=bool(out.selection_changed),
+            view_changed=bool(out.view_changed),
+            keys_moved=bool(out.keys_moved),
+            added_track=int(out.added_track),
+            added_key=int(out.added_key),
+            removed_keys=int(out.removed_keys),
+            removed_clips=int(out.removed_clips),
+            clip_track=int(out.clip_track),
+            clip=int(out.clip),
+            toggled=int(out.toggled),
+            current_track=int(out.current_track),
+            current_key=int(out.current_key),
+            hovered_track=int(out.hovered_track),
+            hovered_key=int(out.hovered_key),
+            view=new_view,
+            in_point=float(c_in.value) if c_in is not None else None,
+            out_point=float(c_out.value) if c_out is not None else None,
+        )
+        self._record_change(bool(res))
+        return res

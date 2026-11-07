@@ -10,6 +10,8 @@ from .._cdefs import (
     CuiDockItemOpts,
     CuiDockOpts,
     CuiNavOpts,
+    CuiPathBarOpts,
+    CuiPathBarResult,
     CuiTabBarItem,
     CuiTabBarOpts,
     CuiTabsOpts,
@@ -20,8 +22,8 @@ from .._cdefs import (
     to_c_color,
     to_c_size,
 )
-from ..scopes import SimpleScope
-from ..types import ColorLike, SizeLike, TabBarItem, TabsVariant, TocItem
+from ..scopes import PathBarMenuScope, SimpleScope
+from ..types import ColorLike, ControlSize, PathBarResult, SizeLike, TabBarItem, TabsVariant, TocItem
 
 
 class NavigationMixin:
@@ -82,6 +84,52 @@ class NavigationMixin:
         clicked = int(self._lib.cui_breadcrumb(self._ctx, arr, n))
         self._record_change(clicked >= 0)
         return clicked
+
+    def path_bar(
+        self,
+        id: str,
+        segments: Sequence[str],
+        *,
+        icon: Optional[str] = None,
+        text: Optional[str] = None,
+        placeholder: Optional[str] = None,
+        size: ControlSize = ControlSize.MD,
+        width: SizeLike = None,
+        menus: bool = False,
+        no_edit: bool = False,
+    ) -> PathBarResult:
+        """File-manager / IDE breadcrumb address bar with click-to-edit path mode and segment menus."""
+        keep = self._frame_keepalive
+        arr, n = encode_str_array(segments, keep)
+        opts = CuiPathBarOpts()
+        opts.icon = encode_opt(icon, keep)
+        opts.text = encode_opt(text, keep)
+        opts.placeholder = encode_opt(placeholder, keep)
+        opts.size = int(size)
+        opts.width = to_c_size(width)
+        opts.menus = bool(menus)
+        opts.no_edit = bool(no_edit)
+        out = CuiPathBarResult()
+        keep.extend((opts, out))
+        self._lib.nexa_path_bar_ex(
+            self._ctx, encode_str(id, keep), arr, n, ctypes.byref(opts), ctypes.byref(out)
+        )
+        res = PathBarResult(
+            clicked=int(out.clicked),
+            submitted=out.submitted.decode("utf-8", errors="replace") if out.submitted else None,
+            editing=bool(out.editing),
+        )
+        self._record_change(bool(res))
+        return res
+
+    def path_bar_menu(self, id: str) -> PathBarMenuScope:
+        """Popup menu scope opened when a ``path_bar(..., menus=True)`` chevron is clicked."""
+        keep = self._frame_keepalive
+        c_seg = c_int(-1)
+        vis = bool(self._lib.cui_path_bar_menu_begin(
+            self._ctx, encode_str(id, keep), ctypes.byref(c_seg)
+        ))
+        return PathBarMenuScope(self._ctx, self._lib.cui_path_bar_menu_end, vis, int(c_seg.value))
 
     def pagination(self, id: str, page: int, page_count: int) -> int:
         keep = self._frame_keepalive

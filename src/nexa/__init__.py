@@ -37,6 +37,7 @@ from .types import (
     CanvasResult,
     CheckStep,
     Choice,
+    CodeEditorResult,
     Color,
     ColorLike,
     Command,
@@ -47,17 +48,36 @@ from .types import (
     Corners,
     CornersLike,
     Cursor,
+    CurveKey,
+    CurveMode,
+    CurveResult,
     Date,
     DateRange,
+    DiffFlags,
+    DiffHunk,
+    DiffMode,
+    DiffRange,
+    DiffResult,
+    DiffRow,
+    DiffRowKind,
+    DiffStats,
     Direction,
     DocTab,
     DocTabsResult,
     Elevation,
     FileDialogKind,
     FilterField,
+    FlameResult,
+    FlameSpan,
+    FlameView,
     FontRole,
     GanttTask,
+    GradientResult,
+    GradientStop,
     GridColumn,
+    HexRange,
+    HexResult,
+    HexSelection,
     InputFlags,
     Justify,
     KanbanMove,
@@ -65,12 +85,14 @@ from .types import (
     KeyCombo,
     LoaderStyle,
     LogLevel,
+    MarkdownResult,
     Mod,
     Model,
     ModelInfo,
     MouseButton,
     NodeView,
     NowPlaying,
+    PathBarResult,
     PixelFormat,
     Placement,
     PlanStep,
@@ -105,20 +127,39 @@ from .types import (
     TextureFormat,
     ThemeMode,
     TickerItem,
+    TimelineClip,
+    TimelineEditorResult,
+    TimelineRuler,
+    TimelineTrack,
+    TimelineView,
     TocItem,
     Token,
     Tone,
+    TreeFlags,
+    TreeNode,
+    TreeTableEvents,
     Vec2,
     VizItem,
     VoiceState,
 )
 from .ui import Context, UI
-from .widgets.tools import LogBuffer
+from .widgets.data import diff_compute, diff_words, tree_sort
+from .widgets.tools import LogBuffer, curve_eval, flame_sort, gradient_eval
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 # Populate functional top-level API (`nexa.row(...)`, `nexa.button(...)`, `nexa.run(...)`, etc.)
 globals().update(FUNCTIONAL_EXPORTS)
+
+# Restore context-free C99 utilities so they work without an active UI frame too
+globals().update(
+    diff_compute=diff_compute,
+    diff_words=diff_words,
+    tree_sort=tree_sort,
+    flame_sort=flame_sort,
+    curve_eval=curve_eval,
+    gradient_eval=gradient_eval,
+)
 
 
 def __getattr__(name: str) -> Any:

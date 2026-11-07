@@ -1,4 +1,4 @@
-# Complete Component Reference (150+ Widgets Across 19 Domains)
+# Complete Component Reference (160+ Widgets Across 20 Domains)
 
 Every widget method below is available **both** on `ctx: ui.UI` (`ctx.button(...)`) **and** as a top-level function when inside an active frame (`import nexa as ui; ui.button(...)`).
 
@@ -110,8 +110,9 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 - **`tabs(id, labels, selected: int, *, variant=TabsVariant.LINE, icons=None, badges=None) -> int`** (`TabsVariant`: `LINE`, `PILL`, `ENCLOSED`)
 - **`nav_section(title)`** | **`nav_item(label, *, icon=None, badge=None, selected=False, disabled=False, group=None) -> bool`**
-- **`breadcrumb(items, *, separator=None) -> int`** (returns clicked crumb index or `-1`)
-- **`pagination(id, page: int, page_count: int, *, siblings=1) -> int`**
+- **`breadcrumb(items) -> int`** (returns clicked crumb index or `-1`)
+- **`path_bar(id, segments: Sequence[str], *, icon=None, text=None, placeholder=None, size=ControlSize.MD, width=None, menus=False, no_edit=False) -> PathBarResult`** *(New in 1.1)* — Editable file-manager / IDE breadcrumb address bar (`clicked`, `submitted`, `editing`) + **`path_bar_menu(id)`** (`PathBarMenuScope` exposing `menu.segment`).
+- **`pagination(id, page: int, page_count: int) -> int`**
 - **`stepper(steps, current: int, *, clickable=True) -> int`**
 - **`tab_bar(id, items: Sequence[TabBarItem], selected: int, *, pill=False, icon_only=False, width=None) -> int`**
 - **`dock(id, *, magnify=0.45, base_size=44.0)`** + **`dock_item(icon, label, *, running=False, attention=False, badge=0) -> bool`** + **`dock_separator()`**
@@ -163,10 +164,14 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
 - **`reorder(id, order: Sequence[int], *, horizontal=False, gap=6.0, width=None)`** -> `ReorderScope` (`with ro.item(pos): ...`; read `ro.order`).
 - **`timeline_item(title, *, description=None, time=None, icon=None, tone=Tone.ACCENT, last=False)`**
 - **`table(id, columns: Sequence[TableColumn], *, sort=None, height=None, striped=False, compact=False, selectable=False)`** -> `TableScope` (`if tbl:`; `tbl.row(selected=...) -> bool`, `tbl.cell()`, `tbl.cell_text(s)`, `tbl.sort`).
-- **`data_grid(id, columns: Sequence[GridColumn], row_count: int, *, width=None, height=None, row_height=0, selected=None, sort=None, striped=False, borderless=False, cursor=0)`** -> `DataGridScope` (`if dg:`; `for r in dg.rows:`, `dg.row(r)`, `dg.cell_text(s)`, `dg.edit(val)`, `dg.selected`, `dg.sort`, `dg.cursor`).
-- **`filter_bar(id, fields: Sequence[FilterField], masks: Sequence[int], search: str = "", *, clearable=True, width=None) -> tuple[list[int], str]`**
-- **`code_block(id, source, *, lang="python", line_numbers=True, copyable=True, wrap=False, highlight_line=0, max_height=0, filename=None)`**
-- **`json_view(id, json_str, *, default_open_depth=2, max_height=0, copyable=True) -> bool`**
+- **`data_grid(id, columns: Sequence[GridColumn], row_count: int, *, width=None, height=None, row_height=0, selected=None, sort=None, striped=False, cursor=None, hide_checkboxes=False, anchor=None)`** -> `DataGridScope` (`if dg:`; `for r in dg.rows:`, `dg.row(r)`, `dg.cell_text(s)`, `dg.edit(val)`, `dg.selected`, `dg.sort`, `dg.cursor`, `dg.anchor`; `GridColumn(..., priority=0)` hides lower-priority columns gracefully).
+- **`tree_table(id, columns: Sequence[GridColumn], nodes: Sequence[TreeNode], *, width=None, height=None, row_height=0, root=0, sort=None, cursor=None, guides=True, labels=None, label_fn=None)`** -> `TreeTableScope` *(New in 1.1)* — Virtualized hierarchical tree-grid (`for idx in tt.rows(): tt.name(label, icon=...); tt.cell_text(...)`; synchronizes `TreeNode.flags` and exposes `tt.events: TreeTableEvents`) + **`tree_sort(nodes, root=-1, *, key=None, reverse=False) -> int`**.
+- **`filter_bar(id, fields: Sequence[FilterField], masks: Sequence[int], search: str = "") -> tuple[list[int], str]`**
+- **`code_block(id, source, *, lang="python", title=None, line_numbers=False, highlight_from=0, highlight_to=0, max_height=0, size=0, no_header=False)`**
+- **`code_editor(id, text: str, *, lang=None, width=None, height=320.0, size=0, tab_size=4, use_tabs=False, read_only=False, no_line_numbers=False, autofocus=False, placeholder=None) -> CodeEditorResult`** *(New in 1.1)* — Multi-line source editor with syntax highlighting, undo/redo, bracket matching & find bar (`text, changed = ui.code_editor(...)`), plus **`code_editor_goto(id, line, col=1)`**, **`code_editor_select(id, anchor, cursor)`**, and **`code_editor_find(id, query=None)`**.
+- **`diff_view(id, old_text, new_text, *, mode=DiffMode.SPLIT, language=None, old_title=None, new_title=None, current=None, context=3, no_fold=False, ignore_eol=False, width=None, height=340.0) -> DiffResult`** *(New in 1.1)* — Side-by-side or inline diff viewer with intraline word diffs & hunk folding, plus **`diff_view_rows(id)`** and context-free C99 **`diff_compute(old_text, new_text)`** / **`diff_words(old_line, new_line)`**.
+- **`markdown(id, text: str, *, width=None, fit_content=False, size=0, color=None, streaming=False, compact=False) -> MarkdownResult`** *(New in 1.1)* — Rich CommonMark + GFM renderer (headings, tables, fenced code, GitHub alerts, interactive task lists via `res.apply_task(text)`).
+- **`json_view(id, json_str, *, expand_depth=2, max_height=0) -> bool`**
 
 ---
 
@@ -208,9 +213,14 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
   - `model_picker(id, models: Sequence[Model], selected: int, *, ghost=False, size=ControlSize.SM) -> int`
   - `chat_composer(id, text: str, *, placeholder=..., busy=False, attachments=None, models=None, model=0, **opts) -> ComposerResult`
   - `voice_orb(id, state=VoiceState.IDLE, level=0.0, *, size=72.0, color=None) -> bool`
-- **Social (`nexa.widgets.social`)**: `chat_message`, `chat_divider`, `typing_indicator`, `comment`, `presence`.
+- **Social (`nexa.widgets.social`)**: `chat_message(..., markdown=False) -> Optional[MarkdownResult]`, `chat_divider`, `typing_indicator`, `comment`, `presence`.
 - **Media (`nexa.widgets.media`)**: `image_load`, `image_load_bytes`, `image_create`, `image_destroy`, `image`, `carousel`, `image_compare`, `card_stack`, `waveform`, `now_playing`, `counter`, `ticker`.
 - **Motion (`nexa.widgets.motion`)**: `shimmer_text`, `typewriter`, `text_reveal`, `word_rotate`, `number_roll`, `gradient_text`, `spotlight`, `animate`, `animate_spring`.
-- **Desktop Chrome (`nexa.widgets.chrome`)**: `menu_bar` + `menu_bar_menu`, `toolbar` + `toolbar_button` / `toolbar_toggle` / `toolbar_separator` / `toolbar_spacer`, `status_bar` + `status_bar_item` / `status_bar_text` / `status_bar_progress` / `status_bar_spacer`, `doc_tabs` (`DocTabsResult.apply_to(tabs)`).
-- **Developer Tools (`nexa.widgets.tools`)**: `inspector` + `inspector_group`, `prop_float`, `prop_int`, `prop_text`, `prop_bool`, `prop_enum`, `prop_color`, `prop_vec2/3/4`, `LogBuffer` + `log_view`.
+- **Desktop Chrome & Docking (`nexa.widgets.chrome`)**: `menu_bar` + `menu_bar_menu`, `toolbar` + `toolbar_button` / `toolbar_toggle` / `toolbar_separator` / `toolbar_spacer`, `status_bar` + `status_bar_item` / `status_bar_text` / `status_bar_progress` / `status_bar_spacer`, `doc_tabs` (`DocTabsResult.apply_to(tabs)`), and *(New in 1.1)* **`dockspace(id, *, layout=None, width=None, height=None)`** + **`dock_panel(title, is_open=None, *, icon=None, dirty=False)`** + **`dock_save(id) -> str`** + **`dock_load(id, layout) -> bool`**.
+- **Developer & Creative Studio Tools (`nexa.widgets.tools`)**: `inspector` + `inspector_group`, `prop_float`, `prop_int`, `prop_text`, `prop_bool`, `prop_enum`, `prop_color`, `prop_vec2/3/4`, `LogBuffer` + `log_view`, plus *(New in 1.1)*:
+  - **`hex_view(id, data, selection=None, *, ranges=None, editable=False, base=0, bytes_per_row=16) -> HexResult`** + **`hex_view_goto(id, offset)`**
+  - **`flame_graph(id, spans, *, view=None, selected=None, height=240.0) -> FlameResult`** + **`flame_sort(spans)`** + **`flame_span_rect(flame_id, span)`**
+  - **`curve_editor(id, keys, *, x_min=0, x_max=1, y_min=0, y_max=1, show_playhead=False, playhead=0) -> CurveResult`** + **`curve_eval(keys, x) -> float`**
+  - **`gradient_editor(id, stops, *, selected=None) -> GradientResult`** + **`gradient_eval(stops, t) -> Color`**
+  - **`timeline_editor(id, tracks, time=0.0, *, start=0.0, end=10.0, fps=30.0, ruler=TimelineRuler.SECONDS) -> TimelineEditorResult`**
 - **Node Editor & Vector Canvas (`nexa.widgets.nodes_canvas`)**: `node_editor` (`ed.node`, `ed.input`, `ed.output`, `ed.content`, `ed.link`, `ed.created_links`, `ed.removed_links`), `canvas(id, w, h, paint_fn)`, `draw_rect`, `draw_rect_border`, `draw_rect_gradient`, `draw_line`, `draw_polyline`, `draw_polygon`, `draw_circle`, `draw_arc`, `draw_bezier`, `draw_text`, `draw_image`, `clip_scope`, `state_buffer`.

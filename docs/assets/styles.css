@@ -169,8 +169,12 @@ code, kbd, pre {
 
 .dither canvas {
   display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
   opacity: 0;
-  transition: opacity 1100ms var(--ease);
+  transition: opacity 900ms var(--ease);
 }
 
 .dither.shown canvas {
@@ -369,9 +373,14 @@ body.guide-mode .read-progress {
 .brand-mark-svg {
   display: block;
   flex: none;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   color: var(--fg);
+  transition: transform 220ms var(--ease);
+}
+
+.brand:hover .brand-mark-svg {
+  transform: rotate(45deg) scale(1.04);
 }
 
 .brand-badge {
@@ -805,6 +814,8 @@ body.guide-mode .read-progress {
 /* Numbered Editorial Sections (`01` .. `05` matching CUI's .home-feature) */
 .home-feature {
   margin-top: 120px;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 560px;
 }
 
 .feature-head {
@@ -1699,6 +1710,273 @@ body.guide-mode .read-progress {
   }
   .facts li + li {
     border-top: 1px solid var(--border-subtle);
+  }
+}
+
+/* ==========================================================================
+   v1.1 Tutorial Track, Sidebar Sub-Navigation, Interactive Component Catalog & Changelog
+   ========================================================================== */
+
+.sidebar-sublinks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 3px 0 8px 12px;
+  padding-left: 10px;
+  border-left: 1px solid var(--border);
+}
+
+.sidebar-sublink {
+  display: block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--text-3);
+  text-decoration: none;
+  transition: color var(--t-hover), background var(--t-hover);
+}
+
+.sidebar-sublink:hover {
+  color: var(--fg);
+  background: var(--surface-muted);
+}
+
+.tutorial-track {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 24px;
+  padding: 10px 12px;
+  border-radius: var(--radius-surface);
+  background: var(--bezel);
+  box-shadow: 0 0 0 1px var(--bezel-edge);
+}
+
+.tutorial-track-label {
+  font: 500 11px/1 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+  margin-right: 6px;
+}
+
+.track-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  text-decoration: none;
+  transition: background var(--t-hover), color var(--t-hover);
+}
+
+.track-step:hover {
+  color: var(--fg);
+  background: var(--surface);
+}
+
+.track-step.active {
+  background: var(--accent-subtle);
+  color: var(--fg);
+  box-shadow: 0 0 0 1px var(--accent-ring);
+}
+
+.track-step-num {
+  font: 500 11px/1 var(--font-mono);
+  color: var(--accent);
+}
+
+.tutorials-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.tutorial-hub-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  border-radius: var(--radius-surface);
+  background: var(--bezel);
+  box-shadow: 0 0 0 1px var(--bezel-edge);
+  text-decoration: none;
+  color: var(--fg);
+  transition: transform var(--t-hover), box-shadow var(--t-hover);
+}
+
+.tutorial-hub-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px var(--accent-ring), var(--shadow-sm);
+}
+
+.tutorial-hub-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.tutorial-hub-num {
+  font: 500 12px/1 var(--font-mono);
+  color: var(--accent);
+}
+
+.tutorial-hub-meta {
+  font: 400 11.5px/1 var(--font-mono);
+  color: var(--text-3);
+}
+
+.tutorial-hub-card h3 {
+  margin: 2px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.tutorial-hub-card p {
+  margin: 0;
+  font-size: 13.8px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+.badge-new {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font: 500 10.5px/1.3 var(--font-mono);
+  background: var(--accent-subtle);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-ring);
+  vertical-align: middle;
+}
+
+.catalog-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0 22px;
+  padding: 14px;
+  border-radius: var(--radius-surface);
+  background: var(--bezel);
+  box-shadow: 0 0 0 1px var(--bezel-edge);
+}
+
+.catalog-search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.catalog-search-row input {
+  flex: 1 1 240px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg);
+  font: 400 13.5px/1.3 var(--font);
+}
+
+.catalog-count {
+  font: 400 12px/1 var(--font-mono);
+  color: var(--text-3);
+}
+
+.catalog-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.catalog-chip {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font: 500 12px/1.2 var(--font);
+  cursor: pointer;
+  transition: background var(--t-hover), color var(--t-hover), border-color var(--t-hover);
+}
+
+.catalog-chip:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+
+.catalog-chip.active {
+  background: var(--accent-subtle);
+  color: var(--fg);
+  border-color: var(--accent);
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.catalog-card {
+  padding: 14px 16px;
+  border-radius: var(--radius-surface);
+  background: var(--bezel);
+  box-shadow: 0 0 0 1px var(--bezel-edge);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.catalog-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.catalog-card-sig {
+  font: 500 13px/1.35 var(--font-mono);
+  color: var(--fg);
+  word-break: break-word;
+}
+
+.catalog-card-domain {
+  font: 400 11px/1 var(--font-mono);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.catalog-card p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.changelog-entry {
+  padding: 22px;
+  margin-top: 18px;
+  border-radius: var(--radius-surface);
+  background: var(--bezel);
+  box-shadow: 0 0 0 1px var(--bezel-edge);
+}
+
+.changelog-entry h2 {
+  margin-top: 0 !important;
+}
+
+@media (max-width: 720px) {
+  .tutorials-hub-grid,
+  .catalog-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

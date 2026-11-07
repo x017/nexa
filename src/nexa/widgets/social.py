@@ -9,12 +9,13 @@ from typing import Optional, Sequence, Tuple
 from .._cdefs import (
     CuiChatOpts,
     CuiCommentOpts,
+    CuiMarkdownResult,
     CuiPresenceUser,
     encode_opt,
     encode_str,
     to_c_color,
 )
-from ..types import CommentFlags, PresenceUser
+from ..types import CommentFlags, MarkdownResult, PresenceUser
 
 
 class SocialMixin:
@@ -31,7 +32,8 @@ class SocialMixin:
         grouped: bool = False,
         last_in_group: bool = True,
         avatar: int = 0,
-    ) -> None:
+        markdown: bool = False,
+    ) -> Optional[MarkdownResult]:
         keep = self._frame_keepalive
         opts = CuiChatOpts()
         opts.mine = bool(mine)
@@ -41,8 +43,26 @@ class SocialMixin:
         opts.grouped = bool(grouped)
         opts.last_in_group = bool(last_in_group)
         opts.avatar = int(avatar)
+        opts.markdown = bool(markdown)
+        c_md = None
+        if markdown:
+            c_md = CuiMarkdownResult()
+            opts.markdown_result = ctypes.pointer(c_md)
+            keep.append(c_md)
         keep.append(opts)
         self._lib.cui_chat_message_ex(self._ctx, encode_str(text, keep), ctypes.byref(opts))
+        if c_md is not None:
+            res = MarkdownResult(
+                link=c_md.link.decode("utf-8", errors="replace") if c_md.link else None,
+                hovered_link=c_md.hovered_link.decode("utf-8", errors="replace") if c_md.hovered_link else None,
+                task_offset=int(c_md.task_offset),
+                task_line=int(c_md.task_line),
+                task_checked=bool(c_md.task_checked),
+                height=float(c_md.height),
+            )
+            self._record_change(bool(res))
+            return res
+        return None
 
     def chat_divider(self, label: str) -> None:
         self._lib.cui_chat_divider(self._ctx, encode_str(label, self._frame_keepalive))

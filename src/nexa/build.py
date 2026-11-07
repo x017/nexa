@@ -45,17 +45,26 @@ CORE_C_FILES: Sequence[str] = (
     "src/cui_pickers.c",
     "src/cui_disclosure.c",
     "src/cui_grid.c",
+    "src/cui_treetable.c",
     "src/cui_code.c",
+    "src/cui_markdown.c",
+    "src/cui_editor.c",
+    "src/cui_diff.c",
     "src/cui_tools.c",
+    "src/cui_hex.c",
     "src/cui_social.c",
     "src/cui_media.c",
     "src/cui_planning.c",
     "src/cui_chrome.c",
+    "src/cui_dock.c",
     "src/cui_viz.c",
     "src/cui_motion.c",
     "src/cui_ai.c",
     "src/cui_image.c",
     "src/cui_nodes.c",
+    "src/cui_flame.c",
+    "src/cui_curves.c",
+    "src/cui_timeline.c",
 )
 
 
@@ -117,6 +126,7 @@ def build_native(
     default_fonts: Optional[bool] = None,
     stb_image: Optional[bool] = None,
     image_all_formats: Optional[bool] = None,
+    text_shaping: Optional[bool] = None,
     backend: Optional[str] = None,
     lto: Optional[bool] = None,
     debug: bool = False,
@@ -133,6 +143,11 @@ def build_native(
     use_fonts = default_fonts if default_fonts is not None else _env_bool(env, "NEXA_DEFAULT_FONTS", not is_minimal)
     use_stb = stb_image if stb_image is not None else _env_bool(env, "NEXA_STB_IMAGE", not is_minimal)
     use_img_all = image_all_formats if image_all_formats is not None else _env_bool(env, "NEXA_IMAGE_ALL", False)
+    use_shape = (
+        text_shaping
+        if text_shaping is not None
+        else (_env_bool(env, "NEXA_TEXT_SHAPING", False) or _env_bool(env, "NEXA_RTL", False))
+    )
     use_app = with_app if with_app is not None else _env_bool(env, "NEXA_WITH_APP", not is_minimal)
     use_gl = with_gl if with_gl is not None else _env_bool(env, "NEXA_WITH_GL", not is_minimal)
     use_sw = with_sw if with_sw is not None else _env_bool(env, "NEXA_WITH_SW", True)
@@ -162,6 +177,11 @@ def build_native(
     sources.append(str(csrc / "nexa_bridge.c"))
 
     defines: List[str] = ["CUI_SHARED", "CUI_BUILDING"]
+    if use_shape:
+        sources.append(str(csrc / "src" / "cui_bidi.c"))
+        sources.append(str(csrc / "src" / "cui_shape.c"))
+        defines.append("CUI_TEXT_SHAPING")
+
     if use_fonts:
         sources.append(str(csrc / "src" / "cui_font_data.c"))
         sources.append(str(csrc / "src" / "cui_inflate.c"))
@@ -312,6 +332,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--no-fonts", action="store_true", help="Omit embedded Inter/Geist/Lucide fonts")
     parser.add_argument("--no-image", action="store_true", help="Omit stb_image PNG/JPEG decoder")
     parser.add_argument("--all-image-formats", action="store_true", help="Include BMP/GIF/TGA decoding")
+    parser.add_argument("--rtl", "--text-shaping", dest="rtl", action="store_true", help="Enable bidirectional paragraphs & Arabic-script OpenType shaping")
     parser.add_argument("--headless", action="store_true", help="Omit native windowing & file dialogs")
     parser.add_argument("--no-gl", action="store_true", help="Omit OpenGL renderer")
     parser.add_argument("--no-sw", action="store_true", help="Omit software renderer")
@@ -334,6 +355,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         default_fonts=False if (args.minimal or args.no_fonts) else None,
         stb_image=False if (args.minimal or args.no_image) else None,
         image_all_formats=True if args.all_image_formats else None,
+        text_shaping=True if args.rtl else None,
         backend=args.platform,
         lto=True if args.lto else None,
         debug=args.debug,

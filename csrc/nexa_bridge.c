@@ -15,7 +15,8 @@ enum {
     NEXA_FEAT_APP           = 1 << 2,
     NEXA_FEAT_DEFAULT_FONTS = 1 << 3,
     NEXA_FEAT_STB_IMAGE     = 1 << 4,
-    NEXA_FEAT_IMAGE_ALL     = 1 << 5
+    NEXA_FEAT_IMAGE_ALL     = 1 << 5,
+    NEXA_FEAT_TEXT_SHAPING  = 1 << 6
 };
 
 static inline cui_color nexa__u2c(uint32_t u) {
@@ -70,6 +71,9 @@ CUI_API uint32_t nexa_features(void) {
 #endif
 #ifdef CUI_IMAGE_ALL_FORMATS
     f |= NEXA_FEAT_IMAGE_ALL;
+#endif
+#ifdef CUI_TEXT_SHAPING
+    f |= NEXA_FEAT_TEXT_SHAPING;
 #endif
     return f;
 }
@@ -516,6 +520,78 @@ CUI_API void nexa_canvas(cui_ctx *ui, const char *id,
     out_flags3[1] = r.pressed ? 1 : 0;
     out_flags3[2] = r.clicked ? 1 : 0;
     out_mouse2[0] = r.mouse.x; out_mouse2[1] = r.mouse.y;
+}
+
+/* ---- CUI 1.1.0 pointer-out ABI wrappers (TreeTable, PathBar, Markdown, CodeEditor, Diff, Hex, Flame, Curves, Gradient, Timeline) ---- */
+
+CUI_API void nexa_tree_table_end(cui_ctx *ui, cui_tree_table_events *out) {
+    cui_tree_table_events ev = cui_tree_table_end(ui);
+    if (out) *out = ev;
+}
+
+CUI_API void nexa_path_bar_ex(cui_ctx *ui, const char *id, const char *const *segments, int count,
+                              const cui_path_bar_opts *opts, cui_path_bar_result *out) {
+    cui_path_bar_result r = cui_path_bar_ex(ui, id, segments, count, opts);
+    if (out) *out = r;
+}
+
+CUI_API void nexa_markdown_ex(cui_ctx *ui, const char *id, const char *text,
+                              const cui_markdown_opts *opts, cui_markdown_result *out) {
+    cui_markdown_result r = cui_markdown_ex(ui, id, text, opts);
+    if (out) *out = r;
+}
+
+CUI_API void nexa_code_editor_ex(cui_ctx *ui, const char *id, char *buf, size_t cap,
+                                 const cui_code_editor_opts *opts, cui_code_editor_result *out) {
+    cui_code_editor_result r = cui_code_editor_ex(ui, id, buf, cap, opts);
+    if (out) *out = r;
+}
+
+CUI_API void nexa_diff_view_ex(cui_ctx *ui, const char *id, const char *old_text, const char *new_text,
+                               const cui_diff_opts *opts, cui_diff_result *out) {
+    cui_diff_result r = cui_diff_view_ex(ui, id, old_text, new_text, opts);
+    if (out) *out = r;
+}
+
+CUI_API void nexa_hex_view_ex(cui_ctx *ui, const char *id, const uint8_t *data, size_t size,
+                              cui_hex_selection *sel, const cui_hex_view_opts *opts, cui_hex_result *out) {
+    cui_hex_result r = cui_hex_view_ex(ui, id, data, size, sel, opts);
+    if (out) *out = r;
+}
+
+CUI_API void nexa_flame_graph_ex(cui_ctx *ui, const char *id, const cui_flame_span *spans, int count,
+                                 cui_flame_view *view, int *selected, const cui_flame_opts *opts,
+                                 cui_flame_result *out) {
+    cui_flame_result r = cui_flame_graph_ex(ui, id, spans, count, view, selected, opts);
+    if (out) *out = r;
+}
+
+CUI_API void nexa_flame_span_rect(cui_ctx *ui, cui_id flame, const cui_flame_span *span, float *out4) {
+    cui_rect r = cui_flame_span_rect(ui, flame, span);
+    out4[0] = r.x; out4[1] = r.y; out4[2] = r.w; out4[3] = r.h;
+}
+
+CUI_API void nexa_curve_editor_ex(cui_ctx *ui, const char *id, cui_curve_key *keys, int *count, int capacity,
+                                  const cui_curve_opts *opts, cui_curve_result *out) {
+    cui_curve_result r = cui_curve_editor_ex(ui, id, keys, count, capacity, opts);
+    if (out) *out = r;
+}
+
+CUI_API void nexa_gradient_editor_ex(cui_ctx *ui, const char *id, cui_gradient_stop *stops, int *count, int capacity,
+                                     const cui_gradient_opts *opts, cui_gradient_result *out) {
+    cui_gradient_result r = cui_gradient_editor_ex(ui, id, stops, count, capacity, opts);
+    if (out) *out = r;
+}
+
+CUI_API uint32_t nexa_gradient_eval(const cui_gradient_stop *stops, int count, float t) {
+    return nexa__c2u(cui_gradient_eval(stops, count, t));
+}
+
+CUI_API void nexa_timeline_editor_ex(cui_ctx *ui, const char *id, cui_timeline_track *tracks, int count,
+                                     float *time, const cui_timeline_editor_opts *opts,
+                                     cui_timeline_editor_result *out) {
+    cui_timeline_editor_result r = cui_timeline_editor_ex(ui, id, tracks, count, time, opts);
+    if (out) *out = r;
 }
 
 /* ---- Optional stubs when stripped via CUI_NO_SW / CUI_NO_GL / CUI_NO_APP ---- */

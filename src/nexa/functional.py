@@ -8,6 +8,8 @@ from typing import Any, Callable, Dict, Optional
 from ._context_var import get_current_ui, try_get_current_ui
 from .app import App
 from .ui import UI
+from .widgets.data import diff_compute, diff_words, tree_sort
+from .widgets.tools import curve_eval, flame_sort, gradient_eval
 
 _EXCLUDED = frozenset({
     "close",
@@ -21,6 +23,12 @@ _EXCLUDED = frozenset({
     "render_to_png",
     "draw_data",
     "raw_handle",
+    "diff_compute",
+    "diff_words",
+    "tree_sort",
+    "flame_sort",
+    "curve_eval",
+    "gradient_eval",
 })
 
 
@@ -77,6 +85,12 @@ FUNCTIONAL_EXPORTS: Dict[str, Callable[..., Any]] = {
     "focused": focused,
     "blurred": blurred,
     "run": run,
+    "diff_compute": diff_compute,
+    "diff_words": diff_words,
+    "tree_sort": tree_sort,
+    "flame_sort": flame_sort,
+    "curve_eval": curve_eval,
+    "gradient_eval": gradient_eval,
 }
 
 for _attr_name in dir(UI):

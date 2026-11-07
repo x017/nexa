@@ -32,7 +32,7 @@ def test_c_struct_sizeof_parity(tmp_path: pathlib.Path) -> None:
             c_name = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
             pairs.append((name, c_name, ctypes.sizeof(obj)))
 
-    assert len(pairs) >= 75
+    assert len(pairs) >= 110
 
     c_src = tmp_path / "check_sizes.c"
     c_bin = tmp_path / "check_sizes"
@@ -80,11 +80,11 @@ def test_ast_native_symbol_and_argcount_parity() -> None:
 
 
 def test_minimal_stripped_builds_and_size(tmp_path: pathlib.Path) -> None:
-    """Stripped minimal builds compile cleanly, bind all symbols, and stay compact (<600 KB)."""
+    """Stripped minimal & RTL text-shaping builds compile cleanly, bind all symbols, and stay compact."""
     min_so = build_native(output_path=tmp_path / "libnexa_min.so", minimal=True)
     assert min_so.is_file()
     size_kb = min_so.stat().st_size / 1024.0
-    assert size_kb < 600.0, f"Expected minimal shared library < 600 KB, got {size_kb:.1f} KB"
+    assert size_kb < 750.0, f"Expected minimal shared library < 750 KB, got {size_kb:.1f} KB"
 
     lib = ctypes.CDLL(str(min_so))
     _cdefs.bind_prototypes(lib)
@@ -94,6 +94,14 @@ def test_minimal_stripped_builds_and_size(tmp_path: pathlib.Path) -> None:
     assert nexa.BuildFeatures.APP not in feats
     assert nexa.BuildFeatures.DEFAULT_FONTS not in feats
     assert nexa.BuildFeatures.STB_IMAGE not in feats
+    assert nexa.BuildFeatures.TEXT_SHAPING not in feats
+
+    rtl_so = build_native(output_path=tmp_path / "libnexa_rtl.so", minimal=True, text_shaping=True)
+    assert rtl_so.is_file()
+    rtl_lib = ctypes.CDLL(str(rtl_so))
+    _cdefs.bind_prototypes(rtl_lib)
+    rtl_feats = nexa.BuildFeatures(int(rtl_lib.nexa_features()))
+    assert nexa.BuildFeatures.TEXT_SHAPING in rtl_feats
 
 
 def test_lazy_imports_and_freeze_flags() -> None:

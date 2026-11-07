@@ -7,6 +7,8 @@ from ctypes import c_bool, c_int
 from typing import Optional, Sequence
 
 from .._cdefs import (
+    CuiDockPanelOpts,
+    CuiDockspaceOpts,
     CuiDocTab,
     CuiDocTabsOpts,
     CuiMenuBarMenuOpts,
@@ -18,9 +20,10 @@ from .._cdefs import (
     CuiToolOpts,
     encode_opt,
     encode_str,
+    to_c_size,
 )
-from ..scopes import ConditionalScope, SimpleScope
-from ..types import DocTab, DocTabsResult, Tone
+from ..scopes import ConditionalScope, OpenStateScope, SimpleScope
+from ..types import DocTab, DocTabsResult, SizeLike, Tone
 
 
 class ChromeMixin:
@@ -216,3 +219,87 @@ class ChromeMixin:
             int(out_flags[2]),
             int(out_flags[3]),
         )
+
+    # ---- Docking Workspace (CUI 1.1.0) ----
+
+    def dockspace(
+        self,
+        id: str = "dockspace",
+        *,
+        layout: Optional[str] = None,
+        width: SizeLike = None,
+        height: SizeLike = None,
+        min_panel_width: float = 0.0,
+        min_panel_height: float = 0.0,
+        shortcuts: bool = True,
+    ) -> SimpleScope:
+        """Multi-split tabbed docking workspace.
+
+        Optional initial ``layout`` DSL example:
+        ``"h0.24([*Explorer],v0.68([*Editor,Diff],[*Console,Hex]))"``
+        (with or without the ``"dock1 "`` header prefix).
+        """
+        keep = self._frame_keepalive
+        norm_layout = layout
+        if norm_layout is not None:
+            s = norm_layout.strip()
+            if s and not s.startswith("dock1 "):
+                norm_layout = "dock1 " + s
+        opts = CuiDockspaceOpts()
+        opts.layout = encode_opt(norm_layout, keep)
+        opts.width = to_c_size(width)
+        opts.height = to_c_size(height)
+        opts.min_panel_width = float(min_panel_width)
+        opts.min_panel_height = float(min_panel_height)
+        opts.shortcuts = bool(shortcuts)
+        keep.append(opts)
+        self._lib.cui_dockspace_begin_ex(self._ctx, encode_str(id, keep), ctypes.byref(opts))
+        return SimpleScope(self._ctx, self._lib.cui_dockspace_end)
+
+    def dock_panel(
+        self,
+        title: str,
+        is_open: Optional[bool] = None,
+        *,
+        icon: Optional[str] = None,
+        dirty: bool = False,
+    ) -> OpenStateScope:
+        """Dockable panel inside an active ``dockspace``; check ``if panel:`` before building body."""
+        keep = self._frame_keepalive
+        opts = CuiDockPanelOpts()
+        opts.icon = encode_opt(icon, keep)
+        opts.dirty = bool(dirty)
+        keep.append(opts)
+        if is_open is None:
+            vis = bool(self._lib.cui_dock_panel_begin_ex(
+                self._ctx, encode_str(title, keep), None, ctypes.byref(opts)
+            ))
+            return OpenStateScope(self._ctx, self._lib.cui_dock_panel_end, vis, True)
+        c_open = c_bool(bool(is_open))
+        keep.append(c_open)
+        vis = bool(self._lib.cui_dock_panel_begin_ex(
+            self._ctx, encode_str(title, keep), ctypes.byref(c_open), ctypes.byref(opts)
+        ))
+        if bool(c_open.value) != bool(is_open):
+            self._record_change(True)
+        return OpenStateScope(self._ctx, self._lib.cui_dock_panel_end, vis, bool(c_open.value))
+
+    def dock_save(self, id: str = "dockspace") -> str:
+        """Serialize the current split/tab layout of ``dockspace(id)`` into a string."""
+        keep = self._frame_keepalive
+        cid = encode_str(id, keep)
+        needed = int(self._lib.cui_dock_save(self._ctx, cid, None, 0))
+        if needed <= 0:
+            return ""
+        buf = ctypes.create_string_buffer(needed + 1)
+        self._lib.cui_dock_save(self._ctx, cid, buf, needed + 1)
+        return buf.value.decode("utf-8", errors="replace")
+
+    def dock_load(self, id: str, layout: str) -> bool:
+        """Restore a serialized layout string into ``dockspace(id)``."""
+        keep = self._frame_keepalive
+        s = layout.strip()
+        norm_layout = ("dock1 " + s) if (s and not s.startswith("dock1 ")) else s
+        return bool(self._lib.cui_dock_load(
+            self._ctx, encode_str(id, keep), encode_str(norm_layout, keep)
+        ))

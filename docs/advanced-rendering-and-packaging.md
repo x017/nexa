@@ -103,13 +103,16 @@ Want to render `nexa` inside your own **Vulkan**, **Metal**, **Direct3D 12**, **
 Compile a stripped custom shared library removing unused subsystems via CLI or environment variables:
 
 ```bash
-# Default full build (~652 KB: SW + GL 3.3 + OS Windowing + Embedded Fonts + PNG/JPEG)
+# Default full build (~820 KB: SW + GL 3.3 + OS Windowing + Embedded Fonts + PNG/JPEG + 160+ widgets)
 python3 -m nexa.build
 
-# Minimal LTO build with Software Renderer (~499 KB)
+# Enable Unicode BiDi paragraphs & Arabic-script OpenType glyph shaping (CUI 1.1)
+python3 -m nexa.build --rtl
+
+# Minimal LTO build with Software Renderer (~672 KB)
 python3 -m nexa.build --minimal --lto
 
-# Ultra-minimal Core-Only LTO build for custom GPU engines (~487 KB)
+# Ultra-minimal Core-Only LTO build for custom GPU engines (~660 KB)
 python3 -m nexa.build --minimal --no-sw --lto
 ```
 

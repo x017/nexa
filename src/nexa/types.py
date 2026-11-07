@@ -354,6 +354,46 @@ class BuildFeatures(IntFlag):
     DEFAULT_FONTS = 1 << 3
     STB_IMAGE = 1 << 4
     IMAGE_ALL = 1 << 5
+    TEXT_SHAPING = 1 << 6
+
+
+class TreeFlags(IntFlag):
+    NONE = 0
+    HAS_CHILDREN = 1 << 0
+    OPEN = 1 << 1
+    SELECTED = 1 << 2
+    LOADING = 1 << 3
+
+
+class DiffMode(IntEnum):
+    SPLIT = 0
+    INLINE = 1
+
+
+class DiffRowKind(IntEnum):
+    CONTEXT = 0
+    ADD = 1
+    DELETE = 2
+    CHANGE = 3
+    FOLD = 4
+
+
+class DiffFlags(IntFlag):
+    NONE = 0
+    IGNORE_EOL = 1 << 0
+
+
+class CurveMode(IntEnum):
+    SMOOTH = 0
+    FREE = 1
+    LINEAR = 2
+    STEP = 3
+
+
+class TimelineRuler(IntEnum):
+    FRAMES = 0
+    SECONDS = 1
+    TIMECODE = 2
 
 
 # ---------------------------------------------------------------------------
@@ -583,6 +623,14 @@ class Color:
 
     def _packed(self) -> int:
         return self.r | (self.g << 8) | (self.b << 16) | (self.a << 24)
+
+    def with_alpha(self, alpha: Union[float, int]) -> Color:
+        """Return an RGBA copy with updated alpha (`0.0..1.0` float or `0..255` int)."""
+        if isinstance(alpha, float):
+            a_u8 = max(0, min(255, int(round(alpha * 255.0))))
+        else:
+            a_u8 = max(0, min(255, int(alpha)))
+        return Color(self.r, self.g, self.b, a_u8)
 
     @property
     def is_token(self) -> bool:
@@ -817,15 +865,16 @@ class TableSort:
 
 
 class GridColumn:
-    __slots__ = ("title", "width", "align", "sortable", "fixed")
+    __slots__ = ("title", "width", "align", "sortable", "fixed", "priority")
 
     def __init__(self, title: str, width: float = 150.0, align: TextAlign = TextAlign.LEFT,
-                 sortable: bool = False, fixed: bool = False) -> None:
+                 sortable: bool = False, fixed: bool = False, priority: int = 0) -> None:
         self.title = title
         self.width = float(width)
         self.align = align
         self.sortable = sortable
         self.fixed = fixed
+        self.priority = int(priority)
 
 
 class Series:
@@ -1236,3 +1285,727 @@ class DropResult:
 
     def __repr__(self) -> str:
         return f"DropResult(code={self.code}, files={self.files!r})"
+
+
+# ---------------------------------------------------------------------------
+# CUI 1.1.0 Models & Value-Returning Results
+# ---------------------------------------------------------------------------
+
+class TreeNode:
+    """Topology node for ``tree_table`` (flat arena of parent / first_child / next_sibling indices)."""
+
+    __slots__ = ("parent", "first_child", "next_sibling", "flags")
+
+    def __init__(
+        self,
+        parent: int = -1,
+        first_child: int = -1,
+        next_sibling: int = -1,
+        flags: Union[TreeFlags, int] = TreeFlags.NONE,
+    ) -> None:
+        self.parent = int(parent)
+        self.first_child = int(first_child)
+        self.next_sibling = int(next_sibling)
+        self.flags = TreeFlags(int(flags))
+
+    @property
+    def has_children(self) -> bool:
+        return bool(self.flags & TreeFlags.HAS_CHILDREN)
+
+    @property
+    def is_open(self) -> bool:
+        return bool(self.flags & TreeFlags.OPEN)
+
+    @property
+    def is_selected(self) -> bool:
+        return bool(self.flags & TreeFlags.SELECTED)
+
+    @property
+    def is_loading(self) -> bool:
+        return bool(self.flags & TreeFlags.LOADING)
+
+    def __repr__(self) -> str:
+        return (
+            f"TreeNode(parent={self.parent}, first_child={self.first_child}, "
+            f"next_sibling={self.next_sibling}, flags={self.flags!r})"
+        )
+
+
+class TreeTableEvents:
+    """Events populated on exit of ``tree_table``."""
+
+    __slots__ = ("activated", "expanded", "collapsed", "load", "selection_changed", "sort_changed")
+
+    def __init__(
+        self,
+        activated: int = -1,
+        expanded: int = -1,
+        collapsed: int = -1,
+        load: Tuple[int, ...] = (),
+        selection_changed: bool = False,
+        sort_changed: bool = False,
+    ) -> None:
+        self.activated = int(activated)
+        self.expanded = int(expanded)
+        self.collapsed = int(collapsed)
+        self.load = tuple(int(x) for x in load)
+        self.selection_changed = bool(selection_changed)
+        self.sort_changed = bool(sort_changed)
+
+    def __bool__(self) -> bool:
+        return (
+            self.activated >= 0
+            or self.expanded >= 0
+            or self.collapsed >= 0
+            or bool(self.load)
+            or self.selection_changed
+            or self.sort_changed
+        )
+
+    def __repr__(self) -> str:
+        return (
+            f"TreeTableEvents(activated={self.activated}, expanded={self.expanded}, "
+            f"collapsed={self.collapsed}, load={self.load!r}, "
+            f"selection_changed={self.selection_changed}, sort_changed={self.sort_changed})"
+        )
+
+
+class PathBarResult:
+    """Returned by ``path_bar``; unpacks as ``(clicked, submitted)``."""
+
+    __slots__ = ("clicked", "submitted", "editing")
+
+    def __init__(self, clicked: int = -1, submitted: Optional[str] = None, editing: bool = False) -> None:
+        self.clicked = int(clicked)
+        self.submitted = submitted
+        self.editing = bool(editing)
+
+    def __bool__(self) -> bool:
+        return self.clicked >= 0 or self.submitted is not None
+
+    def __iter__(self):
+        yield self.clicked
+        yield self.submitted
+
+    def __repr__(self) -> str:
+        return f"PathBarResult(clicked={self.clicked}, submitted={self.submitted!r}, editing={self.editing})"
+
+
+class MarkdownResult:
+    """Returned by ``markdown`` (and ``chat_message(..., markdown=True)``)."""
+
+    __slots__ = ("link", "hovered_link", "task_offset", "task_line", "task_checked", "height")
+
+    def __init__(
+        self,
+        link: Optional[str] = None,
+        hovered_link: Optional[str] = None,
+        task_offset: int = -1,
+        task_line: int = -1,
+        task_checked: bool = False,
+        height: float = 0.0,
+    ) -> None:
+        self.link = link
+        self.hovered_link = hovered_link
+        self.task_offset = int(task_offset)
+        self.task_line = int(task_line)
+        self.task_checked = bool(task_checked)
+        self.height = float(height)
+
+    @property
+    def task_toggled(self) -> bool:
+        return self.task_offset >= 0
+
+    def apply_task(self, markdown_text: str) -> str:
+        """If a GFM task checkbox was toggled this frame, return updated ``markdown_text``."""
+        if self.task_offset < 0:
+            return markdown_text
+        raw = bytearray(markdown_text.encode("utf-8"))
+        off = self.task_offset
+        if 0 <= off < len(raw) and raw[off] in (ord(" "), ord("x"), ord("X")):
+            raw[off] = ord("x") if self.task_checked else ord(" ")
+            return raw.decode("utf-8", errors="replace")
+        return markdown_text
+
+    def __bool__(self) -> bool:
+        return self.link is not None or self.task_offset >= 0
+
+    def __repr__(self) -> str:
+        return (
+            f"MarkdownResult(link={self.link!r}, task_line={self.task_line}, "
+            f"task_checked={self.task_checked}, height={self.height:g})"
+        )
+
+
+class CodeEditorResult:
+    """Returned by ``code_editor``; unpacks as ``(text, changed)``."""
+
+    __slots__ = (
+        "text", "changed", "refused", "focused", "cursor", "anchor",
+        "line", "column", "line_count", "length",
+        "bracket", "bracket_match", "find_matches", "find_index",
+    )
+
+    def __init__(
+        self,
+        text: str,
+        changed: bool = False,
+        refused: bool = False,
+        focused: bool = False,
+        cursor: int = 0,
+        anchor: int = 0,
+        line: int = 1,
+        column: int = 1,
+        line_count: int = 1,
+        length: int = 0,
+        bracket: int = -1,
+        bracket_match: int = -1,
+        find_matches: int = 0,
+        find_index: int = -1,
+    ) -> None:
+        self.text = text
+        self.changed = bool(changed)
+        self.refused = bool(refused)
+        self.focused = bool(focused)
+        self.cursor = int(cursor)
+        self.anchor = int(anchor)
+        self.line = int(line)
+        self.column = int(column)
+        self.line_count = int(line_count)
+        self.length = int(length)
+        self.bracket = int(bracket)
+        self.bracket_match = int(bracket_match)
+        self.find_matches = int(find_matches)
+        self.find_index = int(find_index)
+
+    def __iter__(self):
+        yield self.text
+        yield self.changed
+
+    def __bool__(self) -> bool:
+        return self.changed
+
+    def __repr__(self) -> str:
+        return (
+            f"CodeEditorResult(changed={self.changed}, line={self.line}, column={self.column}, "
+            f"line_count={self.line_count}, length={self.length})"
+        )
+
+
+class DiffResult:
+    """Returned by ``diff_view``."""
+
+    __slots__ = (
+        "added", "removed", "changes", "current", "current_changed",
+        "mode", "folds", "hidden", "recomputed", "approximate",
+    )
+
+    def __init__(
+        self,
+        added: int = 0,
+        removed: int = 0,
+        changes: int = 0,
+        current: int = 0,
+        current_changed: bool = False,
+        mode: DiffMode = DiffMode.SPLIT,
+        folds: int = 0,
+        hidden: int = 0,
+        recomputed: bool = False,
+        approximate: bool = False,
+    ) -> None:
+        self.added = int(added)
+        self.removed = int(removed)
+        self.changes = int(changes)
+        self.current = int(current)
+        self.current_changed = bool(current_changed)
+        self.mode = DiffMode(int(mode))
+        self.folds = int(folds)
+        self.hidden = int(hidden)
+        self.recomputed = bool(recomputed)
+        self.approximate = bool(approximate)
+
+    def __repr__(self) -> str:
+        return (
+            f"DiffResult(added={self.added}, removed={self.removed}, changes={self.changes}, "
+            f"current={self.current}, mode={self.mode.name})"
+        )
+
+
+class DiffRow:
+    __slots__ = ("kind", "old_line", "new_line", "change", "hidden")
+
+    def __init__(self, kind: DiffRowKind, old_line: int, new_line: int, change: int, hidden: int) -> None:
+        self.kind = DiffRowKind(int(kind))
+        self.old_line = int(old_line)
+        self.new_line = int(new_line)
+        self.change = int(change)
+        self.hidden = int(hidden)
+
+    def __repr__(self) -> str:
+        return (
+            f"DiffRow(kind={self.kind.name}, old_line={self.old_line}, "
+            f"new_line={self.new_line}, change={self.change}, hidden={self.hidden})"
+        )
+
+
+class DiffHunk:
+    __slots__ = ("old_start", "old_count", "new_start", "new_count")
+
+    def __init__(self, old_start: int, old_count: int, new_start: int, new_count: int) -> None:
+        self.old_start = int(old_start)
+        self.old_count = int(old_count)
+        self.new_start = int(new_start)
+        self.new_count = int(new_count)
+
+    def __repr__(self) -> str:
+        return f"DiffHunk(-{self.old_start},{self.old_count} +{self.new_start},{self.new_count})"
+
+
+class DiffStats:
+    __slots__ = ("added", "removed", "hunks", "old_lines", "new_lines", "approximate")
+
+    def __init__(
+        self,
+        added: int = 0,
+        removed: int = 0,
+        hunks: int = 0,
+        old_lines: int = 0,
+        new_lines: int = 0,
+        approximate: bool = False,
+    ) -> None:
+        self.added = int(added)
+        self.removed = int(removed)
+        self.hunks = int(hunks)
+        self.old_lines = int(old_lines)
+        self.new_lines = int(new_lines)
+        self.approximate = bool(approximate)
+
+    def __repr__(self) -> str:
+        return (
+            f"DiffStats(added={self.added}, removed={self.removed}, hunks={self.hunks}, "
+            f"old_lines={self.old_lines}, new_lines={self.new_lines}, approximate={self.approximate})"
+        )
+
+
+class DiffRange:
+    __slots__ = ("start", "length")
+
+    def __init__(self, start: int, length: int) -> None:
+        self.start = int(start)
+        self.length = int(length)
+
+    def __iter__(self):
+        yield self.start
+        yield self.length
+
+    def __repr__(self) -> str:
+        return f"DiffRange(start={self.start}, length={self.length})"
+
+
+class HexRange:
+    """Colored annotation span in ``hex_view``."""
+
+    __slots__ = ("offset", "length", "tone", "label")
+
+    def __init__(
+        self,
+        offset: int,
+        length: int,
+        tone: Tone = Tone.NEUTRAL,
+        label: Optional[str] = None,
+    ) -> None:
+        self.offset = int(offset)
+        self.length = int(length)
+        self.tone = tone
+        self.label = label
+
+
+class HexSelection:
+    __slots__ = ("start", "length", "cursor")
+
+    def __init__(self, start: int = 0, length: int = 0, cursor: int = 0) -> None:
+        self.start = int(start)
+        self.length = int(length)
+        self.cursor = int(cursor)
+
+    def __iter__(self):
+        yield self.start
+        yield self.length
+        yield self.cursor
+
+    def __repr__(self) -> str:
+        return f"HexSelection(start={self.start}, length={self.length}, cursor={self.cursor})"
+
+
+class HexResult:
+    """Returned by ``hex_view``."""
+
+    __slots__ = (
+        "selection", "selection_changed", "edited",
+        "edit_offset", "edit_length", "hovered", "copied",
+    )
+
+    def __init__(
+        self,
+        selection: HexSelection,
+        selection_changed: bool = False,
+        edited: bool = False,
+        edit_offset: int = 0,
+        edit_length: int = 0,
+        hovered: int = -1,
+        copied: bool = False,
+    ) -> None:
+        self.selection = selection
+        self.selection_changed = bool(selection_changed)
+        self.edited = bool(edited)
+        self.edit_offset = int(edit_offset)
+        self.edit_length = int(edit_length)
+        self.hovered = int(hovered)
+        self.copied = bool(copied)
+
+    def __bool__(self) -> bool:
+        return self.edited or self.selection_changed
+
+    def __repr__(self) -> str:
+        return (
+            f"HexResult(selection={self.selection!r}, edited={self.edited}, "
+            f"hovered={self.hovered}, copied={self.copied})"
+        )
+
+
+class FlameSpan:
+    """Single profiling span in ``flame_graph``."""
+
+    __slots__ = ("name", "start", "end", "depth", "color_key")
+
+    def __init__(
+        self,
+        name: str,
+        start: float,
+        end: float,
+        depth: int = 0,
+        color_key: int = 0,
+    ) -> None:
+        self.name = name
+        self.start = float(start)
+        self.end = float(end)
+        self.depth = int(depth)
+        self.color_key = int(color_key) & 0xFFFFFFFF
+
+    @property
+    def duration(self) -> float:
+        return self.end - self.start
+
+    def __repr__(self) -> str:
+        return f"FlameSpan({self.name!r}, start={self.start:g}, end={self.end:g}, depth={self.depth})"
+
+
+class FlameView:
+    __slots__ = ("start", "end", "scroll")
+
+    def __init__(self, start: float = 0.0, end: float = 0.0, scroll: float = 0.0) -> None:
+        self.start = float(start)
+        self.end = float(end)
+        self.scroll = float(scroll)
+
+    def __iter__(self):
+        yield self.start
+        yield self.end
+        yield self.scroll
+
+    def __repr__(self) -> str:
+        return f"FlameView(start={self.start:g}, end={self.end:g}, scroll={self.scroll:g})"
+
+
+class FlameResult:
+    """Returned by ``flame_graph``."""
+
+    __slots__ = ("selected", "view", "selection_changed", "view_changed", "hovered", "zoomed")
+
+    def __init__(
+        self,
+        selected: int = -1,
+        view: Optional[FlameView] = None,
+        selection_changed: bool = False,
+        view_changed: bool = False,
+        hovered: int = -1,
+        zoomed: int = -1,
+    ) -> None:
+        self.selected = int(selected)
+        self.view = view or FlameView()
+        self.selection_changed = bool(selection_changed)
+        self.view_changed = bool(view_changed)
+        self.hovered = int(hovered)
+        self.zoomed = int(zoomed)
+
+    def __bool__(self) -> bool:
+        return self.selection_changed or self.view_changed
+
+    def __repr__(self) -> str:
+        return (
+            f"FlameResult(selected={self.selected}, hovered={self.hovered}, "
+            f"zoomed={self.zoomed}, view={self.view!r})"
+        )
+
+
+class CurveKey:
+    """Bezier/linear/step keyframe in ``curve_editor`` and ``timeline_editor``."""
+
+    __slots__ = ("x", "y", "in_dx", "in_dy", "out_dx", "out_dy", "mode")
+
+    def __init__(
+        self,
+        x: float,
+        y: float,
+        in_dx: float = 0.0,
+        in_dy: float = 0.0,
+        out_dx: float = 0.0,
+        out_dy: float = 0.0,
+        mode: CurveMode = CurveMode.SMOOTH,
+    ) -> None:
+        self.x = float(x)
+        self.y = float(y)
+        self.in_dx = float(in_dx)
+        self.in_dy = float(in_dy)
+        self.out_dx = float(out_dx)
+        self.out_dy = float(out_dy)
+        self.mode = CurveMode(int(mode))
+
+    def __repr__(self) -> str:
+        return f"CurveKey(x={self.x:g}, y={self.y:g}, mode={self.mode.name})"
+
+
+class CurveResult:
+    """Returned by ``curve_editor``; unpacks as ``(keys, changed)``."""
+
+    __slots__ = ("keys", "changed", "added", "removed", "selected", "hovered", "hover_x", "hover_y")
+
+    def __init__(
+        self,
+        keys: List[CurveKey],
+        changed: bool = False,
+        added: int = -1,
+        removed: int = -1,
+        selected: int = -1,
+        hovered: bool = False,
+        hover_x: float = 0.0,
+        hover_y: float = 0.0,
+    ) -> None:
+        self.keys = keys
+        self.changed = bool(changed)
+        self.added = int(added)
+        self.removed = int(removed)
+        self.selected = int(selected)
+        self.hovered = bool(hovered)
+        self.hover_x = float(hover_x)
+        self.hover_y = float(hover_y)
+
+    def __iter__(self):
+        yield self.keys
+        yield self.changed
+
+    def __bool__(self) -> bool:
+        return self.changed
+
+    def __repr__(self) -> str:
+        return f"CurveResult(keys={len(self.keys)}, changed={self.changed}, selected={self.selected})"
+
+
+class GradientStop:
+    """Color stop in ``gradient_editor``."""
+
+    __slots__ = ("pos", "color")
+
+    def __init__(self, pos: float, color: ColorLike) -> None:
+        self.pos = float(pos)
+        if isinstance(color, Color):
+            self.color = color
+        elif isinstance(color, str):
+            self.color = Color.hex(color)
+        elif isinstance(color, int):
+            self.color = Color.rgb(color)
+        elif isinstance(color, tuple):
+            self.color = Color(*color)
+        elif isinstance(color, Token):
+            self.color = Color.token(color)
+        else:
+            raise TypeError(f"Unsupported color for GradientStop: {color!r}")
+
+    def __repr__(self) -> str:
+        return f"GradientStop(pos={self.pos:g}, color={self.color!r})"
+
+
+class GradientResult:
+    """Returned by ``gradient_editor``; unpacks as ``(stops, changed)``."""
+
+    __slots__ = ("stops", "changed", "added", "removed", "selected")
+
+    def __init__(
+        self,
+        stops: List[GradientStop],
+        changed: bool = False,
+        added: int = -1,
+        removed: int = -1,
+        selected: int = -1,
+    ) -> None:
+        self.stops = stops
+        self.changed = bool(changed)
+        self.added = int(added)
+        self.removed = int(removed)
+        self.selected = int(selected)
+
+    def __iter__(self):
+        yield self.stops
+        yield self.changed
+
+    def __bool__(self) -> bool:
+        return self.changed
+
+    def __repr__(self) -> str:
+        return f"GradientResult(stops={len(self.stops)}, changed={self.changed}, selected={self.selected})"
+
+
+class TimelineClip:
+    """Clip span on a ``TimelineTrack``."""
+
+    __slots__ = ("start", "end", "offset", "name", "selected")
+
+    def __init__(
+        self,
+        start: float,
+        end: float,
+        offset: float = 0.0,
+        name: Optional[str] = None,
+        selected: bool = False,
+    ) -> None:
+        self.start = float(start)
+        self.end = float(end)
+        self.offset = float(offset)
+        self.name = name
+        self.selected = bool(selected)
+
+    def __repr__(self) -> str:
+        return f"TimelineClip(name={self.name!r}, start={self.start:g}, end={self.end:g}, selected={self.selected})"
+
+
+class TimelineTrack:
+    """Keyframe or clip track in ``timeline_editor``."""
+
+    __slots__ = (
+        "name", "icon", "depth", "collapsed", "muted", "locked",
+        "color", "keys", "key_selected", "clips",
+    )
+
+    def __init__(
+        self,
+        name: str,
+        *,
+        icon: Optional[str] = None,
+        depth: int = 0,
+        collapsed: bool = False,
+        muted: bool = False,
+        locked: bool = False,
+        color: int = 0,
+        keys: Optional[List[CurveKey]] = None,
+        key_selected: Optional[List[bool]] = None,
+        clips: Optional[List[TimelineClip]] = None,
+    ) -> None:
+        self.name = name
+        self.icon = icon
+        self.depth = int(depth)
+        self.collapsed = bool(collapsed)
+        self.muted = bool(muted)
+        self.locked = bool(locked)
+        self.color = int(color) & 0xFF
+        self.keys: List[CurveKey] = list(keys) if keys is not None else []
+        self.key_selected: Optional[List[bool]] = list(key_selected) if key_selected is not None else None
+        self.clips: List[TimelineClip] = list(clips) if clips is not None else []
+
+    def __repr__(self) -> str:
+        return f"TimelineTrack({self.name!r}, keys={len(self.keys)}, clips={len(self.clips)})"
+
+
+class TimelineView:
+    __slots__ = ("start", "end", "scroll")
+
+    def __init__(self, start: float = 0.0, end: float = 0.0, scroll: float = 0.0) -> None:
+        self.start = float(start)
+        self.end = float(end)
+        self.scroll = float(scroll)
+
+    def __repr__(self) -> str:
+        return f"TimelineView(start={self.start:g}, end={self.end:g}, scroll={self.scroll:g})"
+
+
+class TimelineEditorResult:
+    """Returned by ``timeline_editor``; unpacks as ``(time, changed)``."""
+
+    __slots__ = (
+        "time", "changed", "time_changed", "scrubbing", "play_toggled",
+        "selection_changed", "view_changed", "keys_moved",
+        "added_track", "added_key", "removed_keys", "removed_clips",
+        "clip_track", "clip", "toggled", "current_track", "current_key",
+        "hovered_track", "hovered_key", "view", "in_point", "out_point",
+    )
+
+    def __init__(
+        self,
+        time: float,
+        *,
+        changed: bool = False,
+        time_changed: bool = False,
+        scrubbing: bool = False,
+        play_toggled: bool = False,
+        selection_changed: bool = False,
+        view_changed: bool = False,
+        keys_moved: bool = False,
+        added_track: int = -1,
+        added_key: int = -1,
+        removed_keys: int = 0,
+        removed_clips: int = 0,
+        clip_track: int = -1,
+        clip: int = -1,
+        toggled: int = -1,
+        current_track: int = -1,
+        current_key: int = -1,
+        hovered_track: int = -1,
+        hovered_key: int = -1,
+        view: Optional[TimelineView] = None,
+        in_point: Optional[float] = None,
+        out_point: Optional[float] = None,
+    ) -> None:
+        self.time = float(time)
+        self.changed = bool(changed)
+        self.time_changed = bool(time_changed)
+        self.scrubbing = bool(scrubbing)
+        self.play_toggled = bool(play_toggled)
+        self.selection_changed = bool(selection_changed)
+        self.view_changed = bool(view_changed)
+        self.keys_moved = bool(keys_moved)
+        self.added_track = int(added_track)
+        self.added_key = int(added_key)
+        self.removed_keys = int(removed_keys)
+        self.removed_clips = int(removed_clips)
+        self.clip_track = int(clip_track)
+        self.clip = int(clip)
+        self.toggled = int(toggled)
+        self.current_track = int(current_track)
+        self.current_key = int(current_key)
+        self.hovered_track = int(hovered_track)
+        self.hovered_key = int(hovered_key)
+        self.view = view
+        self.in_point = in_point
+        self.out_point = out_point
+
+    def __iter__(self):
+        yield self.time
+        yield self.changed
+
+    def __bool__(self) -> bool:
+        return self.changed or self.time_changed or self.play_toggled
+
+    def __repr__(self) -> str:
+        return (
+            f"TimelineEditorResult(time={self.time:g}, changed={self.changed}, "
+            f"play_toggled={self.play_toggled}, current_track={self.current_track})"
+        )

@@ -1,17 +1,26 @@
 /* ==========================================================================
-   nexa Procedural 3D Topographic Woodcut & Stipple Engraving Engine
+   nexa Procedural 3D Topographic Woodcut & Stipple Engraving Engine (v1.1)
    100% original generative printmaking (zero external images):
    - Projects a 3D ridged-multifractal alpine amphitheater & winding S-curve
      river via smooth floating-horizon occlusion.
-   - Renders crisp device-pixel-snapped topographic isolines, slope-aligned
-     woodcut engraving hatches, drifting cirrus bands, and a concentric
-     celestial halo.
+   - Zero-allocation heightfield + precomputed cirrus field + Uint32Array
+     pixel writes + hardware-composited pixelated canvas scaling (~0.5 ms/tick).
    - Live-harmonizes its 4-ink printmaker palette with all 8 `ui.Accent`
-     presets in both Light and Dark themes, plus subtle pointer sun-angle tilt.
+     presets in both Light and Dark themes.
    ========================================================================== */
 
 (function () {
   "use strict";
+
+  const IS_LE = (() => {
+    const b = new ArrayBuffer(4);
+    new Uint8Array(b)[0] = 0x11;
+    return new Uint32Array(b)[0] === 0x11;
+  })();
+
+  const packRgba = IS_LE
+    ? (r, g, b) => (255 << 24) | ((b & 255) << 16) | ((g & 255) << 8) | (r & 255)
+    : (r, g, b) => ((r & 255) << 24) | ((g & 255) << 16) | ((b & 255) << 8) | 255;
 
   // Hybrid 8x8 Bayer + Interleaved Gradient Noise threshold table
   const BAYER = (() => {
@@ -129,77 +138,71 @@
     return b * 0.55 + (ig < 0 ? ig + 1 : ig) * 0.45;
   }
 
-  // 3D world heightfield for "horizon" (alpine amphitheater + S-curve river)
-  // and "basin" (converging contour river terraces for closing CTA band)
-  function evalWorld(wx, wz, isBasin) {
+  // Zero-allocation heightfield evaluation (stores water flag in `lastIsRiver`)
+  let lastIsRiver = 0;
+  function evalHeight(wx, wz, isBasin) {
     if (isBasin) {
       const riverX = 0.34 * Math.sin(wz * 4.2 + 1.1) - 0.14 * Math.cos(wz * 2.5);
       const distR = Math.abs(wx - riverX);
       const riverW = lerp(0.22, 0.06, Math.pow(wz, 0.85));
+      lastIsRiver = distR < riverW ? 1 : 0;
       const carve = smoothstep(riverW * 0.8, riverW * 3.2, distR);
       const warp = (fbm(wx * 1.3 + 4.2, wz * 1.9 + 2.7, 3) - 0.5) * 0.3;
       const terrace = ridged((wx + warp) * 1.55 + 3.1, wz * 2.5 + 5.4, 3);
       const bowl = 0.25 + 0.75 * Math.pow(Math.min(1.3, Math.abs(wx)), 1.15);
-      const h = terrace * 0.46 * bowl * carve;
-      return [h, distR < riverW ? 1 : 0];
+      return terrace * 0.46 * bowl * carve;
     }
 
     const riverX = -0.06 + 0.28 * Math.sin(wz * 3.8 + 0.35) - 0.12 * Math.cos(wz * 6.2);
     const distR = Math.abs(wx - riverX);
     const riverW = lerp(0.18, 0.032, Math.pow(wz, 0.85));
+    lastIsRiver = distR < riverW ? 1 : 0;
     const carve = smoothstep(riverW * 0.82, riverW * 3.6, distR);
     const flank = 0.14 + 0.86 * Math.pow(Math.min(1.3, Math.abs(wx)), 1.3);
 
     const warp = (fbm(wx * 1.1 + 2.1, wz * 1.7 + 1.3, 3) - 0.5) * 0.32;
     const broad = ridged((wx + warp) * 1.35 + 5.4, wz * 2.3 + 2.2, 3);
-    const fine = ridged((wx + warp) * 2.8 + 9.1, wz * 4.2 + 4.7, 3) * 0.22;
+    const fine = ridged((wx + warp) * 2.8 + 9.1, wz * 4.2 + 4.7, 2) * 0.22;
     const farRise = smoothstep(0.42, 0.96, wz) * 0.36;
     let h = (broad * 0.82 + fine) * (0.36 * flank + farRise) * carve;
 
     if (wz > 0.70) {
       const back = smoothstep(0.70, 0.96, wz) * (1 - smoothstep(0.96, 1.0, wz) * 0.15);
-      const massif = ridged(wx * 1.75 + 14.2, wz * 2.6 + 8.1, 4);
+      const massif = ridged(wx * 1.75 + 14.2, wz * 2.6 + 8.1, 3);
       const passDip = 0.42 + 0.58 * smoothstep(0.05, 0.92, Math.abs(wx + 0.05));
       const mh = back * massif * 0.62 * passDip;
       if (mh > h) h = mh;
     }
-    return [h, distR < riverW ? 1 : 0];
-  }
-
-  function mixRgb(out, idx, a, b, t) {
-    out[idx] = (a[0] + (b[0] - a[0]) * t) | 0;
-    out[idx + 1] = (a[1] + (b[1] - a[1]) * t) | 0;
-    out[idx + 2] = (a[2] + (b[2] - a[2]) * t) | 0;
-    out[idx + 3] = 255;
+    return h;
   }
 
   function ditherArt(opts) {
     const o = {
-      cell: 2,
+      cell: 2.25,
       scene: "horizon",
       reveal: true,
       loop: true,
+      maxScrollY: 0,
       reduced: () => matchMedia("(prefers-reduced-motion: reduce)").matches,
       ...opts,
     };
     const isBasin = o.scene === "basin";
-    const PERIOD = 16;
+    const PERIOD = 18;
 
     const el = document.createElement("div");
     el.className = "dither";
     el.setAttribute("aria-hidden", "true");
     const canvas = document.createElement("canvas");
+    canvas.style.imageRendering = "pixelated";
     el.append(canvas);
 
     let gw = 0;
     let gh = 0;
-    let k = 1;
     let aspect = 2;
-    let small = null;
-    let sctx = null;
     let data = null;
+    let u32 = null;
 
-    // Precomputed static 3D geometry buffers (rebuilt only on resize)
+    // Precomputed static 3D geometry & sky buffers (rebuilt only on resize)
     let pKind = null;
     let pWz = null;
     let pH = null;
@@ -208,21 +211,22 @@
     let pHatch = null;
     let pThresh = null;
     let pRippleNoise = null;
+    let pCirrus = null;
 
     let raf = 0;
     let revealed = !o.reveal;
     let visible = o.reveal !== "view";
-    let sunBias = 0; // -0.35 .. +0.35 from subtle pointer tilt
-    const ctx = canvas.getContext("2d");
+    let sunBias = 0;
+    const ctx = canvas.getContext("2d", { alpha: true });
 
     function buildGeometry() {
       const r = el.getBoundingClientRect();
       if (r.width < 2 || r.height < 2) return false;
-      const dpr = window.devicePixelRatio || 1;
-      k = Math.max(1, Math.round(o.cell * dpr));
-      gw = Math.ceil((r.width * dpr) / k);
-      gh = Math.ceil((r.height * dpr) / k);
-      aspect = gw / Math.max(1, gh);
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const k = Math.max(2, Math.round(o.cell * dpr));
+      gw = Math.max(16, Math.ceil((r.width * dpr) / k));
+      gh = Math.max(16, Math.ceil((r.height * dpr) / k));
+      aspect = gw / gh;
 
       const total = gw * gh;
       pKind = new Uint8Array(total);
@@ -233,18 +237,24 @@
       pHatch = new Float32Array(total);
       pThresh = new Float32Array(total);
       pRippleNoise = new Float32Array(total);
+      pCirrus = new Float32Array(total);
 
       pWz.fill(1);
       for (let y = 0; y < gh; y++) {
         const v = y / gh;
         for (let x = 0; x < gw; x++) {
           const idx = y * gw + x;
+          const u = x / gw;
           pThresh[idx] = screenThreshold(x, y);
-          pRippleNoise[idx] = fbm((x / gw) * 15, v * 11, 2) * 4.8;
+          pRippleNoise[idx] = fbm(u * 14, v * 10, 2) * 4.8;
+          // Tileable horizontal cirrus noise so drift needs zero per-frame fbm()
+          const cA = fbm(u * 4.5 + v * 1.4, v * 9.2 + 3.1, 3);
+          const cB = fbm((u - 1) * 4.5 + v * 1.4, v * 9.2 + 3.1, 3);
+          pCirrus[idx] = lerp(cA, cB, smoothstep(0.75, 1.0, u));
         }
       }
 
-      const SLICES = isBasin ? 120 : 165;
+      const SLICES = isBasin ? 105 : 140;
       const minY = new Int32Array(gw).fill(gh);
       const prevH = new Float32Array(gw);
       const prevWz = new Float32Array(gw);
@@ -262,13 +272,12 @@
         for (let x = 0; x < gw; x++) {
           const u = x / gw;
           const wx = (u - 0.5) * 2.25 * (0.56 + wz * 0.74);
-          const hw = evalWorld(wx, wz, isBasin);
-          const h = hw[0];
-          const isW = hw[1];
+          const h = evalHeight(wx, wz, isBasin);
+          const isW = lastIsRiver;
           const sy = Math.max(0, Math.min(gh, Math.round((baseV - h * hScale) * gh)));
 
-          const hx = evalWorld(wx + epsX, wz, isBasin)[0];
-          const hz = evalWorld(wx, Math.min(1, wz + 0.012), isBasin)[0];
+          const hx = evalHeight(wx + epsX, wz, isBasin);
+          const hz = evalHeight(wx, Math.min(1, wz + 0.012), isBasin);
           const dhDx = (hx - h) / epsX;
           const dhDz = (hz - h) / 0.012;
 
@@ -305,15 +314,10 @@
         }
       }
 
-      small = document.createElement("canvas");
-      small.width = gw;
-      small.height = gh;
-      sctx = small.getContext("2d");
-      data = sctx.createImageData(gw, gh);
-      canvas.width = gw * k;
-      canvas.height = gh * k;
-      canvas.style.width = `${(gw * k) / dpr}px`;
-      canvas.style.height = `${(gh * k) / dpr}px`;
+      canvas.width = gw;
+      canvas.height = gh;
+      data = ctx.createImageData(gw, gh);
+      u32 = new Uint32Array(data.data.buffer);
       return true;
     }
 
@@ -329,7 +333,7 @@
     }
 
     function paint(progress, explicitTime) {
-      if (!pKind || !data) return;
+      if (!pKind || !u32) return;
       const time = explicitTime === undefined ? loopTime() : explicitTime;
       const dark = document.documentElement.dataset.theme === "dark";
       const accentKey = document.documentElement.dataset.accent || "BLUE";
@@ -339,81 +343,67 @@
       const sunDx = 0.78 + sunBias;
       const sunDz = -0.42;
       const sweepPhase = (time / PERIOD) * Math.PI * 2;
-      const cloudDrift = time * 0.016;
-      const rippleShift = time * 1.5;
+      const shiftX = ((time * 1.8) | 0) % gw;
+      const rippleShift = time * 1.4;
       const sunU = 0.80 + sunBias * 0.03;
 
-      const d = data.data;
+      const rimCol = dark ? pal.cloud : pal.sky;
+      const rimPacked = packRgba(rimCol[0], rimCol[1], rimCol[2]);
+      const haloTarget = dark ? pal.cloud : pal.warm;
+
       for (let y = 0; y < gh; y++) {
         const v = y / gh;
-        const revealT =
-          progress >= 1
-            ? 1
-            : easeOut(clamp01(progress * 1.5 - v * 0.5));
+        const rowOff = y * gw;
+        const skyFade = 1 - smoothstep(0, 0.46, v) * 0.35;
+        const revealT = progress >= 1 ? 1 : easeOut(clamp01(progress * 1.5 - v * 0.5));
+        const sdy = v - 0.17;
+        const sdy2 = sdy * sdy;
 
         for (let x = 0; x < gw; x++) {
-          const idx = y * gw + x;
-          const j = idx * 4;
+          const idx = rowOff + x;
           const u = x / gw;
           const th = pThresh[idx];
           const kind = pKind[idx];
 
-          // Gentle diagonal cloud-shadow band across the valley
-          const sw = 0.5 + 0.5 * Math.cos((u * 0.85 + v * 0.35) * Math.PI * 2 - sweepPhase);
-          const bandBoost = sw * sw * sw * sw;
-
           if (kind === 0) {
-            // Engraved celestial sun/moon halo + drifting woodcut cirrus
-            const sdx = (u - sunU) * aspect;
-            const sdy = v - 0.17;
-            const sdist = Math.hypot(sdx, sdy);
-
-            const cirrus = fbm(u * 4.5 + v * 1.4 - cloudDrift, v * 9.2 + 3.1, 3);
-            const band = smoothstep(0.48, 0.80, cirrus) * (1 - smoothstep(0, 0.46, v) * 0.35);
+            const cx = (x - shiftX + gw) % gw;
+            const cirrus = pCirrus[rowOff + cx];
+            const band = smoothstep(0.48, 0.80, cirrus) * skyFade;
             const skyLine = 0.5 + 0.5 * Math.sin(y * 1.45 + cirrus * 3.8);
 
             let halo = 0;
-            if (!isBasin && sdist < 0.19) {
-              const rings = 0.5 + 0.5 * Math.cos(sdist * 165 - time * 0.7);
-              halo = (1 - sdist / 0.19) * (sdist < 0.028 ? 0.68 : rings * 0.48);
+            if (!isBasin) {
+              const sdx = (u - sunU) * aspect;
+              const d2 = sdx * sdx + sdy2;
+              if (d2 < 0.0361) {
+                const sdist = Math.sqrt(d2);
+                const rings = 0.5 + 0.5 * Math.cos(sdist * 165 - time * 0.7);
+                halo = (1 - sdist / 0.19) * (sdist < 0.028 ? 0.68 : rings * 0.48);
+              }
             }
 
             const dens = Math.max(band * 0.50 * (0.45 + 0.55 * skyLine), halo) * revealT;
             if (dens > th) {
               const tw = clamp01(halo * 1.4) * 0.7;
-              mixRgb(d, j, pal.sky, dark ? pal.cloud : pal.warm, tw);
+              u32[idx] = packRgba(
+                (pal.sky[0] + (haloTarget[0] - pal.sky[0]) * tw) | 0,
+                (pal.sky[1] + (haloTarget[1] - pal.sky[1]) * tw) | 0,
+                (pal.sky[2] + (haloTarget[2] - pal.sky[2]) * tw) | 0
+              );
             } else {
-              d[j + 3] = 0;
+              u32[idx] = 0;
             }
           } else if (kind === 1) {
-            // Winding alpine river with horizontal woodcut water shimmer
             const wz = pWz[idx];
             const ripple = 0.5 + 0.5 * Math.sin(y * 2.1 - rippleShift + pRippleNoise[idx]);
             const glint = smoothstep(0.45, 0, Math.abs(u - 0.62)) * 0.28;
             const dens = (0.36 + glint) * (0.35 + 0.65 * ripple) * (1 - wz * 0.3) * revealT;
-            if (dens > th) {
-              const c = dark ? pal.cloud : pal.sky;
-              d[j] = c[0];
-              d[j + 1] = c[1];
-              d[j + 2] = c[2];
-              d[j + 3] = 255;
-            } else {
-              d[j + 3] = 0;
-            }
+            u32[idx] = dens > th ? rimPacked : 0;
           } else if (kind === 3) {
-            // Crisp mountain occlusion silhouette rim
-            const wz = pWz[idx];
-            if (th < lerp(0.92, 0.68, wz) * revealT) {
-              const c = dark ? pal.cloud : pal.sky;
-              d[j] = c[0];
-              d[j + 1] = c[1];
-              d[j + 2] = c[2];
-              d[j + 3] = 255;
-            } else {
-              d[j + 3] = 0;
-            }
+            u32[idx] = th < lerp(0.92, 0.68, pWz[idx]) * revealT ? rimPacked : 0;
           } else {
-            // 3D sculpted terrain: topographic isolines + slope-aligned woodcut relief
+            const sw = 0.5 + 0.5 * Math.cos((u * 0.85 + v * 0.35) * Math.PI * 2 - sweepPhase);
+            const bandBoost = sw * sw * sw * sw;
             const wz = pWz[idx];
             const h = pH[idx];
             const aerial = smoothstep(0.38, 0.94, wz);
@@ -428,18 +418,14 @@
               const lr = lerp(pal.valley[0], pal.warm[0], shade);
               const lg = lerp(pal.valley[1], pal.warm[1], shade);
               const lb = lerp(pal.valley[2], pal.warm[2], shade);
-              const hc = dark ? pal.cloud : pal.sky;
-              d[j] = lerp(lr, hc[0], tHigh) | 0;
-              d[j + 1] = lerp(lg, hc[1], tHigh) | 0;
-              d[j + 2] = lerp(lb, hc[2], tHigh) | 0;
-              d[j + 3] = 255;
+              u32[idx] = packRgba(
+                lerp(lr, rimCol[0], tHigh) | 0,
+                lerp(lg, rimCol[1], tHigh) | 0,
+                lerp(lb, rimCol[2], tHigh) | 0
+              );
             } else {
               const lumVal = dark ? shade : 1 - shade * 0.80;
-              const dens =
-                lumVal *
-                lerp(0.58, 0.28, aerial) *
-                (0.42 + 0.58 * pHatch[idx]) *
-                revealT;
+              const dens = lumVal * lerp(0.58, 0.28, aerial) * (0.42 + 0.58 * pHatch[idx]) * revealT;
               if (dens > th) {
                 const swWarm = smoothstep(0.32, 0.82, shade);
                 const vr = lerp(pal.valley[0], pal.warm[0], swWarm);
@@ -449,30 +435,36 @@
                 const pg = lerp(pal.sky[1], pal.cloud[1], shade);
                 const pb = lerp(pal.sky[2], pal.cloud[2], shade);
                 const mixT = Math.max(smoothstep(0.12, 0.36, h), aerial * 0.85);
-                d[j] = lerp(vr, pr, mixT) | 0;
-                d[j + 1] = lerp(vg, pg, mixT) | 0;
-                d[j + 2] = lerp(vb, pb, mixT) | 0;
-                d[j + 3] = 255;
+                u32[idx] = packRgba(
+                  lerp(vr, pr, mixT) | 0,
+                  lerp(vg, pg, mixT) | 0,
+                  lerp(vb, pb, mixT) | 0
+                );
               } else {
-                d[j + 3] = 0;
+                u32[idx] = 0;
               }
             }
           }
         }
       }
 
-      sctx.putImageData(data, 0, 0);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(small, 0, 0, gw * k, gh * k);
+      ctx.putImageData(data, 0, 0);
     }
 
     function loopTick(now) {
       loopRaf = 0;
-      if (!el.isConnected || !o.loop || o.reduced() || !loopReady || !inView || document.hidden) {
+      if (
+        !el.isConnected ||
+        !o.loop ||
+        o.reduced() ||
+        !loopReady ||
+        !inView ||
+        document.hidden ||
+        (o.maxScrollY > 0 && window.scrollY > o.maxScrollY)
+      ) {
         return;
       }
-      if (now - loopLast >= 55 && pKind) {
+      if (now - loopLast >= 66 && pKind) {
         loopLast = now;
         paint(1);
       }
@@ -480,7 +472,7 @@
     }
 
     function loopStart() {
-      if (o.loop && loopReady && !loopRaf) {
+      if (o.loop && loopReady && !loopRaf && inView && !document.hidden) {
         loopRaf = requestAnimationFrame(loopTick);
       }
     }
@@ -488,23 +480,22 @@
     function draw() {
       cancelAnimationFrame(raf);
       if (!buildGeometry()) return;
-      if (!visible) {
-        paint(1, 0);
-        return;
-      }
       paint(1, 0);
+      if (!visible) return;
       if (!revealed) {
         revealed = true;
         if (!o.reveal || o.reduced()) el.classList.add("shown", "instant");
         else raf = requestAnimationFrame(() => el.classList.add("shown"));
-        clearTimeout(loopDelay);
-        loopDelay = setTimeout(
-          () => {
-            loopReady = true;
-            loopStart();
-          },
-          o.reduced() ? 0 : 1200
-        );
+        if (o.loop) {
+          clearTimeout(loopDelay);
+          loopDelay = setTimeout(
+            () => {
+              loopReady = true;
+              loopStart();
+            },
+            o.reduced() ? 0 : 1000
+          );
+        }
       } else {
         loopStart();
       }
@@ -526,9 +517,15 @@
     const onPointer = (ev) => {
       if (!inView || o.reduced()) return;
       const nx = ev.clientX / Math.max(1, window.innerWidth) - 0.5;
-      sunBias = nx * 0.42;
+      sunBias = nx * 0.38;
+      if (!o.loop && pKind && !themeRaf) {
+        themeRaf = requestAnimationFrame(() => {
+          themeRaf = 0;
+          paint(1, 0);
+        });
+      }
     };
-    window.addEventListener("pointermove", onPointer, { passive: true });
+    if (o.loop) window.addEventListener("pointermove", onPointer, { passive: true });
 
     let lastW = 0;
     let lastH = 0;
@@ -575,7 +572,7 @@
           if (pKind) draw();
         }
       },
-      { threshold: 0.25 }
+      { threshold: 0.2 }
     );
 
     function stop() {

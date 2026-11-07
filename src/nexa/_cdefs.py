@@ -13,7 +13,9 @@ from ctypes import (
     c_double,
     c_float,
     c_int,
+    c_int64,
     c_size_t,
+    c_uint,
     c_uint8,
     c_uint32,
     c_uint64,
@@ -636,7 +638,14 @@ class CuiSwipeAction(Structure):
 
 
 class CuiGridColumn(Structure):
-    _fields_ = [("title", c_char_p), ("width", c_float), ("align", c_int), ("sortable", c_bool), ("fixed", c_bool)]
+    _fields_ = [
+        ("title", c_char_p),
+        ("width", c_float),
+        ("align", c_int),
+        ("sortable", c_bool),
+        ("fixed", c_bool),
+        ("priority", c_int),
+    ]
 
 
 class CuiGridOpts(Structure):
@@ -649,6 +658,8 @@ class CuiGridOpts(Structure):
         ("sort", POINTER(CuiTableSort)),
         ("striped", c_bool),
         ("cursor", POINTER(c_int)),
+        ("hide_checkboxes", c_bool),
+        ("anchor", POINTER(c_int)),
     ]
 
 
@@ -674,6 +685,17 @@ class CuiJsonOpts(Structure):
     _fields_ = [("_", c_int), ("expand_depth", c_int), ("max_height", c_float)]
 
 
+class CuiMarkdownResult(Structure):
+    _fields_ = [
+        ("link", c_char_p),
+        ("hovered_link", c_char_p),
+        ("task_offset", c_int),
+        ("task_line", c_int),
+        ("task_checked", c_bool),
+        ("height", c_float),
+    ]
+
+
 class CuiChatOpts(Structure):
     _fields_ = [
         ("_", c_int),
@@ -684,6 +706,8 @@ class CuiChatOpts(Structure):
         ("grouped", c_bool),
         ("last_in_group", c_bool),
         ("avatar", c_texture),
+        ("markdown", c_bool),
+        ("markdown_result", POINTER(CuiMarkdownResult)),
     ]
 
 
@@ -1349,6 +1373,414 @@ AppFrameFn = CFUNCTYPE(None, c_void_p, c_void_p)
 
 
 # ---------------------------------------------------------------------------
+# CUI 1.1.0 Structs (TreeTable, PathBar, Markdown, CodeEditor, Diff, Dockspace,
+# HexView, FlameGraph, CurveEditor, GradientEditor, TimelineEditor)
+# ---------------------------------------------------------------------------
+
+class CuiTreeNode(Structure):
+    _fields_ = [
+        ("parent", c_int),
+        ("first_child", c_int),
+        ("next_sibling", c_int),
+        ("flags", c_uint32),
+    ]
+
+
+class CuiTreeTableOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("width", CuiSize),
+        ("height", CuiSize),
+        ("row_height", c_float),
+        ("root", c_int),
+        ("sort", POINTER(CuiTableSort)),
+        ("cursor", POINTER(c_int)),
+        ("guides", c_bool),
+        ("label", c_void_p),
+        ("user", c_void_p),
+    ]
+
+
+class CuiTreeTableEvents(Structure):
+    _fields_ = [
+        ("activated", c_int),
+        ("expanded", c_int),
+        ("collapsed", c_int),
+        ("load", POINTER(c_int)),
+        ("load_count", c_int),
+        ("selection_changed", c_bool),
+        ("sort_changed", c_bool),
+    ]
+
+
+class CuiPathBarOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("icon", c_char_p),
+        ("text", c_char_p),
+        ("placeholder", c_char_p),
+        ("size", c_int),
+        ("width", CuiSize),
+        ("menus", c_bool),
+        ("no_edit", c_bool),
+    ]
+
+
+class CuiPathBarResult(Structure):
+    _fields_ = [
+        ("clicked", c_int),
+        ("submitted", c_char_p),
+        ("editing", c_bool),
+    ]
+
+
+class CuiMarkdownOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("width", CuiSize),
+        ("fit_content", c_bool),
+        ("length", c_int),
+        ("size", c_float),
+        ("color", CuiColor),
+        ("streaming", c_bool),
+        ("compact", c_bool),
+    ]
+
+
+class CuiCodeEditorOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("lang", c_char_p),
+        ("width", CuiSize),
+        ("height", c_float),
+        ("size", c_float),
+        ("tab_size", c_int),
+        ("use_tabs", c_bool),
+        ("read_only", c_bool),
+        ("no_line_numbers", c_bool),
+        ("autofocus", c_bool),
+        ("placeholder", c_char_p),
+    ]
+
+
+class CuiCodeEditorResult(Structure):
+    _fields_ = [
+        ("changed", c_bool),
+        ("refused", c_bool),
+        ("focused", c_bool),
+        ("cursor", c_int),
+        ("anchor", c_int),
+        ("line", c_int),
+        ("column", c_int),
+        ("line_count", c_int),
+        ("length", c_int),
+        ("bracket", c_int),
+        ("bracket_match", c_int),
+        ("find_matches", c_int),
+        ("find_index", c_int),
+    ]
+
+
+class CuiDiffOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("mode", c_int),
+        ("language", c_char_p),
+        ("old_title", c_char_p),
+        ("new_title", c_char_p),
+        ("current", POINTER(c_int)),
+        ("context", c_int),
+        ("no_fold", c_bool),
+        ("ignore_eol", c_bool),
+        ("split_min_width", c_float),
+        ("width", CuiSize),
+        ("height", c_float),
+        ("size", c_float),
+    ]
+
+
+class CuiDiffResult(Structure):
+    _fields_ = [
+        ("added", c_int),
+        ("removed", c_int),
+        ("changes", c_int),
+        ("current", c_int),
+        ("current_changed", c_bool),
+        ("mode", c_int),
+        ("folds", c_int),
+        ("hidden", c_int),
+        ("recomputed", c_bool),
+        ("approximate", c_bool),
+    ]
+
+
+class CuiDiffRow(Structure):
+    _fields_ = [
+        ("kind", c_int),
+        ("old_line", c_int),
+        ("new_line", c_int),
+        ("change", c_int),
+        ("hidden", c_int),
+    ]
+
+
+class CuiDiffHunk(Structure):
+    _fields_ = [
+        ("old_start", c_int),
+        ("old_count", c_int),
+        ("new_start", c_int),
+        ("new_count", c_int),
+    ]
+
+
+class CuiDiffStats(Structure):
+    _fields_ = [
+        ("added", c_int),
+        ("removed", c_int),
+        ("hunks", c_int),
+        ("old_lines", c_int),
+        ("new_lines", c_int),
+        ("approximate", c_bool),
+    ]
+
+
+class CuiDiffRange(Structure):
+    _fields_ = [("start", c_int), ("length", c_int)]
+
+
+class CuiDockspaceOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("layout", c_char_p),
+        ("width", CuiSize),
+        ("height", CuiSize),
+        ("min_panel_width", c_float),
+        ("min_panel_height", c_float),
+        ("shortcuts", c_bool),
+    ]
+
+
+class CuiDockPanelOpts(Structure):
+    _fields_ = [("_", c_int), ("icon", c_char_p), ("dirty", c_bool)]
+
+
+class CuiHexRange(Structure):
+    _fields_ = [
+        ("offset", c_size_t),
+        ("length", c_size_t),
+        ("tone", c_int),
+        ("label", c_char_p),
+    ]
+
+
+class CuiHexSelection(Structure):
+    _fields_ = [("start", c_size_t), ("length", c_size_t), ("cursor", c_size_t)]
+
+
+class CuiHexViewOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("width", CuiSize),
+        ("height", c_float),
+        ("base", c_uint64),
+        ("bytes_per_row", c_int),
+        ("ranges", POINTER(CuiHexRange)),
+        ("range_count", c_int),
+        ("edit", POINTER(c_uint8)),
+        ("no_ascii", c_bool),
+        ("no_header", c_bool),
+        ("size", c_float),
+    ]
+
+
+class CuiHexResult(Structure):
+    _fields_ = [
+        ("selection", CuiHexSelection),
+        ("selection_changed", c_bool),
+        ("edited", c_bool),
+        ("edit_offset", c_size_t),
+        ("edit_length", c_size_t),
+        ("hovered", c_int64),
+        ("copied", c_bool),
+    ]
+
+
+class CuiFlameSpan(Structure):
+    _fields_ = [
+        ("name", c_char_p),
+        ("start", c_double),
+        ("end", c_double),
+        ("depth", c_int),
+        ("color_key", c_uint32),
+    ]
+
+
+class CuiFlameView(Structure):
+    _fields_ = [("start", c_double), ("end", c_double), ("scroll", c_float)]
+
+
+class CuiFlameOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("width", CuiSize),
+        ("height", c_float),
+        ("row_height", c_float),
+        ("min_range", c_double),
+    ]
+
+
+class CuiFlameResult(Structure):
+    _fields_ = [
+        ("selection_changed", c_bool),
+        ("view_changed", c_bool),
+        ("hovered", c_int),
+        ("zoomed", c_int),
+    ]
+
+
+class CuiCurveKey(Structure):
+    _fields_ = [
+        ("x", c_float),
+        ("y", c_float),
+        ("in_dx", c_float),
+        ("in_dy", c_float),
+        ("out_dx", c_float),
+        ("out_dy", c_float),
+        ("mode", c_uint8),
+    ]
+
+
+class CuiCurveOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("x_min", c_float),
+        ("x_max", c_float),
+        ("y_min", c_float),
+        ("y_max", c_float),
+        ("width", CuiSize),
+        ("height", c_float),
+        ("x_format", c_char_p),
+        ("y_format", c_char_p),
+        ("x_label", c_char_p),
+        ("y_label", c_char_p),
+        ("selected", POINTER(c_int)),
+        ("snap", c_bool),
+        ("show_playhead", c_bool),
+        ("playhead", c_float),
+    ]
+
+
+class CuiCurveResult(Structure):
+    _fields_ = [
+        ("changed", c_bool),
+        ("added", c_int),
+        ("removed", c_int),
+        ("selected", c_int),
+        ("hovered", c_bool),
+        ("hover_x", c_float),
+        ("hover_y", c_float),
+    ]
+
+
+class CuiGradientStop(Structure):
+    _fields_ = [("pos", c_float), ("color", CuiColor)]
+
+
+class CuiGradientOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("width", CuiSize),
+        ("height", c_float),
+        ("selected", POINTER(c_int)),
+    ]
+
+
+class CuiGradientResult(Structure):
+    _fields_ = [
+        ("changed", c_bool),
+        ("added", c_int),
+        ("removed", c_int),
+        ("selected", c_int),
+    ]
+
+
+class CuiTimelineClip(Structure):
+    _fields_ = [
+        ("start", c_float),
+        ("end", c_float),
+        ("offset", c_float),
+        ("name", c_char_p),
+        ("selected", c_bool),
+    ]
+
+
+class CuiTimelineTrack(Structure):
+    _fields_ = [
+        ("name", c_char_p),
+        ("icon", c_char_p),
+        ("depth", c_int),
+        ("collapsed", c_bool),
+        ("muted", c_bool),
+        ("locked", c_bool),
+        ("color", c_uint8),
+        ("keys", POINTER(CuiCurveKey)),
+        ("key_count", c_int),
+        ("key_capacity", c_int),
+        ("key_selected", POINTER(c_bool)),
+        ("clips", POINTER(CuiTimelineClip)),
+        ("clip_count", c_int),
+    ]
+
+
+class CuiTimelineView(Structure):
+    _fields_ = [("start", c_float), ("end", c_float), ("scroll", c_float)]
+
+
+class CuiTimelineEditorOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("start", c_float),
+        ("end", c_float),
+        ("fps", c_float),
+        ("ruler", c_int),
+        ("view", POINTER(CuiTimelineView)),
+        ("in_", POINTER(c_float)),
+        ("out", POINTER(c_float)),
+        ("current_track", POINTER(c_int)),
+        ("current_key", POINTER(c_int)),
+        ("width", CuiSize),
+        ("height", c_float),
+        ("row_height", c_float),
+        ("track_width", c_float),
+        ("toggles", c_bool),
+        ("free_drag", c_bool),
+    ]
+
+
+class CuiTimelineEditorResult(Structure):
+    _fields_ = [
+        ("changed", c_bool),
+        ("time_changed", c_bool),
+        ("scrubbing", c_bool),
+        ("play_toggled", c_bool),
+        ("selection_changed", c_bool),
+        ("view_changed", c_bool),
+        ("keys_moved", c_bool),
+        ("added_track", c_int),
+        ("added_key", c_int),
+        ("removed_keys", c_int),
+        ("removed_clips", c_int),
+        ("clip_track", c_int),
+        ("clip", c_int),
+        ("toggled", c_int),
+        ("current_track", c_int),
+        ("current_key", c_int),
+        ("hovered_track", c_int),
+        ("hovered_key", c_int),
+    ]
+
+
+# ---------------------------------------------------------------------------
 # Fast Conversion Helpers (used by widget modules)
 # ---------------------------------------------------------------------------
 
@@ -1525,6 +1957,18 @@ def bind_prototypes(lib: ctypes.CDLL) -> None:
         ("nexa_draw_image", [c_void_p, c_texture, c_float, c_float, c_float, c_float, c_float, c_float, c_float, c_float, c_float, c_float, c_float, c_float, c_uint32], None),
         ("nexa_push_clip", [c_void_p, c_float, c_float, c_float, c_float], None),
         ("nexa_canvas", [c_void_p, c_char_p, c_int, c_float, c_int, c_float, c_void_p, c_size_t, P(c_float), P(c_int), P(c_float)], None),
+        ("nexa_tree_table_end", [c_void_p, P(CuiTreeTableEvents)], None),
+        ("nexa_path_bar_ex", [c_void_p, c_char_p, P(c_char_p), c_int, P(CuiPathBarOpts), P(CuiPathBarResult)], None),
+        ("nexa_markdown_ex", [c_void_p, c_char_p, c_char_p, P(CuiMarkdownOpts), P(CuiMarkdownResult)], None),
+        ("nexa_code_editor_ex", [c_void_p, c_char_p, c_char_p, c_size_t, P(CuiCodeEditorOpts), P(CuiCodeEditorResult)], None),
+        ("nexa_diff_view_ex", [c_void_p, c_char_p, c_char_p, c_char_p, P(CuiDiffOpts), P(CuiDiffResult)], None),
+        ("nexa_hex_view_ex", [c_void_p, c_char_p, c_void_p, c_size_t, P(CuiHexSelection), P(CuiHexViewOpts), P(CuiHexResult)], None),
+        ("nexa_flame_graph_ex", [c_void_p, c_char_p, P(CuiFlameSpan), c_int, P(CuiFlameView), P(c_int), P(CuiFlameOpts), P(CuiFlameResult)], None),
+        ("nexa_flame_span_rect", [c_void_p, c_uint32, P(CuiFlameSpan), P(c_float)], None),
+        ("nexa_curve_editor_ex", [c_void_p, c_char_p, P(CuiCurveKey), P(c_int), c_int, P(CuiCurveOpts), P(CuiCurveResult)], None),
+        ("nexa_gradient_editor_ex", [c_void_p, c_char_p, P(CuiGradientStop), P(c_int), c_int, P(CuiGradientOpts), P(CuiGradientResult)], None),
+        ("nexa_gradient_eval", [P(CuiGradientStop), c_int, c_float], c_uint32),
+        ("nexa_timeline_editor_ex", [c_void_p, c_char_p, P(CuiTimelineTrack), c_int, P(c_float), P(CuiTimelineEditorOpts), P(CuiTimelineEditorResult)], None),
 
         # Renderers
         ("cui_sw_create", [], c_void_p),
@@ -1916,6 +2360,31 @@ def bind_prototypes(lib: ctypes.CDLL) -> None:
         ("cui_log_append_text", [c_void_p, c_int, c_double, c_char_p, c_int], None),
         ("cui_log_clear", [c_void_p], None),
         ("cui_log_view_ex", [c_void_p, c_char_p, c_void_p, P(CuiLogViewOpts)], None),
+
+        # CUI 1.1.0 scalar/pointer functions
+        ("cui_tree_table_begin_ex", [c_void_p, c_char_p, P(CuiGridColumn), c_int, P(CuiTreeNode), c_int, P(CuiTreeTableOpts)], None),
+        ("cui_tree_table_row", [c_void_p], c_int),
+        ("cui_tree_table_name", [c_void_p, c_char_p, c_char_p], None),
+        ("cui_tree_table_depth", [c_void_p], c_int),
+        ("cui_tree_sort", [P(CuiTreeNode), c_int, c_int, c_void_p, c_void_p], c_int),
+        ("cui_path_bar_menu_begin", [c_void_p, c_char_p, P(c_int)], c_bool),
+        ("cui_path_bar_menu_end", [c_void_p], None),
+        ("cui_markdown_apply_task", [c_char_p, P(CuiMarkdownResult)], c_bool),
+        ("cui_code_editor_goto", [c_void_p, c_char_p, c_int, c_int], None),
+        ("cui_code_editor_select", [c_void_p, c_char_p, c_int, c_int], None),
+        ("cui_code_editor_find", [c_void_p, c_char_p, c_char_p], None),
+        ("cui_diff_view_rows", [c_void_p, c_char_p, P(CuiDiffRow), c_int, c_int], c_int),
+        ("cui_diff_compute", [c_char_p, c_size_t, c_char_p, c_size_t, c_uint, P(CuiDiffHunk), c_int, P(CuiDiffStats)], c_int),
+        ("cui_diff_words", [c_char_p, c_int, c_char_p, c_int, P(CuiDiffRange), P(c_int), P(CuiDiffRange), P(c_int), c_int], c_bool),
+        ("cui_dockspace_begin_ex", [c_void_p, c_char_p, P(CuiDockspaceOpts)], None),
+        ("cui_dockspace_end", [c_void_p], None),
+        ("cui_dock_panel_begin_ex", [c_void_p, c_char_p, P(c_bool), P(CuiDockPanelOpts)], c_bool),
+        ("cui_dock_panel_end", [c_void_p], None),
+        ("cui_dock_save", [c_void_p, c_char_p, c_char_p, c_size_t], c_size_t),
+        ("cui_dock_load", [c_void_p, c_char_p, c_char_p], c_bool),
+        ("cui_hex_view_goto", [c_void_p, c_char_p, c_size_t], None),
+        ("cui_flame_sort", [P(CuiFlameSpan), c_int], None),
+        ("cui_curve_eval", [P(CuiCurveKey), c_int, c_float], c_float),
 
         # Clip, state & spring animations
         ("cui_pop_clip", [c_void_p], None),

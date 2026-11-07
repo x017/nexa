@@ -18,10 +18,10 @@ CHAPTERS = [
     ("getting-started", "Getting Started", "Start Here", "getting-started.md"),
     ("tutorial-functional", "Functional & Procedural", "Tutorials", "tutorial-functional.md"),
     ("tutorial-oop", "Object-Oriented (OOP)", "Tutorials", "tutorial-oop.md"),
-    ("theming-and-styling", "Theming, Accents & Icons", "Core Guides", "theming-and-styling.md"),
-    ("concurrency-and-async", "Concurrency & Asyncio", "Core Guides", "concurrency-and-async.md"),
-    ("components-reference", "150+ Components Reference", "API Reference", "components-reference.md"),
-    ("advanced-rendering-and-packaging", "Canvas, GPU & Packaging", "Advanced", "advanced-rendering-and-packaging.md"),
+    ("theming-and-styling", "Theming, Accents & Icons", "Tutorials", "theming-and-styling.md"),
+    ("concurrency-and-async", "Concurrency & Asyncio", "Tutorials", "concurrency-and-async.md"),
+    ("advanced-rendering-and-packaging", "Canvas, GPU & Packaging", "Tutorials", "advanced-rendering-and-packaging.md"),
+    ("components-reference", "160+ Components Reference", "API Reference", "components-reference.md"),
 ]
 
 PY_KW = {
@@ -263,7 +263,8 @@ def build_bundle() -> pathlib.Path:
     }
     out_path.write_text(
         "/* Auto-generated from docs/*.md by docs/build_docs_bundle.py */\n"
-        f"window.NEXA_DOCS = {json.dumps(payload, ensure_ascii=False)};\n",
+        f"window.NEXA_DOCS = {json.dumps(payload, ensure_ascii=False)};\n"
+        "window.YAPPS_DOCS = window.NEXA_DOCS;\n",
         encoding="utf-8",
     )
     return out_path

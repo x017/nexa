@@ -13,6 +13,7 @@ from ._cdefs import (
     CuiNodeView,
     CuiPinOpts,
     CuiTableSort,
+    CuiTreeTableEvents,
     encode_opt,
     encode_str,
     make_text_buffer,
@@ -23,6 +24,9 @@ from .types import (
     KanbanMove,
     NodeView,
     TableSort,
+    TreeFlags,
+    TreeNode,
+    TreeTableEvents,
 )
 
 
@@ -231,8 +235,8 @@ class DataGridScope:
 
     __slots__ = (
         "_ui", "visible", "first", "last", "_nrows",
-        "_c_sel", "_c_sort", "_c_cursor", "_keep",
-        "selected", "sort", "cursor",
+        "_c_sel", "_c_sort", "_c_cursor", "_c_anchor", "_keep",
+        "selected", "sort", "cursor", "anchor",
     )
 
     def __init__(
@@ -246,6 +250,7 @@ class DataGridScope:
         c_sort: Optional[CuiTableSort],
         c_cursor: Optional[c_int],
         keep: List[Any],
+        c_anchor: Optional[c_int] = None,
     ) -> None:
         self._ui = ui
         self.visible = bool(visible)
@@ -255,12 +260,14 @@ class DataGridScope:
         self._c_sel = c_sel
         self._c_sort = c_sort
         self._c_cursor = c_cursor
+        self._c_anchor = c_anchor
         self._keep = keep
         self.selected: Optional[List[bool]] = None
         self.sort: Optional[TableSort] = (
             TableSort(int(c_sort.column), bool(c_sort.descending)) if c_sort is not None else None
         )
         self.cursor: int = int(c_cursor.value) if c_cursor is not None else -1
+        self.anchor: int = int(c_anchor.value) if c_anchor is not None else -1
 
     def __bool__(self) -> bool:
         return self.visible
@@ -303,6 +310,8 @@ class DataGridScope:
             self.sort = TableSort(int(self._c_sort.column), bool(self._c_sort.descending))
         if self._c_cursor is not None:
             self.cursor = int(self._c_cursor.value)
+        if self._c_anchor is not None:
+            self.anchor = int(self._c_anchor.value)
 
 
 class ReorderScope:
@@ -533,3 +542,125 @@ class NodeEditorScope:
                 self.deleted_nodes.append(int(ident.value))
             self._ui._lib.cui_node_editor_end(self._ui._ctx)
         self.view = NodeView(float(self._c_view.x), float(self._c_view.y), float(self._c_view.zoom))
+
+
+class TreeTableScope:
+    """Virtualized hierarchical tree-table scope (``ui.tree_table(...)``).
+
+    Iterate visible rows via ``for node_idx in tree.rows():``, draw the indented
+    disclosure name cell with ``tree.name(label, icon=...)``, and emit extra
+    columns via ``tree.cell_text(...)`` / ``tree.cell()`` / ``tree.cell_edit(...)``.
+    On exit, ``nodes[i].flags`` are synchronized in-place and ``tree.events``,
+    ``tree.sort``, and ``tree.cursor`` are populated.
+    """
+
+    __slots__ = (
+        "_ui", "_py_nodes", "_c_nodes", "_count",
+        "_c_sort", "_c_cursor", "_keep",
+        "events", "sort", "cursor",
+    )
+
+    def __init__(
+        self,
+        ui: Any,
+        py_nodes: Sequence[TreeNode],
+        c_nodes: Any,
+        count: int,
+        c_sort: Optional[CuiTableSort],
+        c_cursor: Optional[c_int],
+        keep: List[Any],
+    ) -> None:
+        self._ui = ui
+        self._py_nodes = py_nodes
+        self._c_nodes = c_nodes
+        self._count = count
+        self._c_sort = c_sort
+        self._c_cursor = c_cursor
+        self._keep = keep
+        self.events = TreeTableEvents()
+        self.sort: Optional[TableSort] = (
+            TableSort(int(c_sort.column), bool(c_sort.descending)) if c_sort is not None else None
+        )
+        self.cursor: int = int(c_cursor.value) if c_cursor is not None else -1
+
+    def row(self) -> int:
+        return int(self._ui._lib.cui_tree_table_row(self._ui._ctx))
+
+    def rows(self) -> Iterator[int]:
+        while True:
+            idx = int(self._ui._lib.cui_tree_table_row(self._ui._ctx))
+            if idx < 0:
+                break
+            yield idx
+
+    @property
+    def depth(self) -> int:
+        return int(self._ui._lib.cui_tree_table_depth(self._ui._ctx))
+
+    def name(self, text: str, icon: Optional[str] = None) -> None:
+        keep = self._ui._frame_keepalive
+        self._ui._lib.cui_tree_table_name(
+            self._ui._ctx, encode_str(text, keep), encode_opt(icon, keep)
+        )
+
+    def cell(self) -> None:
+        self._ui._lib.cui_data_grid_cell(self._ui._ctx)
+
+    def cell_text(self, text: str) -> None:
+        b = encode_str(text, self._ui._frame_keepalive)
+        self._ui._lib.cui_data_grid_cell_text(self._ui._ctx, b)
+
+    def cell_edit(self, text: str, max_bytes: int = 256) -> str:
+        buf, cap = make_text_buffer(text, max_bytes)
+        committed = bool(self._ui._lib.cui_data_grid_cell_edit(self._ui._ctx, buf, cap))
+        self._ui._record_change(committed)
+        return buf.value.decode("utf-8", errors="replace") if committed else text
+
+    def __enter__(self) -> TreeTableScope:
+        return self
+
+    def __exit__(self, *exc) -> None:
+        ev = CuiTreeTableEvents()
+        self._ui._lib.nexa_tree_table_end(self._ui._ctx, ctypes.byref(ev))
+        for i in range(self._count):
+            self._py_nodes[i].flags = TreeFlags(int(self._c_nodes[i].flags))
+        loads = (
+            tuple(int(ev.load[i]) for i in range(int(ev.load_count)))
+            if ev.load and ev.load_count > 0
+            else ()
+        )
+        self.events = TreeTableEvents(
+            activated=int(ev.activated),
+            expanded=int(ev.expanded),
+            collapsed=int(ev.collapsed),
+            load=loads,
+            selection_changed=bool(ev.selection_changed),
+            sort_changed=bool(ev.sort_changed),
+        )
+        if self._c_sort is not None:
+            self.sort = TableSort(int(self._c_sort.column), bool(self._c_sort.descending))
+        if self._c_cursor is not None:
+            self.cursor = int(self._c_cursor.value)
+        self._ui._record_change(bool(self.events))
+
+
+class PathBarMenuScope:
+    """Popup menu scope attached to a ``path_bar(..., menus=True)`` segment chevron."""
+
+    __slots__ = ("_ctx", "_end_fn", "visible", "segment")
+
+    def __init__(self, ctx: int, end_fn: Callable[[int], Any], visible: bool, segment: int) -> None:
+        self._ctx = ctx
+        self._end_fn = end_fn
+        self.visible = bool(visible)
+        self.segment = int(segment)
+
+    def __bool__(self) -> bool:
+        return self.visible
+
+    def __enter__(self) -> PathBarMenuScope:
+        return self
+
+    def __exit__(self, *exc) -> None:
+        if self.visible:
+            self._end_fn(self._ctx)

@@ -5,24 +5,7 @@
 
 static float cui__fs(cui_ctx *ui, float size) { return size * ui->theme.font_scale; }
 
-#define CUI__UNDO_MAX 48
-
-typedef struct cui_edit_state {
-    int cursor, anchor;        /* byte offsets */
-    float scroll_x, scroll_y;  /* single line horizontal scroll / textarea vertical */
-    float preferred_x;         /* for up/down in text areas */
-    bool selecting;
-    float hover, focus;
-    char *undo[CUI__UNDO_MAX];
-    int undo_cursor[CUI__UNDO_MAX];
-    int undo_count, undo_pos;
-    double last_edit;
-    int last_kind;
-    int last_cursor;
-    bool had_focus;
-    bool init;
-    bool show_password;
-} cui_edit_state;
+/* cui_edit_state and CUI__UNDO_MAX live in cui_internal.h (the code editor shares them) */
 
 typedef struct {
     const char *buf;
@@ -43,7 +26,7 @@ typedef struct {
 static int cui__edit_mask(char *out, int cap, int len_cp) {
     /* bullet per code point */
     int n = 0;
-    for (int i = 0; i < len_cp && n + 3 < cap; i++) { out[n++] = (char)0xE2; out[n++] = (char)0x80; out[n++] = (char)0xA2; }
+    for (int i = 0; i < len_cp && n + 3 < cap; i++) { memcpy(out + n, "\xE2\x80\xA2", 3); n += 3; }
     out[n] = 0;
     return n;
 }
@@ -67,6 +50,8 @@ static float cui__x_at(cui_ctx *ui, const cui__edit_paint *p, const char *line, 
 }
 
 static void cui__paint_edit(cui_ctx *ui, cui_node *n, void *data) {
+    bool unshaped = ui->text_unshaped;
+    ui->text_unshaped = true;
     cui__edit_paint *p = data;
     cui_rect r = n->rect;
     cui_push_clip(ui, r);
@@ -136,6 +121,7 @@ static void cui__paint_edit(cui_ctx *ui, cui_node *n, void *data) {
         }
     }
     cui_pop_clip(ui);
+    ui->text_unshaped = unshaped;
 }
 
 /* ---- editing primitives ---- */
@@ -181,6 +167,23 @@ static void cui__undo_push_kind(cui_ctx *ui, cui_edit_state *e, const char *buf,
 }
 
 static void cui__undo_push(cui_ctx *ui, cui_edit_state *e, const char *buf) { cui__undo_push_kind(ui, e, buf, 3); }
+
+/* One step back (or forward with redo) in the history; false when there is
+ * none. The caret lands where it was before the edit that is undone. */
+bool cui__edit_undo_step(cui_ctx *ui, cui_edit_state *e, char *buf, size_t cap, bool redo) {
+    if (!redo) {
+        if (e->undo_pos == e->undo_count) { cui__undo_push(ui, e, buf); e->undo_pos--; e->last_edit = 0; }
+        if (e->undo_pos <= 0) return false;
+        e->undo_pos--;
+    } else {
+        if (e->undo_pos + 1 >= e->undo_count) return false;
+        e->undo_pos++;
+    }
+    snprintf(buf, cap, "%s", e->undo[e->undo_pos]);
+    int len = (int)strlen(buf);
+    e->cursor = e->anchor = CUI_MIN(e->undo_cursor[e->undo_pos], len);
+    return true;
+}
 
 static void cui__delete_range(char *buf, int *len, int a, int b) {
     if (b <= a) return;
@@ -400,24 +403,11 @@ static cui__edit_result cui__edit_logic(cui_ctx *ui, cui_id id, cui_edit_state *
                 e->last_edit = 0;
             }
         }
+        bool undo = prim && cui_key_pressed(ui, CUI_KEY_Z) && !shift;
         bool redo = prim && ((shift && cui_key_pressed(ui, CUI_KEY_Z)) || cui_key_pressed(ui, CUI_KEY_Y));
-        if (prim && cui_key_pressed(ui, CUI_KEY_Z) && !shift) {
-            if (e->undo_pos == e->undo_count) { cui__undo_push(ui, e, buf); e->undo_pos--; e->last_edit = 0; }
-            if (e->undo_pos > 0) {
-                e->undo_pos--;
-                snprintf(buf, cap, "%s", e->undo[e->undo_pos]);
-                len = (int)strlen(buf);
-                e->cursor = e->anchor = CUI_MIN(e->undo_cursor[e->undo_pos], len);
-                res.changed = true;
-            }
-        } else if (redo) {
-            if (e->undo_pos + 1 < e->undo_count) {
-                e->undo_pos++;
-                snprintf(buf, cap, "%s", e->undo[e->undo_pos]);
-                len = (int)strlen(buf);
-                e->cursor = e->anchor = CUI_MIN(e->undo_cursor[e->undo_pos], len);
-                res.changed = true;
-            }
+        if ((undo || redo) && cui__edit_undo_step(ui, e, buf, cap, !undo)) {
+            len = (int)strlen(buf);
+            res.changed = true;
         }
         for (int rep = ui->kpressed[CUI_KEY_BACKSPACE]; rep > 0; rep--) {
             s0 = CUI_MIN(e->cursor, e->anchor); s1 = CUI_MAX(e->cursor, e->anchor);
@@ -518,6 +508,8 @@ int cui__text_field(cui_ctx *ui, cui_id id, char *buf, size_t cap, const cui_inp
     memset(&d, 0, sizeof d);
     if (!o) o = &d;
     if (!buf || cap == 0) return 0;
+    bool unshaped = ui->text_unshaped;
+    ui->text_unshaped = true;
     bool disabled = o->disabled || cui_is_disabled(ui);
     cui_edit_state *e = cui_state(ui, id, sizeof *e);
     if (!e->init) {
@@ -705,6 +697,7 @@ int cui__text_field(cui_ctx *ui, cui_id id, char *buf, size_t cap, const cui_inp
         cui__close(ui);
     }
     ui->last_id = id;
+    ui->text_unshaped = unshaped;
     return flags;
 }
 
@@ -814,3 +807,18 @@ bool cui_number_ex(cui_ctx *ui, const char *id_str, double *value, double min, d
     ui->last_id = id;
     return *value != old;
 }
+
+/* ---- primitives shared with the code editor (cui_editor.c) ---- */
+
+void cui__edit_attach(cui_ctx *ui, cui_id id, cui_edit_state *e) {
+    if (e->init) return;
+    e->init = true;
+    e->preferred_x = -1;
+    cui__state_set_dtor(ui, id, cui__edit_dtor);
+}
+void cui__edit_undo_push(cui_ctx *ui, cui_edit_state *e, const char *buf, int kind) { cui__undo_push_kind(ui, e, buf, kind); }
+int cui__edit_insert(char *buf, int *len, size_t cap, int pos, const char *s, int n) { return cui__insert(buf, len, cap, pos, s, n, true); }
+void cui__edit_delete(char *buf, int *len, int a, int b) { cui__delete_range(buf, len, a, b); }
+bool cui__edit_is_word(unsigned char c) { return cui__is_word(c); }
+int cui__edit_word_left(const char *s, int pos) { return cui__word_left(s, pos); }
+int cui__edit_word_right(const char *s, int len, int pos) { return cui__word_right(s, len, pos); }
