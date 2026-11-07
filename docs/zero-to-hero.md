@@ -1,6 +1,6 @@
 # Zero to Hero: The Complete `nexa` Full Tutorial
 
-Welcome to the complete, end-to-end **Zero to Hero** course for **`nexa`** (`v1.1.0`)—the zero-dependency, C99-backed immediate-mode UI framework for Python.
+Welcome to the complete, end-to-end **Zero to Hero** course for **`nexa`** (`v1.1.0`)—a zero-dependency Python port of [CUI](https://github.com/yappologistic/CUI) for building fast, native immediate-mode desktop UIs.
 
 By the end of this single comprehensive tutorial, you will go from **opening your very first 15-line native window** all the way to **architecting, testing, and packaging a multi-pane desktop IDE & telemetry studio** (*Pulse Studio*) with interactive docking, virtualized tree & data grids, syntax-highlighted code and Myers diff editors, CommonMark/GFM checklists, live charts, flame profilers, background worker streams, and headless `pytest` verification.
 

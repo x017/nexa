@@ -1,6 +1,6 @@
 # Getting Started & Core Mental Model
 
-Welcome to **nexa**! Whether you have built desktop UIs with Tkinter, PyQt, Dear ImGui, or React—or this is your very first Python GUI library—this guide walks you from zero to building fast, polished desktop tools in minutes.
+Welcome to **nexa**—a Python port of [CUI](https://github.com/yappologistic/CUI)! Whether you have built desktop UIs with Tkinter, PyQt, Dear ImGui, or React—or this is your very first Python GUI library—this guide walks you from zero to building fast, polished desktop tools in minutes.
 
 ---
 

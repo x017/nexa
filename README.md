@@ -1,6 +1,6 @@
 # nexa
 
-**nexa** is a lightweight, high-performance immediate-mode desktop UI library for Python, powered by the zero-dependency C99 [CUI](https://github.com/yappologistic/CUI) layout, spring-animation, and SDF rendering engine.
+**nexa** is a Python port of [CUI](https://github.com/yappologistic/CUI)—a lightweight, zero-dependency C99 immediate-mode desktop UI library with spring motion, Flexbox/Grid layout, and crisp SDF rendering.
 
 ![nexa 1.1 Workbench Studio — Dockspace, TreeTable, CodeEditor, FlameGraph & Timeline](docs/assets/screenshots/workbench.png)
 
