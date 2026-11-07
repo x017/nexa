@@ -142,6 +142,7 @@ Overlays, disclosures, menus, and popups only build their children when open or 
 - Structured Views: `table`, `data_grid`, `inspector`, `node_editor`
 
 ```python
+# Declare `is_open = False` OUTSIDE `draw()`, with `nonlocal is_open` inside `draw()`:
 with ui.dialog("Confirm Reset", is_open, description="Reset all settings to defaults?") as dlg:
     if dlg:
         with ui.dialog_footer():
@@ -150,7 +151,7 @@ with ui.dialog("Confirm Reset", is_open, description="Reset all settings to defa
             if ui.button("Reset", variant=ui.ButtonVariant.DANGER):
                 reset_all()
                 dlg.open = False
-is_open = dlg.open  # Also catches Escape key or backdrop click!
+is_open = dlg.open  # Syncs Cancel/Reset, header X, Escape key & backdrop click!
 ```
 
 ---

@@ -588,13 +588,14 @@ static bool cui__modal_begin(cui_ctx *ui, cui_id id, const char *title, bool *op
     cui_id scrim_id = id ^ 0x5C819u;
     int z = st->z ? st->z : 1000 + ++ui->layer_seq;
     st->z = z;
+    cui_interact si = cui__interact(ui, scrim_id, 0);
     /* Esc and click outside: only the topmost modal reacts, and only when no popup inside it is open */
     bool topmost = ui->prev_modal_layer == 0 || ui->prev_modal_layer == id;
     for (int i = 0; i < ui->popup_count; i++) if (ui->popups[i].open) topmost = false;
     if (is_open && !persistent && topmost) {
         /* while a text field has focus, the first Esc leaves the field */
         if (cui_key_pressed(ui, CUI_KEY_ESCAPE) && !ui->edit_prev) { *open = false; ui->kpressed[CUI_KEY_ESCAPE] = 0; }
-        if (ui->mreleased[0] && ui->hot == scrim_id && ui->active == scrim_id) *open = false;
+        if (st->opened < ui->frame && si.clicked) *open = false;
     }
     if (is_open && (!ui->modal_layer || z > ui->modal_z)) {
         ui->modal_layer = id;
@@ -602,7 +603,6 @@ static bool cui__modal_begin(cui_ctx *ui, cui_id id, const char *title, bool *op
         /* move keyboard focus into the dialog when it opens */
         if (st->opened == ui->frame && ui->focus_visible) ui->focus = 0;
     }
-    cui__interact(ui, scrim_id, 0);
     int root = cui__float_begin(ui, id, z, 0, CUI__PLACE_FULL, 0);
     cui_node *rn = &ui->nodes[root];
     rn->id = scrim_id;
@@ -1307,7 +1307,7 @@ bool cui_color_picker(cui_ctx *ui, const char *id_str, cui_color *value) {
 /* Command palette                                                          */
 /* ------------------------------------------------------------------------ */
 
-typedef struct { char query[128]; int highlight; bool was_open; cui_spring t; } cui__palette_state;
+typedef struct { char query[128]; int highlight; uint64_t opened; bool was_open; cui_spring t; } cui__palette_state;
 
 static int cui__fuzzy(const char *text, const char *q) {
     /* subsequence match; higher is better, -1 = no match */
@@ -1334,7 +1334,7 @@ int cui_command_palette(cui_ctx *ui, bool *open, const cui_command *cmds, int co
     cui_id id = cui_make_id(ui, "#command-palette");
     cui__palette_state *st = cui_state(ui, id, sizeof *st);
     bool is_open = open && *open;
-    if (is_open && !st->was_open) { st->query[0] = 0; st->highlight = 0; }
+    if (is_open && !st->was_open) { st->query[0] = 0; st->highlight = 0; st->opened = ui->frame; }
     st->was_open = is_open;
     if (is_open) cui__spring(ui, &st->t, 1.0f, CUI__SPRING_ENTER);
     else cui__spring(ui, &st->t, 0.0f, CUI__SPRING_EXIT);
@@ -1342,11 +1342,11 @@ int cui_command_palette(cui_ctx *ui, bool *open, const cui_command *cmds, int co
     float t = cui__clampf(st->t.x, 0, 1);
     int chosen = -1;
     cui_id scrim_id = id ^ 0x5C819u;
+    cui_interact si = cui__interact(ui, scrim_id, 0);
     if (is_open) {
         if (cui_key_pressed(ui, CUI_KEY_ESCAPE)) { *open = false; ui->kpressed[CUI_KEY_ESCAPE] = 0; }
-        if (ui->mreleased[0] && ui->hot == scrim_id && ui->active == scrim_id) *open = false;
+        if (st->opened < ui->frame && si.clicked) *open = false;
     }
-    cui__interact(ui, scrim_id, 0);
     if (is_open) { ui->modal_layer = id; ui->modal_z = 0x7FFF0000; }
     int root = cui__float_begin(ui, id, 0x7FFF0000, 0, CUI__PLACE_FULL, 0);
     cui_node *rn = &ui->nodes[root];

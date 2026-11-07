@@ -131,13 +131,23 @@ with ui.card(pad=16, gap=10):          # Outer card (vertical by default)
 ```
 
 #### Pattern E — Conditional Scopes (`with ui.dialog(...) as dlg: if dlg:`)
-Popups, menus, modals, sheets, accordions, and dock panels are **only visible some of the time** (for example, when a menu is clicked open or a tab is active). For these, **always write `as scope:` followed by `if scope:`**:
+Popups, menus, modals, sheets, accordions, and dock panels are **only visible some of the time** (for example, when a menu is clicked open or a tab is active). For these, **always**:
+1. Keep `is_open` **outside `draw()`** (with `nonlocal is_open` / `global is_open` / `self.is_open`) so it persists across frames instead of resetting every frame,
+2. Bind `as scope:` and check `if scope:` before emitting inner widgets, and
+3. Sync `is_open = dlg.open` right after the `with` block!
 ```python
-with ui.dialog("Confirm", is_open) as dlg:   # 1. Tell nexa about the dialog
-    if dlg:                                  # 2. Only build inner buttons when visible!
-        if ui.button("Close"):
-            dlg.open = False                 # 3. Close programmatically if clicked
-is_open = dlg.open                           # 4. Sync back (catches Escape key & backdrop click!)
+is_open = False                                  # Declared OUTSIDE draw() so it persists across frames!
+
+def draw() -> None:
+    nonlocal is_open                             # Required in Python closures whenever assigning `is_open = ...`
+    if ui.button("Open Confirm"):
+        is_open = True
+
+    with ui.dialog("Confirm", is_open) as dlg:   # 1. Tell nexa about the dialog
+        if dlg:                                  # 2. Only build inner buttons when visible!
+            if ui.button("Close"):
+                dlg.open = False                 # 3. Close programmatically if clicked
+    is_open = dlg.open                           # 4. Sync back (catches Close, X button, Escape & backdrop!)
 ```
 
 ### 5. Quick Decoder for Special Symbols, Arguments & Mini-Syntaxes
@@ -156,13 +166,14 @@ Whenever you spot a special symbol or layout string in the modules ahead, here i
 | `for r in grid.rows:` | Inside `data_grid` / `tree_table`, loops **only over the ~20 rows currently visible on screen** (so 50,000 rows render instantly!). |
 | `"h0.25([*Files],v0.60([*Code,Diff],[*Logs]))"` | **Dockspace layout mini-syntax**: `h0.25(Left, Right)` = horizontal split (`25%` left, `75%` right); `v0.60(Top, Bottom)` = vertical split (`60%` top, `40%` bottom); `[A,*B]` = tab strip with `*B` selected! |
 
-### 6. Top 6 Beginner Syntax Pitfalls & 1-Line Fixes
+### 6. Top 7 Beginner Syntax Pitfalls & 1-Line Fixes
 
 | If You See This Happen… | Why It Happened | The 1-Line Fix |
 |---|---|---|
 | Typing in `ui.input` doesn't change the text | Return value wasn't saved back | Write `name = ui.input("id", name)` instead of bare `ui.input("id", name)` |
 | Clicking one button in a `for` loop triggers all rows | Every row hashed the same button label | Wrap loop body in `with ui.id_scope(idx):` (or use `"Click##" + str(idx)`) |
-| Pressing `Escape` doesn't close `ui.dialog` / `ui.sheet` | `is_open` wasn't synced from `.open` | Add `is_open = dlg.open` right after the `with ui.dialog(...) as dlg:` block |
+| `ui.dialog` / `ui.sheet` **never closes** when clicking `Close` / `X` / `Escape` | `is_open = True` was placed *inside* `draw()` (resetting every frame!) or `nonlocal is_open` was omitted | Declare `is_open` **outside** `draw()`, add `nonlocal is_open` inside `draw()`, and keep `is_open = dlg.open` |
+| Pressing `Escape` or backdrop doesn't close `ui.dialog` / `ui.sheet` | `is_open` wasn't synced from `.open` | Add `is_open = dlg.open` right after the `with ui.dialog(...) as dlg:` block |
 | `TypeError` passing `height=ui.FILL` to `code_editor` / `diff_view` | Heavy virtualized editors take pixel float `height` | Pass `width=ui.FILL, height=340` (a number in pixels) |
 | `TypeError: 'bool' object is not callable` on `ctx.submitted()` | On `ctx: ui.UI`, transition flags are properties | Write `if ctx.submitted:` (no `()`), or top-level `if ui.submitted():` |
 | Window freezes while fetching data or sleeping | Blocking code ran inside `draw()` | Dispatch slow work via `runner.submit(...)` or `runner.stream(...)` (Module 8) |
@@ -286,7 +297,7 @@ To track keyboard focus, scroll offsets, and hover springs across frames, `nexa`
    - Structured Views: `table`, `data_grid`, `tree_table`, `inspector`, `node_editor`
 
 ```python
-# CORRECT conditional scope pattern:
+# Declare `confirm_open = False` OUTSIDE `draw()`, with `nonlocal confirm_open` inside `draw()`:
 with ui.dialog("Delete Project?", confirm_open, description="This action cannot be undone.") as dlg:
     if dlg:  # <-- Only build inner widgets when the dialog is actually visible!
         with ui.dialog_footer():
@@ -294,7 +305,7 @@ with ui.dialog("Delete Project?", confirm_open, description="This action cannot 
                 dlg.open = False
             if ui.button("Delete", variant=ui.ButtonVariant.DANGER):
                 dlg.open = False
-confirm_open = dlg.open  # Captures Escape key & backdrop click automatically!
+confirm_open = dlg.open  # Captures Cancel/Delete, header X, Escape key & backdrop click!
 ```
 
 #### Rule 3: Inspecting Per-Widget Transitions (`changed`, `submitted`, `focused`, `blurred`)

@@ -130,10 +130,10 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
 - **`confirm_popover(id, *, title="Are you sure?", description=None, confirm_label="Confirm", cancel_label="Cancel", danger=False) -> bool`** (`confirm_popover_open(id)` opens it on the anchor widget)
 - **`menu(label, *, icon=None, variant=ButtonVariant.OUTLINE, size=ControlSize.MD)`** + **`context_menu(id)`** + **`user_menu(name, *, detail=None, avatar_tex=0, status=None, compact=False)`**
   - Inside menus: **`menu_item(label, *, icon=None, shortcut=None, disabled=False, danger=False, checked=False) -> bool`**, **`menu_separator()`**, **`menu_label(text)`**.
-- **`dialog(title, open: bool, *, description=None, width=440.0, dismissible=True, close_button=True)`** -> `BoolStateScope` (`dlg.open`) + **`dialog_footer()`**.
-- **`sheet(title, open: bool, *, description=None, side=Side.RIGHT, size=380.0, modal=True)`** -> `BoolStateScope` (`sh.open`).
-- **`accordion(title, expanded: bool, *, subtitle=None, icon=None)`** -> `BoolStateScope` (`acc.open`).
-- **`expandable_card(title, expanded: bool, *, subtitle=None, icon=None, badge=None, width=None)`** -> `BoolStateScope`.
+- **`dialog(title, is_open: bool, *, description=None, width=0.0, no_close_button=False, persistent=False)`** -> `OpenStateScope` (`dlg.open`) + **`dialog_footer()`**.
+- **`sheet(title, is_open: bool, *, side=Side.RIGHT, size=0.0, description=None)`** -> `OpenStateScope` (`sh.open`).
+- **`accordion(title, is_open: bool)`** -> `OpenStateScope` (`acc.open`).
+- **`expandable_card(title, is_open: bool, *, description=None, icon=None, badge=None, badge_tone=Tone.NEUTRAL)`** -> `OpenStateScope` (`card.open`).
 - **`expandable_text(id, text, *, lines=3, more_label="Show more", less_label="Show less")`**
 
 ---

@@ -206,7 +206,12 @@ class OverlaysMixin:
         vis = bool(self._lib.cui_dialog_begin(
             self._ctx, encode_str(title, keep), ctypes.byref(c_open), ctypes.byref(opts)
         ))
-        return OpenStateScope(self._ctx, self._lib.cui_dialog_end, vis, bool(c_open.value))
+        if bool(c_open.value) != bool(is_open):
+            self._record_change(True)
+        return OpenStateScope(
+            self._ctx, self._lib.cui_dialog_end, vis, bool(c_open.value),
+            request_redraw=self._lib.cui_request_redraw,
+        )
 
     def dialog_footer(self) -> SimpleScope:
         self._lib.cui_dialog_footer_begin(self._ctx)
@@ -231,7 +236,12 @@ class OverlaysMixin:
         vis = bool(self._lib.cui_sheet_begin(
             self._ctx, encode_str(title, keep), ctypes.byref(c_open), ctypes.byref(opts)
         ))
-        return OpenStateScope(self._ctx, self._lib.cui_sheet_end, vis, bool(c_open.value))
+        if bool(c_open.value) != bool(is_open):
+            self._record_change(True)
+        return OpenStateScope(
+            self._ctx, self._lib.cui_sheet_end, vis, bool(c_open.value),
+            request_redraw=self._lib.cui_request_redraw,
+        )
 
     # ---- Accordion & Expandable Disclosure ----
 
@@ -242,7 +252,12 @@ class OverlaysMixin:
         vis = bool(self._lib.cui_accordion_begin(
             self._ctx, encode_str(title, keep), ctypes.byref(c_open)
         ))
-        return OpenStateScope(self._ctx, self._lib.cui_accordion_end, vis, bool(c_open.value))
+        if bool(c_open.value) != bool(is_open):
+            self._record_change(True)
+        return OpenStateScope(
+            self._ctx, self._lib.cui_accordion_end, vis, bool(c_open.value),
+            request_redraw=self._lib.cui_request_redraw,
+        )
 
     def expandable_card(
         self,
@@ -265,7 +280,12 @@ class OverlaysMixin:
         vis = bool(self._lib.cui_expandable_card_begin(
             self._ctx, encode_str(title, keep), ctypes.byref(c_open), ctypes.byref(opts)
         ))
-        return OpenStateScope(self._ctx, self._lib.cui_expandable_card_end, vis, bool(c_open.value))
+        if bool(c_open.value) != bool(is_open):
+            self._record_change(True)
+        return OpenStateScope(
+            self._ctx, self._lib.cui_expandable_card_end, vis, bool(c_open.value),
+            request_redraw=self._lib.cui_request_redraw,
+        )
 
     def expandable_text(
         self,

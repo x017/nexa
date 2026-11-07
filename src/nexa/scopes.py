@@ -117,12 +117,15 @@ class OpenStateScope:
     the updated open boolean!
     """
 
-    __slots__ = ("_ctx", "_end_fn", "visible", "open", "clicked")
+    __slots__ = ("_ctx", "_end_fn", "_request_redraw", "_initial_open", "visible", "open", "clicked")
 
     def __init__(self, ctx: int, end_fn: Callable[[int], Any],
-                 visible: bool, is_open: bool, clicked: bool = False) -> None:
+                 visible: bool, is_open: bool, clicked: bool = False,
+                 request_redraw: Optional[Callable[[int], Any]] = None) -> None:
         self._ctx = ctx
         self._end_fn = end_fn
+        self._request_redraw = request_redraw
+        self._initial_open = bool(is_open)
         self.visible = bool(visible)
         self.open = bool(is_open)
         self.clicked = bool(clicked)
@@ -136,6 +139,8 @@ class OpenStateScope:
     def __exit__(self, *exc) -> None:
         if self.visible:
             self._end_fn(self._ctx)
+        if bool(self.open) != self._initial_open and self._request_redraw is not None:
+            self._request_redraw(self._ctx)
 
 
 class SplitScope:
