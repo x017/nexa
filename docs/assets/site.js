@@ -542,12 +542,20 @@
   // ---- Special Views for `guide.html` (#tutorials, #components, #changelog) ----
   function buildTutorialsHubHtml(docsData) {
     const heroChapter = docsData && Array.isArray(docsData.chapters) ? docsData.chapters.find((c) => c.slug === "zero-to-hero") : null;
+    const syntaxToc =
+      heroChapter && Array.isArray(heroChapter.toc)
+        ? heroChapter.toc.find((t) => t.title.toLowerCase().includes("syntax guide"))
+        : null;
+    const syntaxPill = syntaxToc
+      ? `<a class="module-jump-pill" href="#zero-to-hero--${escapeHtml(syntaxToc.id)}">Syntax &amp; Sections Guide</a>`
+      : "";
     const modulePills =
       heroChapter && Array.isArray(heroChapter.toc)
-        ? heroChapter.toc
+        ? syntaxPill +
+          heroChapter.toc
             .filter((t) => /^Module\s+\d+/i.test(t.title))
             .map((t) => {
-              const shortLbl = t.title.split("—")[0].replace("Module ", "M").trim();
+              const shortLbl = t.title.split(":")[0].replace("Module ", "M").trim();
               return `<a class="module-jump-pill" href="#zero-to-hero--${escapeHtml(t.id)}">${escapeHtml(shortLbl)}</a>`;
             })
             .join("")

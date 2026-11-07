@@ -26,6 +26,149 @@ By the end of this single comprehensive tutorial, you will go from **opening you
 
 ---
 
+## How This Tutorial Is Organized & Complete Syntax Guide
+
+Before jumping into code, spend **3 minutes** reading this section. It explains **how all 11 sections fit together** and **translates every piece of `nexa` syntax into plain English** so nothing ever looks mysterious.
+
+### 1. Guide to the Sections (4 Stages from Zero to Hero)
+
+This tutorial is divided into **4 progressive stages**. Every module follows the exact same easy-to-read pattern: **(1) Plain-English Concept → (2) New Syntax Breakdown → (3) Complete Copy-Paste Runnable App**.
+
+| Stage | Modules | What Each Section Teaches You | How to Read It |
+|---|---|---|---|
+| **Stage 1: Foundations** | **Modules 0 – 2** | **M0** opens your first window and explains how state & IDs work. **M1** teaches Flexbox, grids, scrolling, and resizable splits. **M2** covers every form input, slider, picker, keyboard shortcut, and validation rule. | **Read in order**—every later module builds on these three! |
+| **Stage 2: Desktop Power** | **Modules 3 – 5** | **M3** adds desktop chrome (menu bars, toolbars, tabs, path bars, dialogs, sheets, `Ctrl+K`). **M4** adds 50,000-row virtualized tables, code & diff editors, Markdown checklists, charts, and Kanban boards. **M5** adds multi-split dockspaces, node graphs, curves, timelines, and custom vector drawing. | Run each milestone app and play with the widgets live. |
+| **Stage 3: Scale, Style & Async** | **Modules 6 – 8** | **M6** shows how to organize larger apps using OOP (`Application`, `Component`, `Router`, `Store`). **M7** customizes Light/Dark themes, 8 OKLCH accents, colors, and fonts. **M8** runs background threads, logs, and AI token streams without freezing the UI. | Jump to whichever topic your own project needs first, or read straight through. |
+| **Stage 4: Capstone & Ship** | **Modules 9 – 10** | **M9** combines Stages 1–3 into **Pulse Studio** (`examples/zero_to_hero.py`). **M10** writes automated headless `pytest` UI tests and packages single-file executables. | Study **M9** as your blueprint for real-world production apps. |
+
+### 2. Line-by-Line Anatomy of a `nexa` Program
+
+Here is the smallest interactive `nexa` program, with **every single line explained**:
+
+```python
+import nexa as ui                     # 1. Everything in nexa lives under one clean `ui` namespace.
+
+def main() -> None:
+    count = 0                         # 2. Your state is just normal Python variables outside `draw()`.
+    name = "Ada"
+
+    def draw() -> None:               # 3. `draw()` describes what the window looks like right now.
+        nonlocal count, name          # 4. Python's `nonlocal` lets `draw()` reassign `count` & `name`.
+
+        with ui.column(pad=20, gap=10):                 # 5. `with` opens a vertical box; indented lines go INSIDE it!
+            ui.heading(f"Hello, {name}!")               # 6. Display text using normal Python f-strings.
+            name = ui.input("user_box", name)           # 7. Pass current `name` IN -> receive edited `name` OUT.
+            if ui.button("Add +1"):                     # 8. `if ui.button(...)` is True on the frame clicked!
+                count += 1
+            ui.label(f"Clicked {count} times")
+
+    ui.run(draw, title="Demo", width=420, height=260)   # 9. Opens the native OS window & sleeps at 0% CPU when idle.
+```
+
+> **Pro Tip: Don't like writing `nonlocal`?** Put your state in a dictionary (`state = {"count": 0, "name": "Ada"}` → `state["count"] += 1`) or an OOP class (`self.count += 1` in Module 6). Because mutating a `dict` or `self` attribute doesn't reassign a local variable, you never need `nonlocal`!
+
+### 3. Why Do You See Both `ui.button(...)` and `ctx.button(...)`?
+
+Throughout the docs, you will see two ways of calling the **exact same widgets**:
+
+```python
+# Style A — Implicit `ui.*` (shortest for small scripts; `draw()` takes 0 arguments)
+def draw() -> None:
+    if ui.button("Save"):
+        pass
+    if ui.submitted():      # <-- Function call `ui.submitted()`
+        pass
+
+# Style B — Explicit `ctx.*` (best for helper functions & OOP classes; `draw(ctx)` takes 1 argument)
+def draw(ctx: ui.UI) -> None:
+    if ctx.button("Save"):  # <-- Exact same button!
+        pass
+    if ctx.submitted:       # <-- Property `ctx.submitted` (no parentheses on `ctx`!)
+        pass
+```
+
+- **`ui.*`** automatically finds the active window behind the scenes (`contextvars`).
+- **`ctx.*`** passes the window's `ui.UI` context explicitly—making it easy to split large apps across multiple `.py` files and classes. `ui.run(draw)` supports **both** automatically!
+
+### 4. The 5 Widget Syntax Patterns (Every Call Shape in `nexa`)
+
+All 160+ components in `nexa` follow **just 5 simple syntax patterns**:
+
+#### Pattern A — Click Actions (`-> bool`)
+Buttons, menu items, and toolbar icons return `True` **only on the frame you click them**:
+```python
+if ui.button("Run Check", variant=ui.ButtonVariant.PRIMARY, icon=ui.Icon.PLAY):
+    print("Clicked once!")
+```
+
+#### Pattern B — Value-In, Value-Out (`value -> new_value`)
+Inputs, sliders, switches, checkboxes, selects, and pickers take your current variable and return the updated value. **Always assign the result back to your variable!**
+```python
+enabled = ui.switch("Enable cache", enabled)                  # bool  -> bool
+volume  = ui.slider("Volume", volume, 0.0, 100.0)             # float -> float
+email   = ui.input("email_id", email, label="Work Email")     # str   -> str
+choice  = ui.select("plan_id", ["Free", "Pro"], choice)       # int   -> int (selected index)
+lo, hi  = ui.range_slider("Bounds", lo, hi, 0.0, 50.0)        # returns a (lo, hi) tuple!
+```
+
+#### Pattern C — Rich Result Objects (`res = ctx.widget(...)`)
+Complex v1.1 widgets (like `code_editor`, `path_bar`, `markdown`, `flame_graph`, `chat_composer`) return a small result object so you can read **both** the updated value **and** extra metadata (like cursor line/column or clicked task items):
+```python
+ed = ctx.code_editor("src_ed", code_text, lang="python", width=ui.FILL, height=320)
+code_text = ed.text          # Updated source code string
+cur_line  = ed.line          # Current 1-based cursor line number
+was_edited = ed.changed      # True if edited on this frame
+```
+
+#### Pattern D — Always-Open Layout Scopes (`with ui.row(...):`)
+Python indentation visually matches your UI hierarchy! Everything indented inside `with` becomes a child of that container, and exiting the `with` block closes the container automatically:
+```python
+with ui.card(pad=16, gap=10):          # Outer card (vertical by default)
+    ui.heading("Server Status")        # Top child inside card
+    with ui.row(gap=8):                # Horizontal row inside card
+        ui.badge("Online")             # Left item in row
+        ui.button("Restart")           # Right item in row
+```
+
+#### Pattern E — Conditional Scopes (`with ui.dialog(...) as dlg: if dlg:`)
+Popups, menus, modals, sheets, accordions, and dock panels are **only visible some of the time** (for example, when a menu is clicked open or a tab is active). For these, **always write `as scope:` followed by `if scope:`**:
+```python
+with ui.dialog("Confirm", is_open) as dlg:   # 1. Tell nexa about the dialog
+    if dlg:                                  # 2. Only build inner buttons when visible!
+        if ui.button("Close"):
+            dlg.open = False                 # 3. Close programmatically if clicked
+is_open = dlg.open                           # 4. Sync back (catches Escape key & backdrop click!)
+```
+
+### 5. Quick Decoder for Special Symbols, Arguments & Mini-Syntaxes
+
+Whenever you spot a special symbol or layout string in the modules ahead, here is what it means:
+
+| Syntax You See | Plain-English Meaning |
+|---|---|
+| `"Delete##row_5"` | Displays **`Delete`** on screen, while hashing the full string `"Delete##row_5"` so row 5 doesn't collide with row 6. |
+| `"##silent_switch"` | Displays **no label text at all**, while giving the widget the unique ID `"##silent_switch"`. |
+| `with ui.id_scope(i):` | Wraps one iteration of a `for` loop so every widget inside gets a unique ID automatically. |
+| `pad=16` vs `gap=10` | `pad` is breathing room **inside the outer border** of a box; `gap` is spacing **between adjacent child items**. |
+| `ui.spacer()` | An invisible stretchy spring inside a `row` or `column` that pushes everything after it to the far right or bottom. |
+| `width=ui.FILL` vs `ui.GROW(1)` | `FILL` stretches to 100% of parent; `GROW(1)` shares remaining space along a `row`/`column` above/beside fixed bars. |
+| `sp.next()` | Inside `with ctx.split(...) as sp:`, marks where **Pane 1 ends** and **Pane 2 begins**. |
+| `for r in grid.rows:` | Inside `data_grid` / `tree_table`, loops **only over the ~20 rows currently visible on screen** (so 50,000 rows render instantly!). |
+| `"h0.25([*Files],v0.60([*Code,Diff],[*Logs]))"` | **Dockspace layout mini-syntax**: `h0.25(Left, Right)` = horizontal split (`25%` left, `75%` right); `v0.60(Top, Bottom)` = vertical split (`60%` top, `40%` bottom); `[A,*B]` = tab strip with `*B` selected! |
+
+### 6. Top 6 Beginner Syntax Pitfalls & 1-Line Fixes
+
+| If You See This Happen… | Why It Happened | The 1-Line Fix |
+|---|---|---|
+| Typing in `ui.input` doesn't change the text | Return value wasn't saved back | Write `name = ui.input("id", name)` instead of bare `ui.input("id", name)` |
+| Clicking one button in a `for` loop triggers all rows | Every row hashed the same button label | Wrap loop body in `with ui.id_scope(idx):` (or use `"Click##" + str(idx)`) |
+| Pressing `Escape` doesn't close `ui.dialog` / `ui.sheet` | `is_open` wasn't synced from `.open` | Add `is_open = dlg.open` right after the `with ui.dialog(...) as dlg:` block |
+| `TypeError` passing `height=ui.FILL` to `code_editor` / `diff_view` | Heavy virtualized editors take pixel float `height` | Pass `width=ui.FILL, height=340` (a number in pixels) |
+| `TypeError: 'bool' object is not callable` on `ctx.submitted()` | On `ctx: ui.UI`, transition flags are properties | Write `if ctx.submitted:` (no `()`), or top-level `if ui.submitted():` |
+| Window freezes while fetching data or sleeping | Blocking code ran inside `draw()` | Dispatch slow work via `runner.submit(...)` or `runner.stream(...)` (Module 8) |
+
+---
+
 ## Module 0: Zero Setup, First Window & The Immediate-Mode Mental Model
 
 ### 0.1 Installation & Zero-Dependency Architecture
@@ -190,7 +333,21 @@ You can also clamp flexible containers with `min_width=`, `max_width=`, `min_hei
 - **Responsive `ui.grid(columns=3, min_column_width=180, gap=14)`**: Automatically wraps columns based on window width when `min_column_width > 0`!
 - **Draggable `ui.split("id", ratio, vertical=False)`**: Renders an interactive resize handle between two panes; call `sp.next()` between Pane 1 and Pane 2, then save `ratio = sp.ratio` after exiting the `with` block.
 
-### 1.3 Milestone 1: Responsive 3-Pane Desktop Shell
+### 1.3 New Syntax Breakdown (Before You Run Milestone 1)
+
+Look at the three layout patterns introduced in the Milestone 1 shell below:
+1. **`height=ui.GROW(1)` above a fixed `status_bar`**: When a vertical `column` holds a top header, a middle workspace (`height=ui.GROW(1)`), and a bottom `status_bar()`, `GROW(1)` tells the middle workspace to absorb 100% of leftover vertical window height automatically as the user resizes the window.
+2. **Draggable two-pane `split` (`sp.next()` & `sp.ratio`)**:
+   ```python
+   with ctx.split("main_split", split_ratio, min_first=320, min_second=200) as sp:
+       ctx.label("Left pane content")
+       sp.next()  # <-- Switches from Pane 1 (left) to Pane 2 (right)!
+       ctx.label("Right pane content")
+   split_ratio = sp.ratio  # <-- Saves the dragged divider position for the next frame!
+   ```
+3. **Auto-wrapping responsive `grid`**: `with ctx.grid(columns=3, min_column_width=190, gap=14):` arranges cards into 3 columns on wide screens, and automatically wraps down to 2 or 1 column when the pane shrinks narrower than `3 * 190px`!
+
+### 1.4 Milestone 1: Responsive 3-Pane Desktop Shell
 
 Let's combine a collapsible sidebar, a draggable `split` inspector, a scrollable responsive KPI `grid`, and a `status_bar`:
 
@@ -435,7 +592,14 @@ Real desktop software needs more than forms—it needs **application chrome**: m
   - `pb.clicked >= 0`: User clicked segment `pb.clicked`—truncate `segments[pb.clicked + 1:]`.
   - `pb.submitted`: Non-empty `str` when the user typed a custom `/path/to/file` and pressed Enter.
 
-### 3.2 Milestone 3: Multi-Tab Scratchpad with Full Desktop Chrome
+### 3.2 New Syntax Breakdown (Menus, Context Menus & Command Palette)
+
+Notice how clean overlay & chrome syntax is in Milestone 3:
+- **Nested Menu Bars**: `with ctx.menu_bar():` is always visible, while each dropdown `with ctx.menu_bar_menu("File") as m: if m:` is conditional (only builds its `menu_item(...)` rows when `"File"` is open!).
+- **Right-Click `context_menu`**: Place `with ctx.context_menu("id") as cm: if cm:` **immediately after** any widget (like `textarea` or `card`)—`nexa` automatically binds right-click on that previous widget to open the popup menu!
+- **`command_palette(is_open, commands)`**: Returns a 2-tuple `(palette_open, chosen_index)`. When the user picks a command with Enter or mouse click, `chosen_index` is `0..N-1` (otherwise `-1`).
+
+### 3.3 Milestone 3: Multi-Tab Scratchpad with Full Desktop Chrome
 
 ```python
 import nexa as ui
@@ -631,7 +795,22 @@ One of `nexa`'s biggest advantages over Electron or pure-Python GUI toolkits is 
 
 > **Pitfall to Avoid:** On `code_editor`, `diff_view`, `flame_graph`, `hex_view`, `curve_editor`, and `timeline_editor`, `width=` accepts `SizeLike` (`ui.FILL` or pixels), whereas `height=` expects a concrete `float` pixel height (e.g., `height=320`).
 
-### 4.1 Milestone 4: 50,000-Row Data Grid, Code/Diff/Markdown & Kanban Lab
+### 4.1 New Syntax Breakdown (`data_grid`, `markdown` Tasks & `kanban` Moves)
+
+Three high-leverage syntax idioms power Milestone 4:
+1. **Virtualized `data_grid` row loop**:
+   ```python
+   with ctx.data_grid("id", cols, 50_000, width=ui.FILL, height=ui.GROW(1)) as grid:
+       if grid:
+           for r in grid.rows:             # Loops ONLY over ~18 visible rows on screen!
+               grid.row(r)                 # Starts visible row `r`
+               grid.cell_text(f"#{r}")     # Read-only text cell
+               val = grid.cell_edit(val)   # Double-click inline editable cell!
+   ```
+2. **Interactive Markdown Task Lists**: `md_res = ctx.markdown("id", md_src)` renders GitHub-flavored `- [ ]` / `- [x]` checkboxes; when a user clicks one, `md_res.task_toggled` is `True` and `md_src = md_res.apply_task(md_src)` rewrites the `[x]` in your Markdown string automatically!
+3. **Drag-and-Drop `kanban`**: Build columns with `with board.column(title, count):` and cards with `with board.card(card_id):`. After exiting `with ctx.kanban(...) as board:`, check `if board.move is not None:` (`mv.card`, `mv.from_column`, `mv.to_column`, `mv.to_index`) to move the item in your Python list!
+
+### 4.2 Milestone 4: 50,000-Row Data Grid, Code/Diff/Markdown & Kanban Lab
 
 ```python
 import nexa as ui
@@ -809,7 +988,19 @@ With CUI v1.1 synced into `nexa`, you can build full **game-engine, audio/video 
 3. **`curve_editor` + `gradient_editor` + `timeline_editor`**: Evaluate your Bezier curves and perceptual OKLab color stops directly on any `x` in `[0, 1]` via `ui.curve_eval(keys, x)` and `ui.gradient_eval(stops, t)`!
 4. **Custom Vector `canvas`**: Reserve layout space with `ctx.canvas("id", width, height, paint_fn)` and draw anti-aliased SDF shapes (`draw_rect_gradient`, `draw_polyline`, `draw_circle`, `draw_arc`, `draw_text`).
 
-### 5.1 Milestone 5: Interactive Synth Node Studio & Live SDF Oscilloscope
+### 5.1 New Syntax Breakdown (`dockspace` Strings, `node_editor` & `canvas`)
+
+Before running Milestone 5, decode these three studio patterns:
+1. **Reading a `dockspace` layout string**:
+   `"h0.44([*Graph,Hex],v0.58([*Oscilloscope],[*Timeline]))"` means:
+   - Split the window **horizontally** (`h0.44`) into **44% Left** and **56% Right**.
+   - On the **Left**, create a tab group `[ *Graph, Hex ]` (`*` makes `Graph` the active tab).
+   - On the **Right**, split **vertically** (`v0.58`) into **58% Top** (`[*Oscilloscope]`) and **42% Bottom** (`[*Timeline]`).
+   - Then inside `with ctx.dockspace(...):`, emit each `with ctx.dock_panel("Graph") as p: if p:` matching those exact panel titles!
+2. **Node Graph Scopes**: Inside `with ctx.node_editor("id", node_view) as ed: if ed:`, wrap each node in `with ed.node(id, x, y, "Title") as n:`, put controls inside `with ed.content():`, declare pins with `ed.input(pin_id, "In")` / `ed.output(pin_id, "Out")`, and read back dragged coordinates via `n.x, n.y`!
+3. **Custom Vector `canvas` Callback**: `ctx.canvas("id", ui.FILL, ui.FILL, paint_fn)` lets Flexbox compute the exact screen rectangle `r: ui.Rect` (`r.x`, `r.y`, `r.w`, `r.h`) first, then calls your `paint_fn(c, r)` to draw crisp GPU/SIMD lines, arcs, gradients, and text inside `r`.
+
+### 5.2 Milestone 5: Interactive Synth Node Studio & Live SDF Oscilloscope
 
 ```python
 import math
@@ -950,7 +1141,14 @@ if __name__ == "__main__":
 3. **`ui.Router` & `ui.View`**: Register named screens (`self.router.register("detail", DetailView("detail"))`), navigate with parameters (`self.router.push("detail", issue_id=42)`), receive parameters in `on_enter(self, params: dict)`, and get instant browser-style `self.router.back()` / `self.router.forward()` history!
 4. **`ui.Store[T]`**: Observable state container (`store = ui.Store(AppState(), wake=self.app.wake)`). Read `store.value`, mutate via `store.update(fn)` or `store.value = ...`, and subscribe listeners via `store.subscribe(cb)`.
 
-### 6.2 Milestone 6: Multi-Screen OOP Issue Tracker (`Application` + `Component` + `Router` + `Store`)
+### 6.2 New Syntax Breakdown (Calling `Component`s, `Store.value` & `Router`)
+
+Notice three super clean OOP syntax conveniences in Milestone 6:
+- **Calling a `Component` like a function (`self.cards[id](ctx)`)**: Every `ui.Component` implements `__call__`. Writing `if self.cards[item.id](ctx):` automatically pushes `self.key` onto the ID stack, runs `build(ctx)`, pops the ID stack, and returns whatever `build(ctx)` returned!
+- **Reading & updating `ui.Store`**: Read current state via `self.store.value`, and mutate via `self.store.update(lambda s: ...)` (which notifies subscribers and wakes the window automatically).
+- **Navigating with `Router`**: `self.router.push("detail", issue_id=item.id)` switches screens and passes `{"issue_id": item.id}` straight into `DetailView.on_enter(self, params: dict)`, while `self.router.back()` pops back to `"board"`.
+
+### 6.3 Milestone 6: Multi-Screen OOP Issue Tracker (`Application` + `Component` + `Router` + `Store`)
 
 ```python
 import dataclasses
@@ -1182,7 +1380,20 @@ Never call `time.sleep(...)`, `urllib.request.urlopen(...)`, or heavy CPU infere
 3. **`ui.LogBuffer`**: C-backed ring buffer (`logs.info(...)`, `logs.warn(...)`, `logs.error(...)`) safe to call from **any** thread without holding the GIL during rendering, paired with `ctx.log_view("id", logs)`.
 4. **`ui.AsyncBridge.for_app(app)`** (or `self.async_bridge` on `ui.Application`) / `await app.run_async(draw)`: Runs full Python `asyncio` coroutines and async generators seamlessly alongside 60fps UI!
 
-### 8.1 Milestone 8: Streaming AI Copilot with Markdown Bubbles, Reasoning & Voice Orb
+### 8.1 New Syntax Breakdown (`runner.stream` & Thread-Safe Callbacks)
+
+Look at how `runner.stream(...)` keeps your UI silky-smooth at 60–120fps without locks or queues:
+```python
+runner.stream(
+    token_generator,          # 1. Runs on a background worker thread (safe to sleep / do HTTP / run LLM!)
+    prompt,                   # 2. Positional argument(s) forwarded to `token_generator(prompt)`
+    on_item=on_token,         # 3. Called on the MAIN UI thread for every `yield`ed chunk + wakes window!
+    on_done=on_finish,        # 4. Called on the MAIN UI thread when the generator finishes!
+)
+```
+Because `on_item` and `on_done` execute on the main UI thread between frames, they can safely append to `messages[-1]["text"]` with zero race conditions!
+
+### 8.2 Milestone 8: Streaming AI Copilot with Markdown Bubbles, Reasoning & Voice Orb
 
 ```python
 import time
