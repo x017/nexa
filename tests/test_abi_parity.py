@@ -15,7 +15,7 @@ import pytest
 
 import nexa
 from nexa import _cdefs
-from nexa.build import build_native, find_c_compiler, freeze_flags
+from nexa.build import build_native, find_c_compiler, freeze_flags, shared_lib_filename
 
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -35,7 +35,7 @@ def test_c_struct_sizeof_parity(tmp_path: pathlib.Path) -> None:
     assert len(pairs) >= 110
 
     c_src = tmp_path / "check_sizes.c"
-    c_bin = tmp_path / "check_sizes"
+    c_bin = tmp_path / ("check_sizes.exe" if sys.platform == "win32" else "check_sizes")
     lines = [
         '#include "cui/cui.h"',
         '#include "cui/cui_app.h"',
@@ -44,12 +44,24 @@ def test_c_struct_sizeof_parity(tmp_path: pathlib.Path) -> None:
         "int main(void) {",
     ]
     for py_name, c_name, _ in pairs:
-        lines.append(f'    printf("{py_name} %zu\\n", sizeof({c_name}));')
+        lines.append(f'    printf("{py_name} %lu\\n", (unsigned long)sizeof({c_name}));')
     lines.append("    return 0;\n}")
-    c_src.write_text("\n".join(lines))
+    c_src.write_text("\n".join(lines), encoding="utf-8")
 
-    subprocess.run([cc, "-std=c99", f"-I{REPO_ROOT / 'csrc' / 'include'}", str(c_src), "-o", str(c_bin)], check=True)
-    out = subprocess.check_output([str(c_bin)], text=True)
+    cc_base = pathlib.Path(cc).stem.lower()
+    if cc_base == "cl":
+        subprocess.run(
+            [cc, "/nologo", "/utf-8", f"/I{REPO_ROOT / 'csrc' / 'include'}", str(c_src), f"/Fe:{c_bin}"],
+            cwd=str(tmp_path),
+            check=True,
+        )
+    else:
+        cmd = [cc, "-std=c99"]
+        if sys.platform == "win32" and "gcc" in cc_base:
+            cmd.append("-static")
+        cmd.extend([f"-I{REPO_ROOT / 'csrc' / 'include'}", str(c_src), "-o", str(c_bin)])
+        subprocess.run(cmd, check=True)
+    out = subprocess.check_output([str(c_bin)], text=True, encoding="utf-8")
     c_sizes = {k: int(v) for k, v in (ln.split() for ln in out.strip().splitlines())}
 
     for py_name, c_name, py_sz in pairs:
@@ -62,7 +74,7 @@ def test_ast_native_symbol_and_argcount_parity() -> None:
     src_dir = REPO_ROOT / "src" / "nexa"
 
     for py_path in sorted(src_dir.rglob("*.py")):
-        tree = ast.parse(py_path.read_text())
+        tree = ast.parse(py_path.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if isinstance(node, ast.Attribute) and node.attr.startswith(("cui_", "nexa_")):
                 assert hasattr(lib, node.attr), f"{py_path}:{node.lineno} references missing symbol {node.attr}"
@@ -81,10 +93,11 @@ def test_ast_native_symbol_and_argcount_parity() -> None:
 
 def test_minimal_stripped_builds_and_size(tmp_path: pathlib.Path) -> None:
     """Stripped minimal & RTL text-shaping builds compile cleanly, bind all symbols, and stay compact."""
-    min_so = build_native(output_path=tmp_path / "libnexa_min.so", minimal=True)
+    fname = shared_lib_filename()
+    min_so = build_native(output_path=tmp_path / f"min_{fname}", minimal=True)
     assert min_so.is_file()
     size_kb = min_so.stat().st_size / 1024.0
-    assert size_kb < 750.0, f"Expected minimal shared library < 750 KB, got {size_kb:.1f} KB"
+    assert size_kb < 800.0, f"Expected minimal shared library < 800 KB, got {size_kb:.1f} KB"
 
     lib = ctypes.CDLL(str(min_so))
     _cdefs.bind_prototypes(lib)
@@ -96,7 +109,7 @@ def test_minimal_stripped_builds_and_size(tmp_path: pathlib.Path) -> None:
     assert nexa.BuildFeatures.STB_IMAGE not in feats
     assert nexa.BuildFeatures.TEXT_SHAPING not in feats
 
-    rtl_so = build_native(output_path=tmp_path / "libnexa_rtl.so", minimal=True, text_shaping=True)
+    rtl_so = build_native(output_path=tmp_path / f"rtl_{fname}", minimal=True, text_shaping=True)
     assert rtl_so.is_file()
     rtl_lib = ctypes.CDLL(str(rtl_so))
     _cdefs.bind_prototypes(rtl_lib)

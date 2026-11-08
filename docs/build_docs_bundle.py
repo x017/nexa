@@ -288,6 +288,7 @@ def build_bundle() -> pathlib.Path:
         f"window.NEXA_DOCS = {json.dumps(payload, ensure_ascii=False)};\n"
         "window.YAPPS_DOCS = window.NEXA_DOCS;\n",
         encoding="utf-8",
+        newline="\n",
     )
     return out_path
 
