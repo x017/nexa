@@ -248,9 +248,10 @@ def test_all_examples_execute_cleanly(tmp_path: pathlib.Path) -> None:
         env = dict(
             os.environ,
             NEXA_HEADLESS="1",
+            PYTHONUTF8="1",
             CUI_SCREENSHOT=str(out_png),
             CUI_SCREENSHOT_FRAMES="4",
         )
-        res = subprocess.run([sys.executable, str(ex)], env=env, capture_output=True, text=True, timeout=20)
+        res = subprocess.run([sys.executable, str(ex)], env=env, capture_output=True, text=True, encoding="utf-8", timeout=20)
         assert res.returncode == 0, f"{ex.name} failed:\n{res.stderr}"
         assert out_png.is_file() and out_png.stat().st_size > 1000

@@ -59,6 +59,7 @@ def test_sdist_excludes_compiled_binaries_and_includes_sources() -> None:
             cwd=str(ROOT),
             capture_output=True,
             text=True,
+            encoding="utf-8",
             timeout=90,
         )
         # Clean up egg-info generated in-tree during `--no-isolation` sdist build

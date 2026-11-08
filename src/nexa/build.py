@@ -25,6 +25,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
@@ -247,8 +248,23 @@ def build_native(
             if use_lto:
                 cmd.append("/LTCG")
         if use_app and plat_choice == "win32":
-            cmd.extend(["user32.lib", "gdi32.lib", "opengl32.lib", "shell32.lib", "imm32.lib", "dwmapi.lib", "comdlg32.lib", "ole32.lib"])
+            cmd.extend(
+                [
+                    "user32.lib",
+                    "gdi32.lib",
+                    "opengl32.lib",
+                    "shell32.lib",
+                    "imm32.lib",
+                    "dwmapi.lib",
+                    "comdlg32.lib",
+                    "ole32.lib",
+                    "advapi32.lib",
+                ]
+            )
         cmd.extend(extra_ldflags)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            subprocess.run(cmd, cwd=tmpdir, check=True)
+        return output_path
     else:
         cmd = [cc]
         if plat_choice != "cocoa":
@@ -285,10 +301,24 @@ def build_native(
             if use_app and plat_choice == "cocoa":
                 cmd.extend(["-framework", "Cocoa", "-framework", "QuartzCore", "-framework", "OpenGL"])
         elif sys_name == "windows":
+            if "gcc" in cc_base:
+                cmd.append("-static")
             if not debug:
                 cmd.extend(["-Wl,--gc-sections", "-Wl,-s"])
             if use_app and plat_choice == "win32":
-                cmd.extend(["-luser32", "-lgdi32", "-lopengl32", "-lshell32", "-limm32", "-ldwmapi", "-lcomdlg32", "-lole32"])
+                cmd.extend(
+                    [
+                        "-luser32",
+                        "-lgdi32",
+                        "-lopengl32",
+                        "-lshell32",
+                        "-limm32",
+                        "-ldwmapi",
+                        "-lcomdlg32",
+                        "-lole32",
+                        "-ladvapi32",
+                    ]
+                )
         else:
             if not debug:
                 cmd.extend(["-Wl,--gc-sections", "-Wl,-s"])

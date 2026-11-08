@@ -100,6 +100,7 @@ def test_all_markdown_python_blocks_parse_and_standalone_tutorials_run() -> None
         **os.environ,
         "NEXA_HEADLESS": "1",
         "NEXA_MAX_FRAMES": "3",
+        "PYTHONUTF8": "1",
         "PYTHONPATH": str(ROOT / "src"),
     }
     for label, code in standalone_blocks:
@@ -109,6 +110,7 @@ def test_all_markdown_python_blocks_parse_and_standalone_tutorials_run() -> None
             env=env,
             capture_output=True,
             text=True,
+            encoding="utf-8",
             timeout=15,
         )
         assert proc.returncode == 0, f"{label} failed:\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}"
@@ -143,18 +145,19 @@ def test_multi_view_examples_exercise_every_route_and_tab() -> None:
         **os.environ,
         "NEXA_HEADLESS": "1",
         "NEXA_MAX_FRAMES": "3",
+        "PYTHONUTF8": "1",
         "PYTHONPATH": str(ROOT / "src"),
     }
     tracker_src = (ROOT / "examples" / "tracker.py").read_text(encoding="utf-8")
     for view_idx in range(3):
         patched = tracker_src.replace("tab = 0", f"tab = {view_idx}", 1)
-        res = subprocess.run([sys.executable, "-c", patched], cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=15)
+        res = subprocess.run([sys.executable, "-c", patched], cwd=str(ROOT), env=env, capture_output=True, text=True, encoding="utf-8", timeout=15)
         assert res.returncode == 0, f"tracker.py tab={view_idx} failed:\n{res.stderr}"
 
     gallery_src = (ROOT / "examples" / "gallery.py").read_text(encoding="utf-8")
     for tab_idx in range(3):
         patched = gallery_src.replace("active_tab = 0", f"active_tab = {tab_idx}", 1)
-        res = subprocess.run([sys.executable, "-c", patched], cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=15)
+        res = subprocess.run([sys.executable, "-c", patched], cwd=str(ROOT), env=env, capture_output=True, text=True, encoding="utf-8", timeout=15)
         assert res.returncode == 0, f"gallery.py active_tab={tab_idx} failed:\n{res.stderr}"
 
 

@@ -40,4 +40,19 @@ jobs:
       - name: Run pytest suite
         env:
           NEXA_HEADLESS: "1"
-        run: pytest -v -W error
+          PYTHONUTF8: "1"
+        run: pytest -v -W error -o junit_family=xunit2 --junitxml=pytest-results.xml
+
+      - name: Surface pytest failures as annotations
+        if: failure()
+        shell: python
+        run: |
+          import pathlib, xml.etree.ElementTree as ET
+          p = pathlib.Path("pytest-results.xml")
+          if p.is_file():
+              for tc in ET.parse(p).iter("testcase"):
+                  for node in [*tc.findall("failure"), *tc.findall("error")]:
+                      title = f"{tc.attrib.get('classname', '')}.{tc.attrib.get('name', '')}"
+                      msg = (node.text or node.attrib.get("message", "")).strip()[-1200:]
+                      msg_esc = msg.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+                      print(f"::error title={title}::{msg_esc}")

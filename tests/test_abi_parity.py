@@ -44,7 +44,7 @@ def test_c_struct_sizeof_parity(tmp_path: pathlib.Path) -> None:
         "int main(void) {",
     ]
     for py_name, c_name, _ in pairs:
-        lines.append(f'    printf("{py_name} %zu\\n", sizeof({c_name}));')
+        lines.append(f'    printf("{py_name} %lu\\n", (unsigned long)sizeof({c_name}));')
     lines.append("    return 0;\n}")
     c_src.write_text("\n".join(lines), encoding="utf-8")
 
@@ -56,8 +56,12 @@ def test_c_struct_sizeof_parity(tmp_path: pathlib.Path) -> None:
             check=True,
         )
     else:
-        subprocess.run([cc, "-std=c99", f"-I{REPO_ROOT / 'csrc' / 'include'}", str(c_src), "-o", str(c_bin)], check=True)
-    out = subprocess.check_output([str(c_bin)], text=True)
+        cmd = [cc, "-std=c99"]
+        if sys.platform == "win32" and "gcc" in cc_base:
+            cmd.append("-static")
+        cmd.extend([f"-I{REPO_ROOT / 'csrc' / 'include'}", str(c_src), "-o", str(c_bin)])
+        subprocess.run(cmd, check=True)
+    out = subprocess.check_output([str(c_bin)], text=True, encoding="utf-8")
     c_sizes = {k: int(v) for k, v in (ln.split() for ln in out.strip().splitlines())}
 
     for py_name, c_name, py_sz in pairs:
