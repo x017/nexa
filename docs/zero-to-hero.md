@@ -184,10 +184,16 @@ Whenever you spot a special symbol or layout string in the modules ahead, here i
 
 ### 0.1 Installation & Zero-Dependency Architecture
 
-Install `nexa` from the repository root (or via `pip`):
+Install `nexa-ui` from PyPI (imported in Python as `import nexa as ui`):
 
 ```bash
-pip install .
+pip install nexa-ui
+```
+
+Or install directly from a local git checkout:
+
+```bash
+pip install -e .
 ```
 
 What happens under the hood?

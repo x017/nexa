@@ -1,22 +1,39 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=77.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "nexa"
+name = "nexa-ui"
 version = "1.1.0"
-description = "Fast, tiny, native immediate-mode UI components for Python — a Python port of CUI"
-readme = "README.md"
-license = { file = "LICENSE" }
-requires-python = ">=3.8"
+description = "Fast, tiny, zero-dependency immediate-mode desktop UI for Python — a Python port of CUI"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = "MIT"
+license-files = [
+    "LICENSE",
+    "THIRD_PARTY.md",
+    "csrc/third_party/licenses/LICENSE-*.txt",
+]
+requires-python = ">=3.9"
 authors = [
     { name = "Parsa Mohammadian" }
 ]
-keywords = ["ui", "gui", "cui", "native", "immediate-mode", "desktop", "charts", "opengl"]
+keywords = [
+    "ui",
+    "gui",
+    "cui",
+    "native",
+    "immediate-mode",
+    "imgui",
+    "desktop",
+    "widgets",
+    "charts",
+    "opengl",
+    "docking",
+    "markdown",
+]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: POSIX :: Linux",
@@ -24,13 +41,30 @@ classifiers = [
     "Programming Language :: C",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: User Interfaces",
     "Typing :: Typed",
 ]
 dependencies = []
 
+[project.urls]
+Homepage = "https://github.com/x017/nexa"
+Documentation = "http://cv.x017.ir/nexa/guide.html"
+Repository = "https://github.com/x017/nexa"
+Issues = "https://github.com/x017/nexa/issues"
+Changelog = "http://cv.x017.ir/nexa/guide.html#changelog"
+"Upstream CUI" = "https://github.com/yappologistic/CUI"
+
 [project.optional-dependencies]
-dev = ["pytest>=7.0"]
+dev = [
+    "pytest>=7.0",
+    "build>=1.0",
+    "twine>=5.0",
+]
 
 [project.scripts]
 nexa-build = "nexa.build:main"
@@ -38,11 +72,14 @@ nexa-build = "nexa.build:main"
 [project.entry-points.pyinstaller40]
 hook-dirs = "nexa._pyinstaller:get_hook_dirs"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
+[tool.cibuildwheel]
+# nexa binds via ctypes (`py3-none-<plat>`) without linking libpython, so one build per OS/arch
+# produces an ABI-independent wheel compatible with Python 3.9+.
+build = "cp312-*"
+skip = "*-win32 *-manylinux_i686 *-musllinux_i686"
+environment = { NEXA_LTO = "1" }
+test-command = "python -c \"import nexa as ui; assert ui.__version__; sw = ui.SoftwareRenderer(); ctx = ui.UI(width=320, height=200, renderer=sw); ctx.begin_frame(0.016); ctx.heading('nexa-ui'); dd = ctx.end_frame(); px = sw.render(dd); assert len(px) == 320 * 200 * 4; ctx.close(); sw.close()\""
 
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools.package-data]
-nexa = ["py.typed", "_native/*"]
+[tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64"]
+environment = { NEXA_LTO = "1", MACOSX_DEPLOYMENT_TARGET = "11.0" }

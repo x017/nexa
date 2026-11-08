@@ -6,10 +6,16 @@ Welcome to **nexa**—a Python port of [CUI](https://github.com/yappologistic/CU
 
 ## 1. Installation & Requirements
 
-Install `nexa` from the repository root:
+Install `nexa-ui` from PyPI (imported in Python as `import nexa as ui`):
 
 ```bash
-pip install .
+pip install nexa-ui
+```
+
+Or install from a local git checkout:
+
+```bash
+pip install -e .
 ```
 
 ### What you need (and what you *don't* need)

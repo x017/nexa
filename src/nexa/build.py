@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import os
 import platform
+import shlex
 import shutil
 import subprocess
 import sys
@@ -227,6 +228,9 @@ def build_native(
     cc_base = Path(cc).stem.lower()
     inc_dirs = [str(csrc / "include"), str(csrc / "src")]
 
+    extra_cflags = shlex.split(env.get("NEXA_CFLAGS", ""))
+    extra_ldflags = shlex.split(env.get("NEXA_LDFLAGS", ""))
+
     if cc_base == "cl":
         cmd: List[str] = [cc, "/nologo", "/LD", "/utf-8", "/Gy", "/Gw"]
         cmd += ["/Od", "/Zi"] if debug else (["/O1", "/GL"] if use_lto else ["/O1"])
@@ -234,6 +238,7 @@ def build_native(
             cmd.append(f"/D{d}")
         for inc in inc_dirs:
             cmd.append(f"/I{inc}")
+        cmd.extend(extra_cflags)
         cmd.extend(sources)
         cmd.append(f"/Fe:{output_path}")
         cmd.append("/link")
@@ -243,10 +248,18 @@ def build_native(
                 cmd.append("/LTCG")
         if use_app and plat_choice == "win32":
             cmd.extend(["user32.lib", "gdi32.lib", "opengl32.lib", "shell32.lib", "imm32.lib", "dwmapi.lib", "comdlg32.lib", "ole32.lib"])
+        cmd.extend(extra_ldflags)
     else:
         cmd = [cc]
         if plat_choice != "cocoa":
             cmd.append("-std=c99")
+        if sys_name == "darwin":
+            archflags = shlex.split(env.get("ARCHFLAGS", ""))
+            if archflags:
+                cmd.extend(archflags)
+            min_macos = env.get("MACOSX_DEPLOYMENT_TARGET", "").strip()
+            if min_macos:
+                cmd.append(f"-mmacosx-version-min={min_macos}")
         cmd.extend(["-shared", "-fvisibility=hidden", "-ffunction-sections", "-fdata-sections"])
         if sys_name != "windows":
             cmd.append("-fPIC")
@@ -262,6 +275,7 @@ def build_native(
             cmd.append(f"-I{inc}")
         if plat_choice == "cocoa":
             cmd.extend(["-DGL_SILENCE_DEPRECATION", "-fobjc-arc"])
+        cmd.extend(extra_cflags)
         cmd.extend(sources)
 
         if sys_name == "darwin":
@@ -286,6 +300,7 @@ def build_native(
             elif use_app and plat_choice == "glfw":
                 cmd.append("-lglfw")
 
+        cmd.extend(extra_ldflags)
         cmd.extend(["-o", str(output_path)])
 
     subprocess.run(cmd, check=True)
