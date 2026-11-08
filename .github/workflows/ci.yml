@@ -16,13 +16,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-14, windows-latest]
-        python-version: ["3.9", "3.12"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.11", "3.13"]
         exclude:
-          - os: macos-14
-            python-version: "3.9"
+          - os: macos-latest
+            python-version: "3.11"
           - os: windows-latest
-            python-version: "3.9"
+            python-version: "3.11"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,8 +34,8 @@ jobs:
 
       - name: Install nexa-ui and dev dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[dev]"
+          python -m pip install --upgrade pip "setuptools>=77.0" wheel
+          python -m pip install --no-build-isolation -e ".[dev]"
 
       - name: Run pytest suite
         env:

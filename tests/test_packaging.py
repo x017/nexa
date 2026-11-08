@@ -55,13 +55,13 @@ def test_sdist_excludes_compiled_binaries_and_includes_sources() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         out_dir = pathlib.Path(tmp)
         proc = subprocess.run(
-            [sys.executable, "setup.py", "sdist", "--dist-dir", str(out_dir)],
+            [sys.executable, "-m", "build", "--sdist", "--no-isolation", "--outdir", str(out_dir)],
             cwd=str(ROOT),
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=90,
         )
-        # Clean up egg-info generated in-tree by direct `setup.py sdist`
+        # Clean up egg-info generated in-tree during `--no-isolation` sdist build
         for egg in (ROOT / "src").glob("*.egg-info"):
             for child in sorted(egg.rglob("*"), reverse=True):
                 if child.is_file():
