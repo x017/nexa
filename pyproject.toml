@@ -52,11 +52,11 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/x017/nexa"
-Documentation = "http://cv.x017.ir/nexa/guide.html"
+Homepage = "http://parsa.x017.ir/nexa/"
+Documentation = "http://parsa.x017.ir/nexa/guide.html"
 Repository = "https://github.com/x017/nexa"
 Issues = "https://github.com/x017/nexa/issues"
-Changelog = "http://cv.x017.ir/nexa/guide.html#changelog"
+Changelog = "http://parsa.x017.ir/nexa/guide.html#changelog"
 "Upstream CUI" = "https://github.com/yappologistic/CUI"
 
 [project.optional-dependencies]
