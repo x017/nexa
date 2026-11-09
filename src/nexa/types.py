@@ -161,6 +161,7 @@ class ControlSize(IntEnum):
 
 class TabsVariant(IntEnum):
     UNDERLINE = 0
+    LINE = 0
     PILL = 1
 
 

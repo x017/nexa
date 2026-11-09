@@ -237,6 +237,38 @@ class NodesCanvasMixin:
             float(thickness), to_packed_color(color)
         )
 
+    def draw_bezier(
+        self,
+        p0: Union[Vec2, Tuple[float, float]],
+        p1: Union[Vec2, Tuple[float, float]],
+        p2: Union[Vec2, Tuple[float, float]],
+        p3: Union[Vec2, Tuple[float, float]],
+        color: ColorLike,
+        thickness: float = 1.5,
+        *,
+        segments: int = 24,
+    ) -> None:
+        """Draw a smooth cubic Bézier curve through ``(p0, p1, p2, p3)``."""
+        n_seg = max(2, int(segments))
+        x0, y0 = _unpack_xy(p0)
+        x1, y1 = _unpack_xy(p1)
+        x2, y2 = _unpack_xy(p2)
+        x3, y3 = _unpack_xy(p3)
+        n_pts = n_seg + 1
+        arr = (c_float * (n_pts * 2))()
+        for i in range(n_pts):
+            t = i / n_seg
+            u = 1.0 - t
+            b0 = u * u * u
+            b1 = 3.0 * u * u * t
+            b2 = 3.0 * u * t * t
+            b3 = t * t * t
+            arr[i * 2] = b0 * x0 + b1 * x1 + b2 * x2 + b3 * x3
+            arr[i * 2 + 1] = b0 * y0 + b1 * y1 + b2 * y2 + b3 * y3
+        self._lib.nexa_draw_polyline(
+            self._ctx, arr, n_pts, float(thickness), to_packed_color(color), False
+        )
+
     def draw_text(
         self,
         text: str,

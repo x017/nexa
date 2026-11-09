@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import importlib.util
+import inspect
 import os
 import pathlib
 import re
@@ -12,6 +13,9 @@ import sys
 import textwrap
 
 import nexa as ui
+from nexa import scopes as nexa_scopes
+from nexa import types as nexa_types
+from nexa.ui import UI
 
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -173,3 +177,62 @@ def test_docs_bundle_is_in_sync() -> None:
     mod.build_bundle()
     after = out_path.read_text(encoding="utf-8")
     assert before == after, "docs/assets/docs-data.js is out of sync; run `python3 docs/build_docs_bundle.py`"
+
+
+def test_all_public_types_scopes_and_reference_signatures_are_exported() -> None:
+    # 1. Every public symbol in nexa.types and nexa.scopes must be on top-level `nexa` and in `__all__`
+    for mod in (nexa_types, nexa_scopes):
+        for attr in dir(mod):
+            if attr.startswith("_"):
+                continue
+            obj = getattr(mod, attr)
+            if getattr(obj, "__module__", "") == mod.__name__:
+                assert hasattr(ui, attr), f"Missing top-level export: {mod.__name__}.{attr}"
+                assert attr in ui.__all__, f"Missing __all__ entry: {attr}"
+
+    # 2. Every Class.MEMBER reference across docs/README/HTML/JS must exist
+    targets = [
+        ROOT / "README.md",
+        *sorted((ROOT / "docs").glob("*.md")),
+        ROOT / "docs" / "index.html",
+        ROOT / "docs" / "assets" / "site.js",
+    ]
+    enum_ref_re = re.compile(r"\b([A-Z][A-Za-z0-9_]*)\.([A-Z][A-Za-z0-9_]*)\b")
+    for path in targets:
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if "do **not** exist" in line or "do not exist" in line:
+                continue
+            for m in enum_ref_re.finditer(line):
+                cls_name, mem_name = m.group(1), m.group(2)
+                if hasattr(ui, cls_name):
+                    cls_obj = getattr(ui, cls_name)
+                    if isinstance(cls_obj, type):
+                        assert hasattr(cls_obj, mem_name), f"{path.name}:{lineno} invalid {cls_name}.{mem_name}"
+
+    # 3. Every documented signature in docs/components-reference.md must match UI / nexa
+    ref_txt = (ROOT / "docs" / "components-reference.md").read_text(encoding="utf-8")
+    sig_re1 = re.compile(r"\*\*`([a-z_][a-z0-9_]*)\(([^`]*)\)")
+    sig_re2 = re.compile(r"-\s+`([a-z_][a-z0-9_]*)\(([^`]*)\)")
+    checked = 0
+    for lineno, line in enumerate(ref_txt.splitlines(), 1):
+        for m in [*sig_re1.finditer(line), *sig_re2.finditer(line)]:
+            fn_name, params_str = m.group(1), m.group(2)
+            target = getattr(UI, fn_name, None) or getattr(ui, fn_name, None)
+            assert target is not None, f"components-reference.md:{lineno} missing {fn_name}"
+            sig = inspect.signature(target)
+            actual_params = set(sig.parameters.keys()) - {"self", "kwargs"}
+            has_var_kw = any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
+            if not has_var_kw:
+                for part in params_str.split(","):
+                    part = part.strip()
+                    if not part or part == "*" or part.startswith("**"):
+                        continue
+                    pname = part.split(":")[0].split("=")[0].strip()
+                    if pname and re.match(r"^[a-z_][a-z0-9_]*$", pname):
+                        assert pname in actual_params, (
+                            f"components-reference.md:{lineno} {fn_name} bad param {pname!r} "
+                            f"(expected in {sorted(actual_params)})"
+                        )
+            checked += 1
+    assert checked >= 180
+

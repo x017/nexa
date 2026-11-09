@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, Optional
 from ._context_var import get_current_ui, try_get_current_ui
 from .app import App
 from .ui import UI
-from .widgets.data import diff_compute, diff_words, tree_sort
+from .widgets.data import diff_compute, diff_words, markdown_apply_task, tree_sort
 from .widgets.tools import curve_eval, flame_sort, gradient_eval
 
 _EXCLUDED = frozenset({
@@ -25,6 +25,7 @@ _EXCLUDED = frozenset({
     "raw_handle",
     "diff_compute",
     "diff_words",
+    "markdown_apply_task",
     "tree_sort",
     "flame_sort",
     "curve_eval",
@@ -87,6 +88,7 @@ FUNCTIONAL_EXPORTS: Dict[str, Callable[..., Any]] = {
     "run": run,
     "diff_compute": diff_compute,
     "diff_words": diff_words,
+    "markdown_apply_task": markdown_apply_task,
     "tree_sort": tree_sort,
     "flame_sort": flame_sort,
     "curve_eval": curve_eval,

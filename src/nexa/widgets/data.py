@@ -139,6 +139,11 @@ def diff_words(
     return ok, old_ranges, new_ranges
 
 
+def markdown_apply_task(markdown_text: str, result: MarkdownResult) -> str:
+    """Apply a GFM task-list checkbox toggle reported by ``markdown`` and return updated text."""
+    return result.apply_task(markdown_text)
+
+
 def tree_sort(
     nodes: Sequence[TreeNode],
     root: int = -1,
@@ -602,6 +607,10 @@ class DataMixin:
         )
         self._record_change(bool(res))
         return res
+
+    def markdown_apply_task(self, text: str, result: MarkdownResult) -> str:
+        """Apply a GFM task-list checkbox toggle reported by ``markdown`` and return updated text."""
+        return result.apply_task(text)
 
     def code_editor(
         self,

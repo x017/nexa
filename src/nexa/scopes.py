@@ -130,6 +130,14 @@ class OpenStateScope:
         self.open = bool(is_open)
         self.clicked = bool(clicked)
 
+    @property
+    def expanded(self) -> bool:
+        return self.open
+
+    @expanded.setter
+    def expanded(self, value: bool) -> None:
+        self.open = bool(value)
+
     def __bool__(self) -> bool:
         return self.visible
 
@@ -669,3 +677,8 @@ class PathBarMenuScope:
     def __exit__(self, *exc) -> None:
         if self.visible:
             self._end_fn(self._ctx)
+
+
+# Documented ergonomic aliases
+TreeScope = OpenStateScope
+SwipeItemScope = SwipeScope

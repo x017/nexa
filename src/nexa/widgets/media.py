@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import ctypes
+import os
+import tempfile
 from ctypes import c_float, c_int
 from pathlib import Path
 from typing import Optional, Sequence, Tuple, Union
@@ -62,6 +64,24 @@ class MediaMixin:
         if tex == 0:
             raise OSError(f"Failed to load image: {path}")
         return tex, int(cw.value), int(ch.value)
+
+    def image_load_bytes(
+        self,
+        data: Union[bytes, bytearray, memoryview],
+        *,
+        suffix: str = ".png",
+    ) -> Tuple[int, int, int]:
+        """Decode PNG/JPEG from in-memory ``data``; returns ``(texture_id, width, height)``."""
+        fd, tmp_name = tempfile.mkstemp(suffix=suffix)
+        try:
+            with os.fdopen(fd, "wb") as fp:
+                fp.write(data)
+            return self.image_load(tmp_name)
+        finally:
+            try:
+                os.unlink(tmp_name)
+            except OSError:
+                pass
 
     def image_destroy(self, texture: int) -> None:
         if texture:

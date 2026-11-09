@@ -190,6 +190,8 @@ Install `nexa-ui` from PyPI (imported in Python as `import nexa as ui`):
 pip install nexa-ui
 ```
 
+> **Important:** Always install **`nexa-ui`** (`pip install nexa-ui` or `uv add nexa-ui`) rather than `nexa` (an unrelated package on PyPI), and avoid naming a local folder `nexa/` or file `nexa.py`.
+
 Or install directly from a local git checkout:
 
 ```bash

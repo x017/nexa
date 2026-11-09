@@ -466,7 +466,7 @@
         if (capText) capText.textContent = item.caption;
         if (capLink) {
           capLink.textContent = `Source: ${item.file} →`;
-          capLink.href = `https://github.com/x017/yapps/blob/main/${item.file}`;
+          capLink.href = `https://github.com/x017/nexa/blob/main/${item.file}`;
         }
         tabsRoot.querySelectorAll(".tab-pill").forEach((b) => {
           b.classList.toggle("active", b.dataset.showcase === item.id);

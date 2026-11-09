@@ -2,7 +2,7 @@
 
 **nexa** (`pip install nexa-ui`) is a Python port of [CUI](https://github.com/yappologistic/CUI)—a lightweight, zero-dependency C99 immediate-mode desktop UI library with spring motion, Flexbox/Grid layout, and crisp SDF rendering.
 
-![nexa 1.1 Workbench Studio — Dockspace, TreeTable, CodeEditor, FlameGraph & Timeline](https://raw.githubusercontent.com/x017/yapps/main/docs/assets/screenshots/workbench.png)
+![nexa 1.1 Workbench Studio — Dockspace, TreeTable, CodeEditor, FlameGraph & Timeline](https://raw.githubusercontent.com/x017/nexa/main/docs/assets/screenshots/workbench.png)
 
 - **Sub-megabyte native core**: **820 KB** stripped shared library (`libnexa_cui`) including embedded **Inter**, **Geist Mono**, **168 Lucide icons**, OpenGL 3.3 + multi-threaded CPU software rasterizer, PNG/JPEG loader, optional **BiDi & Arabic OpenType text shaping** (`--rtl`), and OS windowing (**660 KB** in minimal LTO builds).
 - **Zero runtime Python dependencies**: Pure Python standard library (`ctypes` ABI releasing the GIL on every native call, `__slots__` value types, ~48 ms warm import).
@@ -15,16 +15,16 @@
 
 ## Documentation & Step-by-Step Guides
 
-Read the interactive documentation at **[x017.github.io/yapps](https://x017.github.io/yapps/)** or browse [`docs/`](https://github.com/x017/yapps/tree/main/docs):
+Read the interactive documentation at **[cv.x017.ir/nexa](http://cv.x017.ir/nexa/)** or browse [`docs/`](https://github.com/x017/nexa/tree/main/docs):
 
-0. **[Zero to Hero: The Complete `nexa` Full Tutorial](https://github.com/x017/yapps/blob/main/docs/zero-to-hero.md)** — Comprehensive 11-module masterclass taking you from your first 15-line native window through Flexbox/Grid layouts, forms & pickers, desktop chrome, 50k virtualized grids, code & diff editors, studio canvases, OOP architecture, OKLCH theming, async worker streams, headless `pytest`, and building **Pulse Studio** (`examples/zero_to_hero.py`).
-1. **[Getting Started & Core Mental Model](https://github.com/x017/yapps/blob/main/docs/getting-started.md)** — Installation, value-returning immediate mode, widget IDs & `id_scope`, conditional vs. unconditional `with` scopes, and transition flags.
-2. **[Tutorial: Functional & Procedural Coding](https://github.com/x017/yapps/blob/main/docs/tutorial-functional.md)** — Top-level `ui.run(draw)`, flexbox/grid sizing (`FIT`, `FILL`, `GROW`, `PX`, `PCT`), procedural helper decomposition, manual `while app.frame():` loops, and a complete Budget Tracker project.
-3. **[Tutorial: Object-Oriented (OOP) Architecture](https://github.com/x017/yapps/blob/main/docs/tutorial-oop.md)** — `Application`, reusable auto-ID-scoped `Component`s, multi-view `Router` & `View` navigation, reactive `Store[T]`, and a complete Incident Console project.
-4. **[Theming, Accents, Tones, Colors & Typography](https://github.com/x017/yapps/blob/main/docs/theming-and-styling.md)** — All **8 built-in `Accent` palettes**, **9 semantic `Tone`s**, custom OKLCH/hex `Token` overrides, `.ttf` font loading, and **168 `Icon` constants**.
-5. **[Concurrency, Multithreading, `asyncio`, & Networking](https://github.com/x017/yapps/blob/main/docs/concurrency-and-async.md)** — `BackgroundRunner`, token streaming, `Channel`, `LogBuffer`, `await app.run_async(...)`, and `AsyncBridge`.
-6. **[Complete 160+ Component Reference](https://github.com/x017/yapps/blob/main/docs/components-reference.md)** — Signatures and usage across all 20 widget domains.
-7. **[Custom Canvas, Headless Testing, Custom GPU & Packaging](https://github.com/x017/yapps/blob/main/docs/advanced-rendering-and-packaging.md)** — Vector `canvas`, automated `pytest` UI testing, Vulkan/Metal/`wgpu` `DrawData`, minimal LTO builds, and PyInstaller/Nuitka freezing.
+0. **[Zero to Hero: The Complete `nexa` Full Tutorial](https://github.com/x017/nexa/blob/main/docs/zero-to-hero.md)** — Comprehensive 11-module masterclass taking you from your first 15-line native window through Flexbox/Grid layouts, forms & pickers, desktop chrome, 50k virtualized grids, code & diff editors, studio canvases, OOP architecture, OKLCH theming, async worker streams, headless `pytest`, and building **Pulse Studio** (`examples/zero_to_hero.py`).
+1. **[Getting Started & Core Mental Model](https://github.com/x017/nexa/blob/main/docs/getting-started.md)** — Installation, value-returning immediate mode, widget IDs & `id_scope`, conditional vs. unconditional `with` scopes, and transition flags.
+2. **[Tutorial: Functional & Procedural Coding](https://github.com/x017/nexa/blob/main/docs/tutorial-functional.md)** — Top-level `ui.run(draw)`, flexbox/grid sizing (`FIT`, `FILL`, `GROW`, `PX`, `PCT`), procedural helper decomposition, manual `while app.frame():` loops, and a complete Budget Tracker project.
+3. **[Tutorial: Object-Oriented (OOP) Architecture](https://github.com/x017/nexa/blob/main/docs/tutorial-oop.md)** — `Application`, reusable auto-ID-scoped `Component`s, multi-view `Router` & `View` navigation, reactive `Store[T]`, and a complete Incident Console project.
+4. **[Theming, Accents, Tones, Colors & Typography](https://github.com/x017/nexa/blob/main/docs/theming-and-styling.md)** — All **8 built-in `Accent` palettes**, **9 semantic `Tone`s**, custom OKLCH/hex `Token` overrides, `.ttf` font loading, and **168 `Icon` constants**.
+5. **[Concurrency, Multithreading, `asyncio`, & Networking](https://github.com/x017/nexa/blob/main/docs/concurrency-and-async.md)** — `BackgroundRunner`, token streaming, `Channel`, `LogBuffer`, `await app.run_async(...)`, and `AsyncBridge`.
+6. **[Complete 160+ Component Reference](https://github.com/x017/nexa/blob/main/docs/components-reference.md)** — Signatures and usage across all 20 widget domains.
+7. **[Custom Canvas, Headless Testing, Custom GPU & Packaging](https://github.com/x017/nexa/blob/main/docs/advanced-rendering-and-packaging.md)** — Vector `canvas`, automated `pytest` UI testing, Vulkan/Metal/`wgpu` `DrawData`, minimal LTO builds, and PyInstaller/Nuitka freezing.
 
 ---
 
@@ -35,6 +35,8 @@ Install prebuilt wheels from PyPI (imported in Python as `import nexa as ui`):
 ```bash
 pip install nexa-ui
 ```
+
+> **Note:** Make sure to install **`nexa-ui`** (`pip install nexa-ui` or `uv add nexa-ui`), **not** `nexa` (which is an unrelated package on PyPI). Once installed, import it in Python as `import nexa as ui`.
 
 Or install directly from a local git checkout:
 
@@ -145,7 +147,7 @@ with ui.SoftwareRenderer(threads=4) as sw:
 | `ui.Accent.CORAL` | `#ff9386` | `#d1403a` |
 | `ui.Accent.ROSE` | `#ff8bc5` | `#d23286` |
 
-Need a custom hex or OKLCH brand accent? Set `ctx.theme[ui.Token.ACCENT] = ui.Color.hex("#14b8a6")` at any time—see **[Theming & Styling](https://github.com/x017/yapps/blob/main/docs/theming-and-styling.md)**.
+Need a custom hex or OKLCH brand accent? Set `ctx.theme[ui.Token.ACCENT] = ui.Color.hex("#14b8a6")` at any time—see **[Theming & Styling](https://github.com/x017/nexa/blob/main/docs/theming-and-styling.md)**.
 
 ---
 
@@ -215,23 +217,23 @@ if __name__ == "__main__":
 
 ## Examples & Tests
 
-Run any of the **13 complete example apps** in [`examples/`](https://github.com/x017/yapps/tree/main/examples):
+Run any of the **13 complete example apps** in [`examples/`](https://github.com/x017/nexa/tree/main/examples):
 
 | Example | Highlights |
 |---|---|
-| [`examples/zero_to_hero.py`](https://github.com/x017/yapps/blob/main/examples/zero_to_hero.py) | **0-to-Hero Capstone (*Pulse Studio*)**: OOP `Application` + `Component` + `Store`, `dockspace`, `path_bar`, `tree_table`, `code_editor`, `diff_view`, GFM `markdown`, `line_chart`, `flame_graph`, `BackgroundRunner` & `command_palette` |
-| [`examples/workbench.py`](https://github.com/x017/yapps/blob/main/examples/workbench.py) | **New in 1.1**: Multi-split `dockspace`, `path_bar`, `tree_table`, `code_editor`, `diff_view`, `markdown`, `flame_graph`, `curve_editor`, `gradient_editor`, `timeline_editor` & `hex_view` |
-| [`examples/hello.py`](https://github.com/x017/yapps/blob/main/examples/hello.py) | Functional quickstart, `input`, `switch`, `toast`, `theme_toggle` |
-| [`examples/notes.py`](https://github.com/x017/yapps/blob/main/examples/notes.py) | Split-view notes editor, search, tags, `dialog`, `command_palette` (`Ctrl+K`) |
-| [`examples/settings.py`](https://github.com/x017/yapps/blob/main/examples/settings.py) | OOP `Application` + `Router` + `View` + `Component` + all 8 `Accent` presets |
-| [`examples/dashboard.py`](https://github.com/x017/yapps/blob/main/examples/dashboard.py) | KPI `number_roll`, `sparkline`, `line_chart`, `donut_chart`, 250-row `data_grid` |
-| [`examples/assistant.py`](https://github.com/x017/yapps/blob/main/examples/assistant.py) | AI workspace + `BackgroundRunner.stream`, `reasoning`, `tool_call`, `voice_orb` |
-| [`examples/tracker.py`](https://github.com/x017/yapps/blob/main/examples/tracker.py) | Drag-and-drop `kanban` board, `gantt` timeline, `week_calendar`, `presence` |
-| [`examples/finance.py`](https://github.com/x017/yapps/blob/main/examples/finance.py) | Live `ticker`, odometer `counter`, `treemap`, `sankey`, `money_input` |
-| [`examples/mail.py`](https://github.com/x017/yapps/blob/main/examples/mail.py) | `swipe_item` inbox, `chip` filters, `comment`, `dropzone`, slide-over `sheet` |
-| [`examples/music.py`](https://github.com/x017/yapps/blob/main/examples/music.py) | `carousel`, `now_playing` transport, scrubbable `waveform`, `reorder` queue |
-| [`examples/gallery.py`](https://github.com/x017/yapps/blob/main/examples/gallery.py) | IDE `menu_bar`/`toolbar`/`doc_tabs`, Bezier `node_editor`, `canvas`, `inspector`, `LogBuffer` |
-| [`examples/async_network.py`](https://github.com/x017/yapps/blob/main/examples/async_network.py) | Cooperative `await app.run_async` + loopback HTTP server + `Channel` |
+| [`examples/zero_to_hero.py`](https://github.com/x017/nexa/blob/main/examples/zero_to_hero.py) | **0-to-Hero Capstone (*Pulse Studio*)**: OOP `Application` + `Component` + `Store`, `dockspace`, `path_bar`, `tree_table`, `code_editor`, `diff_view`, GFM `markdown`, `line_chart`, `flame_graph`, `BackgroundRunner` & `command_palette` |
+| [`examples/workbench.py`](https://github.com/x017/nexa/blob/main/examples/workbench.py) | **New in 1.1**: Multi-split `dockspace`, `path_bar`, `tree_table`, `code_editor`, `diff_view`, `markdown`, `flame_graph`, `curve_editor`, `gradient_editor`, `timeline_editor` & `hex_view` |
+| [`examples/hello.py`](https://github.com/x017/nexa/blob/main/examples/hello.py) | Functional quickstart, `input`, `switch`, `toast`, `theme_toggle` |
+| [`examples/notes.py`](https://github.com/x017/nexa/blob/main/examples/notes.py) | Split-view notes editor, search, tags, `dialog`, `command_palette` (`Ctrl+K`) |
+| [`examples/settings.py`](https://github.com/x017/nexa/blob/main/examples/settings.py) | OOP `Application` + `Router` + `View` + `Component` + all 8 `Accent` presets |
+| [`examples/dashboard.py`](https://github.com/x017/nexa/blob/main/examples/dashboard.py) | KPI `number_roll`, `sparkline`, `line_chart`, `donut_chart`, 250-row `data_grid` |
+| [`examples/assistant.py`](https://github.com/x017/nexa/blob/main/examples/assistant.py) | AI workspace + `BackgroundRunner.stream`, `reasoning`, `tool_call`, `voice_orb` |
+| [`examples/tracker.py`](https://github.com/x017/nexa/blob/main/examples/tracker.py) | Drag-and-drop `kanban` board, `gantt` timeline, `week_calendar`, `presence` |
+| [`examples/finance.py`](https://github.com/x017/nexa/blob/main/examples/finance.py) | Live `ticker`, odometer `counter`, `treemap`, `sankey`, `money_input` |
+| [`examples/mail.py`](https://github.com/x017/nexa/blob/main/examples/mail.py) | `swipe_item` inbox, `chip` filters, `comment`, `dropzone`, slide-over `sheet` |
+| [`examples/music.py`](https://github.com/x017/nexa/blob/main/examples/music.py) | `carousel`, `now_playing` transport, scrubbable `waveform`, `reorder` queue |
+| [`examples/gallery.py`](https://github.com/x017/nexa/blob/main/examples/gallery.py) | IDE `menu_bar`/`toolbar`/`doc_tabs`, Bezier `node_editor`, `canvas`, `inspector`, `LogBuffer` |
+| [`examples/async_network.py`](https://github.com/x017/nexa/blob/main/examples/async_network.py) | Cooperative `await app.run_async` + loopback HTTP server + `Channel` |
 
 Render headless screenshots on any machine or CI runner:
 
@@ -249,4 +251,4 @@ pytest -v
 
 ## License
 
-MIT License. Bundled fonts (Inter, Geist Mono, Lucide) and single-header libraries (`stb_*`) are permissive open-source; see [`LICENSE`](https://github.com/x017/yapps/blob/main/LICENSE), [`THIRD_PARTY.md`](https://github.com/x017/yapps/blob/main/THIRD_PARTY.md), and [`RELEASING.md`](https://github.com/x017/yapps/blob/main/RELEASING.md).
+MIT License. Bundled fonts (Inter, Geist Mono, Lucide) and single-header libraries (`stb_*`) are permissive open-source; see [`LICENSE`](https://github.com/x017/nexa/blob/main/LICENSE), [`THIRD_PARTY.md`](https://github.com/x017/nexa/blob/main/THIRD_PARTY.md), and [`RELEASING.md`](https://github.com/x017/nexa/blob/main/RELEASING.md).
