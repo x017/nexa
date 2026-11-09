@@ -178,7 +178,10 @@
         <span class="tok-kw">while</span> app.frame(wait=<span class="tok-kw">True</span>):
             <span class="tok-kw">with</span> app.ui.row(width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>, bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">BACKGROUND</span>):
                 render_sidebar(app.ui, state)
-                render_main(app.ui, state)`,
+                render_main(app.ui, state)
+
+<span class="tok-kw">if</span> __name__ == <span class="tok-str">"__main__"</span>:
+    main()`,
     },
     oop: {
       file: "studio_oop.py",
@@ -233,14 +236,28 @@
       .replace(/"/g, "&quot;");
   }
 
-  const savedTheme = localStorage.getItem("nexa_theme");
+  function storageGet(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function storageSet(key, val) {
+    try {
+      localStorage.setItem(key, val);
+    } catch (e) {}
+  }
+
+  const savedTheme = storageGet("nexa_theme");
   let currentTheme =
     savedTheme === "dark" || savedTheme === "light"
       ? savedTheme
       : matchMedia("(prefers-color-scheme: dark)").matches
       ? "dark"
       : "light";
-  let currentAccent = localStorage.getItem("nexa_accent") || "VIOLET";
+  let currentAccent = storageGet("nexa_accent") || "VIOLET";
   if (!ACCENTS.some((a) => a.key === currentAccent)) currentAccent = "BLUE";
 
   function applyThemeAndAccent() {
@@ -298,7 +315,7 @@
         const btn = ev.target.closest(".accent-dot");
         if (!btn) return;
         currentAccent = btn.dataset.accent;
-        localStorage.setItem("nexa_accent", currentAccent);
+        storageSet("nexa_accent", currentAccent);
         applyThemeAndAccent();
       });
     }
@@ -307,7 +324,7 @@
     if (themeBtn) {
       themeBtn.addEventListener("click", () => {
         currentTheme = currentTheme === "dark" ? "light" : "dark";
-        localStorage.setItem("nexa_theme", currentTheme);
+        storageSet("nexa_theme", currentTheme);
         applyThemeAndAccent();
       });
     }
@@ -417,6 +434,36 @@
     }
   }
 
+  function copyTextToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).catch(() => fallbackCopyText(text));
+    }
+    return fallbackCopyText(text);
+  }
+
+  function fallbackCopyText(text) {
+    return new Promise((resolve, reject) => {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.top = "-9999px";
+        ta.style.left = "-9999px";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        if (ok) resolve();
+        else reject(new Error("execCommand copy failed"));
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
   function bindCopyButtons(scope) {
     (scope || document).querySelectorAll("[data-copy-text], [data-copy-code]").forEach((btn) => {
       if (btn.dataset.boundCopy) return;
@@ -429,13 +476,16 @@
           text = codeEl ? codeEl.textContent : "";
         }
         if (!text) return;
-        navigator.clipboard.writeText(text).then(() => {
-          const prev = btn.textContent;
-          btn.textContent = "Copied";
-          setTimeout(() => {
-            btn.textContent = prev;
-          }, 1400);
-        });
+        copyTextToClipboard(text)
+          .then(() => {
+            const prev = btn.dataset.origLabel || btn.textContent;
+            btn.dataset.origLabel = prev;
+            btn.textContent = "Copied";
+            setTimeout(() => {
+              btn.textContent = prev;
+            }, 1400);
+          })
+          .catch(() => {});
       });
     });
   }
@@ -533,7 +583,7 @@
         const card = ev.target.closest(".accent-card");
         if (!card) return;
         currentAccent = card.dataset.accent;
-        localStorage.setItem("nexa_accent", currentAccent);
+        storageSet("nexa_accent", currentAccent);
         applyThemeAndAccent();
       });
     }

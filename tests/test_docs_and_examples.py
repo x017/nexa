@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import ast
+import html
 import importlib.util
 import inspect
+import json
 import os
 import pathlib
 import re
@@ -91,14 +93,34 @@ def test_all_markdown_python_blocks_parse_and_standalone_tutorials_run() -> None
         content = md.read_text(encoding="utf-8")
         for idx, match in enumerate(fence_re.finditer(content), 1):
             code = textwrap.dedent(match.group(1))
+            label = f"{md.name}#block{idx}"
             # Every Python fence in README & docs must be syntactically valid Python
-            ast.parse(code, filename=f"{md.name}#block{idx}")
+            tree = ast.parse(code, filename=label)
             parsed_count += 1
+            # Never allow a snippet to define top-level `def main()` without invoking `main()`
+            has_def_main = any(isinstance(n, ast.FunctionDef) and n.name == "main" for n in tree.body)
+            if has_def_main:
+                assert '__main__' in code or "\nmain()" in code, f"{label} defines main() without calling it"
             if 'if __name__ == "__main__":' in code and "CustomRenderer" not in code:
-                standalone_blocks.append((f"{md.name}#block{idx}", code))
+                standalone_blocks.append((label, code))
 
+    # Also verify all Quickstart paradigm snippets embedded in docs/assets/site.js
+    site_js = (ROOT / "docs" / "assets" / "site.js").read_text(encoding="utf-8")
+    paradigm_count = 0
+    for pm in re.finditer(r'(\w+):\s*\{\s*file:\s*"([^"]+)".*?code:\s*`(.*?)`', site_js, re.DOTALL):
+        key, fname, html_code = pm.groups()
+        plain = html.unescape(re.sub(r"<[^>]+>", "", html_code))
+        label = f"site.js:{key}({fname})"
+        tree = ast.parse(plain, filename=label)
+        has_def_main = any(isinstance(n, ast.FunctionDef) and n.name == "main" for n in tree.body)
+        if has_def_main:
+            assert '__main__' in plain or "\nmain()" in plain, f"{label} defines main() without calling it"
+        standalone_blocks.append((label, plain))
+        paradigm_count += 1
+
+    assert paradigm_count >= 3
     assert parsed_count >= 25
-    assert len(standalone_blocks) >= 8
+    assert len(standalone_blocks) >= 12
 
     env = {
         **os.environ,
@@ -177,6 +199,18 @@ def test_docs_bundle_is_in_sync() -> None:
     mod.build_bundle()
     after = out_path.read_text(encoding="utf-8")
     assert before == after, "docs/assets/docs-data.js is out of sync; run `python3 docs/build_docs_bundle.py`"
+
+    # Ensure inline Markdown formatting leaves zero unrendered `**` or broken `](url)` links
+    data, _ = json.JSONDecoder().raw_decode(after.split("window.NEXA_DOCS =", 1)[1].lstrip())
+    for ch in data["chapters"]:
+        prose = re.sub(r"<pre>.*?</pre>", "", ch["html"], flags=re.DOTALL)
+        prose_no_code = re.sub(r"<code>.*?</code>", "CODE", prose, flags=re.DOTALL)
+        assert "**" not in prose_no_code, f"Unrendered ** bold marker in {ch['slug']}"
+        assert not re.search(r"\]\([^)<]+\)", prose_no_code), f"Broken markdown link in {ch['slug']}"
+
+    # Ensure copy buttons work over non-HTTPS origins (e.g. http://parsa.x017.ir/nexa/)
+    site_js = (ROOT / "docs" / "assets" / "site.js").read_text(encoding="utf-8")
+    assert 'execCommand("copy")' in site_js and "isSecureContext" in site_js
 
 
 def test_all_public_types_scopes_and_reference_signatures_are_exported() -> None:

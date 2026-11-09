@@ -63,6 +63,10 @@ def main() -> None:
             ui.label(f"Clicked {count} times")
 
     ui.run(draw, title="Demo", width=420, height=260)   # 9. Opens the native OS window & sleeps at 0% CPU when idle.
+
+
+if __name__ == "__main__":
+    main()                                              # 10. Entry point: run `main()` when executed as a script!
 ```
 
 > **Pro Tip: Don't like writing `nonlocal`?** Put your state in a dictionary (`state = {"count": 0, "name": "Ada"}` → `state["count"] += 1`) or an OOP class (`self.count += 1` in Module 6). Because mutating a `dict` or `self` attribute doesn't reassign a local variable, you never need `nonlocal`!

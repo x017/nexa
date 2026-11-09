@@ -77,26 +77,33 @@ def slugify(text: str) -> str:
 
 
 def render_inline(text: str) -> str:
-    parts = re.split(r"(`[^`]+`)", text)
-    rendered: list[str] = []
-    for p in parts:
-        if p.startswith("`") and p.endswith("`") and len(p) >= 2:
-            rendered.append(f"<code>{html.escape(p[1:-1])}</code>")
-        else:
-            s = html.escape(p)
-            # Links [label](target)
-            def _link_sub(m: re.Match[str]) -> str:
-                lbl, url = m.group(1), m.group(2)
-                if url.endswith(".md"):
-                    chap_slug = pathlib.Path(url).stem
-                    return f'<a href="#{chap_slug}" data-doc-link="{chap_slug}">{lbl}</a>'
-                return f'<a href="{url}" target="_blank" rel="noopener">{lbl}</a>'
+    stashed: list[str] = []
 
-            s = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", _link_sub, s)
-            s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
-            s = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", s)
-            rendered.append(s)
-    return "".join(rendered)
+    def _stash(fragment: str) -> str:
+        idx = len(stashed)
+        stashed.append(fragment)
+        return f"\x00TOK{idx}\x00"
+
+    # 1. Stash inline `code` spans first so `**bold**` and `[links](...)` can wrap them cleanly.
+    s = re.sub(r"`([^`]+)`", lambda m: _stash(f"<code>{html.escape(m.group(1))}</code>"), text)
+    s = html.escape(s)
+
+    def _format_emph(val: str) -> str:
+        val = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", val)
+        val = re.sub(r"(?<!\*)\*([^*\n]+?)\*(?!\*)", r"<em>\1</em>", val)
+        return val
+
+    # 2. Convert Markdown links [label](target) and stash `<a ...>` so URLs aren't touched by `*`.
+    def _link_sub(m: re.Match[str]) -> str:
+        lbl, url = _format_emph(m.group(1)), m.group(2)
+        if url.endswith(".md"):
+            chap_slug = pathlib.Path(url).stem
+            return _stash(f'<a href="#{chap_slug}" data-doc-link="{chap_slug}">{lbl}</a>')
+        return _stash(f'<a href="{url}" target="_blank" rel="noopener">{lbl}</a>')
+
+    s = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", _link_sub, s)
+    s = _format_emph(s)
+    return re.sub(r"\x00TOK(\d+)\x00", lambda m: stashed[int(m.group(1))], s)
 
 
 def markdown_to_html(md: str) -> tuple[str, list[dict[str, str]], list[dict[str, str]]]:
