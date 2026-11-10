@@ -200,17 +200,41 @@ def test_docs_bundle_is_in_sync() -> None:
     after = out_path.read_text(encoding="utf-8")
     assert before == after, "docs/assets/docs-data.js is out of sync; run `python3 docs/build_docs_bundle.py`"
 
-    # Ensure inline Markdown formatting leaves zero unrendered `**` or broken `](url)` links
+    # Ensure inline Markdown formatting leaves zero unrendered `**` or broken `](url)` links,
+    # TOC titles contain no raw Markdown markers, and chapter screenshots include dimensions
     data, _ = json.JSONDecoder().raw_decode(after.split("window.NEXA_DOCS =", 1)[1].lstrip())
     for ch in data["chapters"]:
         prose = re.sub(r"<pre>.*?</pre>", "", ch["html"], flags=re.DOTALL)
         prose_no_code = re.sub(r"<code>.*?</code>", "CODE", prose, flags=re.DOTALL)
         assert "**" not in prose_no_code, f"Unrendered ** bold marker in {ch['slug']}"
         assert not re.search(r"\]\([^)<]+\)", prose_no_code), f"Broken markdown link in {ch['slug']}"
+        for toc_item in ch["toc"]:
+            assert "*" not in toc_item["title"] and "`" not in toc_item["title"], (
+                f"Raw Markdown marker in TOC title of {ch['slug']}: {toc_item['title']}"
+            )
+        for img_tag in re.findall(r"<img[^>]+>", ch["html"]):
+            assert 'width="' in img_tag and 'height="' in img_tag, f"Missing dimensions on {img_tag}"
 
     # Ensure copy buttons work over non-HTTPS origins (e.g. http://parsa.x017.ir/nexa/)
     site_js = (ROOT / "docs" / "assets" / "site.js").read_text(encoding="utf-8")
     assert 'execCommand("copy")' in site_js and "isSecureContext" in site_js
+
+    # Ensure docs/assets/styles.css has zero undefined var(--...) tokens and doesn't underline hub cards
+    styles_css = (ROOT / "docs" / "assets" / "styles.css").read_text(encoding="utf-8")
+    defined_vars = set(re.findall(r"(--[a-zA-Z0-9_-]+)\s*:", styles_css)) | set(
+        re.findall(r'setProperty\("(--[a-zA-Z0-9_-]+)"', site_js)
+    )
+    used_vars = set(re.findall(r"var\((--[a-zA-Z0-9_-]+)\)", styles_css))
+    assert used_vars <= defined_vars, f"Undefined CSS custom properties: {sorted(used_vars - defined_vars)}"
+    assert ".prose a:not(.btn):not(.tutorial-hub-card)" in styles_css
+
+    # Ensure index.html and guide.html use matching cache-busting versions on shared assets
+    index_html = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
+    guide_html = (ROOT / "docs" / "guide.html").read_text(encoding="utf-8")
+    for asset in ("styles.css", "site.js", "dither.js", "favicon.svg"):
+        iv = re.findall(rf"assets/{re.escape(asset)}\?v=([0-9.]+)", index_html)
+        gv = re.findall(rf"assets/{re.escape(asset)}\?v=([0-9.]+)", guide_html)
+        assert iv and iv == gv, f"Asset version mismatch for {asset}: index={iv} vs guide={gv}"
 
 
 def test_all_public_types_scopes_and_reference_signatures_are_exported() -> None:

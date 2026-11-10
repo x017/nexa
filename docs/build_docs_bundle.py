@@ -10,6 +10,7 @@ import html
 import json
 import pathlib
 import re
+import struct
 
 
 DOCS_DIR = pathlib.Path(__file__).resolve().parent
@@ -159,13 +160,21 @@ def markdown_to_html(md: str) -> tuple[str, list[dict[str, str]], list[dict[str,
         img_m = re.match(r"^\s*!\[([^\]]*)\]\(([^)]+)\)\s*$", line)
         if img_m:
             alt_txt = html.escape(img_m.group(1).strip())
-            src_url = html.escape(img_m.group(2).strip())
+            raw_src = img_m.group(2).strip()
+            src_url = html.escape(raw_src)
+            dims_attr = ""
+            img_path = DOCS_DIR / raw_src.split("?")[0]
+            if img_path.is_file() and img_path.suffix.lower() == ".png":
+                hdr = img_path.read_bytes()[:24]
+                if len(hdr) == 24 and hdr[:8] == b"\x89PNG\r\n\x1a\n":
+                    w, h = struct.unpack(">II", hdr[16:24])
+                    dims_attr = f' width="{w}" height="{h}"'
             html_parts.append(
                 f'<figure class="doc-figure">'
                 f'<div class="window-frame">'
                 f'<div class="window-bar"><div class="window-dots"><i></i><i></i><i></i></div>'
                 f'<span>{alt_txt}</span><span style="width: 42px;"></span></div>'
-                f'<img src="{src_url}" alt="{alt_txt}" loading="lazy" decoding="async" />'
+                f'<img src="{src_url}" alt="{alt_txt}"{dims_attr} loading="lazy" decoding="async" />'
                 f"</div></figure>"
             )
             i += 1
@@ -179,6 +188,8 @@ def markdown_to_html(md: str) -> tuple[str, list[dict[str, str]], list[dict[str,
             raw_title = hm.group(2).strip()
             slug = slugify(raw_title)
             current_h = re.sub(r"`([^`]+)`", r"\1", raw_title)
+            current_h = re.sub(r"\*\*([^*]+)\*\*", r"\1", current_h)
+            current_h = re.sub(r"\*([^*]+)\*", r"\1", current_h)
             current_slug = slug if lvl > 1 else ""
             if lvl == 2:
                 toc.append({"title": current_h, "id": slug})

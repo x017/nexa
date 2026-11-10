@@ -962,19 +962,27 @@
         updateActiveTocOnScroll();
         return;
       }
-      const parts = raw.split("--");
-      renderChapter(parts[0], parts[1] || "");
+      const sep = raw.indexOf("--");
+      const slug = sep >= 0 ? raw.slice(0, sep) : raw;
+      const anchor = sep >= 0 ? raw.slice(sep + 2) : "";
+      renderChapter(slug, anchor);
       updateActiveTocOnScroll();
     }
 
     window.addEventListener("hashchange", syncFromHash);
 
     document.addEventListener("click", (ev) => {
-      const docLink = ev.target.closest("[data-doc-link]");
+      const docLink = ev.target.closest("[data-doc-link], [data-chapter]");
       if (docLink) {
         ev.preventDefault();
-        const slug = docLink.dataset.docLink;
-        window.location.hash = `#${slug}`;
+        const slug = docLink.dataset.docLink || docLink.dataset.chapter;
+        const targetHash = `#${slug}`;
+        if (window.location.hash !== targetHash) {
+          window.location.hash = targetHash;
+        } else {
+          renderChapter(slug, "");
+          updateActiveTocOnScroll();
+        }
         return;
       }
       const anchorLink = ev.target.closest("[data-anchor]");

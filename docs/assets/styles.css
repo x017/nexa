@@ -32,6 +32,7 @@
   --code-str: #8a5300;
   --code-num: #00774d;
   --code-com: #767676;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05), 0 6px 16px -4px rgb(0 0 0 / 0.08);
   --shadow-float: 0 1px 3px rgb(0 0 0 / 0.06), 0 12px 32px -4px rgb(0 0 0 / 0.12);
 
   /* Active CUI Accent (defaults to Accent.BLUE light #0562ef) */
@@ -89,6 +90,7 @@
   --code-str: #f2bd68;
   --code-num: #55d69f;
   --code-com: #8c8c8c;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.22), 0 8px 20px -4px rgb(0 0 0 / 0.34);
   --shadow-float: 0 1px 3px rgb(0 0 0 / 0.24), 0 14px 36px -4px rgb(0 0 0 / 0.4);
 
   --accent: #6ba3ff;
@@ -1539,13 +1541,13 @@ body.guide-mode .read-progress {
   margin: 32px 0;
 }
 
-.prose a {
+.prose a:not(.btn):not(.tutorial-hub-card):not(.module-jump-pill):not(.track-step):not(.pager-card) {
   text-decoration: underline;
   text-decoration-color: var(--border-strong);
   text-underline-offset: 3px;
 }
 
-.prose a:hover {
+.prose a:not(.btn):not(.tutorial-hub-card):not(.module-jump-pill):not(.track-step):not(.pager-card):hover {
   text-decoration-color: var(--fg);
 }
 
@@ -1765,12 +1767,12 @@ body.guide-mode .read-progress {
 }
 
 .prose blockquote.callout-tip {
-  border-left-color: var(--accent);
+  border-left: 3px solid var(--accent);
   background: var(--accent-subtle);
 }
 
 .prose blockquote.callout-warn {
-  border-left-color: #f3ad20;
+  border-left: 3px solid var(--warning);
 }
 
 .hero-course-banner {
@@ -1792,6 +1794,11 @@ body.guide-mode .read-progress {
   border: 0 !important;
   font: 600 23px/1.25 var(--font-display);
   letter-spacing: -0.02em;
+}
+
+.hero-course-banner h2 a {
+  text-decoration: none !important;
+  color: inherit;
 }
 
 .hero-course-banner p {
