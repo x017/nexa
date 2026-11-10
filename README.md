@@ -15,7 +15,7 @@
 
 ## Documentation & Step-by-Step Guides
 
-Read the interactive documentation at **[parsa.x017.ir/nexa](http://parsa.x017.ir/nexa/)** or browse [`docs/`](https://github.com/x017/nexa/tree/main/docs):
+Read the interactive documentation at **[parsa.x017.ir/nexa](http://parsa.x017.ir/nexa/)**, explore the **[Documentation Wiki](http://parsa.x017.ir/nexa/wiki.html)** (also mirrored to the **[GitHub Wiki](https://github.com/x017/nexa/wiki)**), or browse [`docs/`](https://github.com/x017/nexa/tree/main/docs):
 
 0. **[Zero to Hero: The Complete `nexa` Full Tutorial](https://github.com/x017/nexa/blob/main/docs/zero-to-hero.md)** — Comprehensive 11-module masterclass taking you from your first 15-line native window through Flexbox/Grid layouts, forms & pickers, desktop chrome, 50k virtualized grids, code & diff editors, studio canvases, OOP architecture, OKLCH theming, async worker streams, headless `pytest`, and building **Pulse Studio** (`examples/zero_to_hero.py`).
 1. **[Getting Started & Core Mental Model](https://github.com/x017/nexa/blob/main/docs/getting-started.md)** — Installation, value-returning immediate mode, widget IDs & `id_scope`, conditional vs. unconditional `with` scopes, and transition flags.

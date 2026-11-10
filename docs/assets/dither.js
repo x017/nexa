@@ -183,7 +183,7 @@
       reveal: true,
       loop: true,
       maxScrollY: 0,
-      reduced: () => matchMedia("(prefers-reduced-motion: reduce)").matches,
+      reduced: () => typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       ...opts,
     };
     const isBasin = o.scene === "basin";
@@ -217,7 +217,13 @@
     let revealed = !o.reveal;
     let visible = o.reveal !== "view";
     let sunBias = 0;
-    const ctx = canvas.getContext("2d", { alpha: true });
+    let ctx = null;
+    try {
+      ctx = canvas.getContext("2d", { alpha: true });
+    } catch (e) {
+      ctx = null;
+    }
+    if (!ctx) return el;
 
     function buildGeometry() {
       const r = el.getBoundingClientRect();

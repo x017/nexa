@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Functional &amp; Procedural — nexa Documentation</title>
+  <meta name="description" content="Functional &amp; Procedural — step-by-step guide and runnable Python examples for nexa (nexa-ui)." />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.2.0" />
+  <link rel="stylesheet" href="assets/styles.css?v=1.2.0" />
+  <script>
+    try {
+      const saved = localStorage.getItem("nexa_theme");
+      const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+    } catch (e) {}
+  </script>
+</head>
+<body class="guide-mode">
+  <!-- Sticky Top Bar with Reading Progress Hairline -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html">
+        <svg class="brand-mark-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+          <path d="M12 3.4 L20.6 12 L12 20.6 L3.4 12 Z" stroke="currentColor" stroke-opacity="0.34" stroke-width="1.35" stroke-linejoin="round"/>
+          <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M12 5.2 C12 9.4 14.6 12 18.8 12 C14.6 12 12 14.6 12 18.8 C12 14.6 9.4 12 5.2 12 C9.4 12 12 9.4 12 5.2 Z M12 9.8 L14.2 12 L12 14.2 L9.8 12 Z"
+                fill="currentColor"/>
+          <circle cx="12" cy="3.4" r="1.9" fill="var(--accent)"/>
+          <circle cx="20.6" cy="12" r="1.7" fill="currentColor"/>
+          <circle cx="12" cy="20.6" r="1.7" fill="currentColor"/>
+          <circle cx="3.4" cy="12" r="1.7" fill="currentColor"/>
+        </svg>
+        <span>nexa</span>
+        <span class="brand-badge">Docs</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="nav-link" href="index.html">Overview</a>
+        <a class="nav-link" data-nav="wiki" href="wiki.html">Wiki</a>
+        <a class="nav-link" data-nav="guide" href="getting-started.html">Guide</a>
+        <a class="nav-link active" data-nav="tutorials" href="tutorials.html">Tutorials</a>
+        <a class="nav-link" data-nav="components" href="components.html">Components</a>
+        <a class="nav-link" data-nav="changelog" href="changelog.html">Changelog</a>
+      </nav>
+      <div class="topbar-right">
+        <div class="accent-strip" id="header-accent-strip" title="Switch live OKLCH accent"></div>
+        <a class="icon-btn" href="https://github.com/x017/nexa" target="_blank" rel="noopener" aria-label="Source on GitHub" title="Source on GitHub">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+        </a>
+        <button class="icon-btn" id="theme-toggle-btn" type="button" aria-label="Switch theme"></button>
+      </div>
+    </div>
+    <div class="read-progress" id="read-progress"></div>
+  </header>
+
+  <!-- Documentation Layout Shell -->
+  <div class="docs-shell">
+    <!-- Left Chapter Navigation + Instant Filter -->
+    <aside class="docs-sidebar" aria-label="Documentation chapters">
+      <div class="search-box">
+        <input id="docs-search-input" type="search" placeholder="Filter wiki, tutorials &amp; widgets…" autocomplete="off" />
+        <span class="search-kbd">Ctrl K</span>
+      </div>
+      <div class="search-results" id="docs-search-results"></div>
+      <nav id="docs-sidebar-nav"><div class="sidebar-group-title">Explore</div><a class="sidebar-link" href="wiki.html">Docs Wiki <span class="badge-new">WIKI</span></a><a class="sidebar-link" href="tutorials.html">All Tutorials Overview</a><a class="sidebar-link" href="components.html">Component Explorer <span class="badge-new">1.1</span></a><a class="sidebar-link" href="changelog.html">Changelog</a><div class="sidebar-group-title">Start Here</div><a class="sidebar-link" href="zero-to-hero.html">0 to Hero: Full Tutorial <span class="badge-new">FULL</span></a><a class="sidebar-link" href="getting-started.html">Getting Started</a><div class="sidebar-group-title">Tutorials</div><a class="sidebar-link active" href="tutorial-functional.html">Functional &amp; Procedural</a><div class="sidebar-sublinks"><a class="sidebar-sublink" href="#lesson-1-top-level-functional-basics" data-anchor="lesson-1-top-level-functional-basics">Lesson 1: Top-Level Functional Basics</a><a class="sidebar-sublink" href="#lesson-2-mastering-flexbox-sizing-grids" data-anchor="lesson-2-mastering-flexbox-sizing-grids">Lesson 2: Mastering Flexbox, Sizing &amp; Grids</a><a class="sidebar-sublink" href="#lesson-3-procedural-decomposition-plain-functions-state-dict" data-anchor="lesson-3-procedural-decomposition-plain-functions-state-dict">Lesson 3: Procedural Decomposition (Plain Functions + State Dict)</a><a class="sidebar-sublink" href="#lesson-4-manual-frame-loop-while-app-frame" data-anchor="lesson-4-manual-frame-loop-while-app-frame">Lesson 4: Manual Frame Loop (while app.frame():)</a><a class="sidebar-sublink" href="#lesson-5-complete-procedural-project-expense-budget-tracker" data-anchor="lesson-5-complete-procedural-project-expense-budget-tracker">Lesson 5: Complete Procedural Project — Expense &amp; Budget Tracker</a><a class="sidebar-sublink" href="#next-steps" data-anchor="next-steps">Next Steps</a></div><a class="sidebar-link" href="tutorial-oop.html">Object-Oriented (OOP)</a><a class="sidebar-link" href="theming-and-styling.html">Theming, Accents &amp; Icons</a><a class="sidebar-link" href="concurrency-and-async.html">Concurrency &amp; Asyncio</a><a class="sidebar-link" href="advanced-rendering-and-packaging.html">Canvas, GPU &amp; Packaging</a><div class="sidebar-group-title">API Reference</div><a class="sidebar-link" href="components-reference.html">160+ Components Reference</a></nav>
+    </aside>
+
+    <!-- Main Content Area with Procedural Topographic Backdrop -->
+    <div class="docs-content-grid docs-main-wrap">
+      <div class="docs-art" id="docs-hero-art"></div>
+
+      <div class="docs-page-inner">
+        <main class="docs-main">
+          <article class="prose" id="docs-article">
+<div class="tutorial-track" aria-label="Tutorial curriculum"><span class="tutorial-track-label">Tutorials</span><a class="track-step" href="zero-to-hero.html"><span class="track-step-num">00</span><span>0 → Hero</span></a><a class="track-step" href="getting-started.html"><span class="track-step-num">01</span><span>Start</span></a><a class="track-step active" href="tutorial-functional.html"><span class="track-step-num">02</span><span>Functional</span></a><a class="track-step" href="tutorial-oop.html"><span class="track-step-num">03</span><span>OOP</span></a><a class="track-step" href="theming-and-styling.html"><span class="track-step-num">04</span><span>Theming</span></a><a class="track-step" href="concurrency-and-async.html"><span class="track-step-num">05</span><span>Async &amp; Threads</span></a><a class="track-step" href="advanced-rendering-and-packaging.html"><span class="track-step-num">06</span><span>GPU &amp; Packaging</span></a></div><h1 id="tutorial-functional-procedural-coding">Tutorial: Functional &amp; Procedural Coding</h1>
+<p><code>nexa</code> lets you write clean, Pythonic desktop applications <strong>without a single class</strong> when you want speed, simplicity, and direct data flow.</p>
+<p>In fact, <code>nexa</code> supports <strong>two closely related non-OOP styles</strong>:</p>
+<ol><li><strong>Top-Level Functional Style</strong> (<code>import nexa as ui</code> + <code>ui.heading(...)</code>, <code>ui.button(...)</code>): Uses a lightweight <code>contextvars.ContextVar</code> under the hood so you don&#x27;t even pass a context parameter around. Ideal for scripts, prototypes, and single-file tools.</li><li><strong>Explicit Procedural Style</strong> (<code>def render_sidebar(ctx: ui.UI, state: dict)</code>): Passes <code>ctx: ui.UI</code> explicitly as the first argument to plain Python functions. Ideal for larger procedural codebases, multi-window tools, and unit-tested UI modules.</li></ol>
+<p>Let&#x27;s master both step by step!</p>
+<hr />
+<h2 id="lesson-1-top-level-functional-basics">Lesson 1: Top-Level Functional Basics</h2>
+<p>With <code>ui.run(draw)</code>, your <code>draw</code> function takes <strong>0 arguments</strong> (or 1 <code>ctx: ui.UI</code> argument—<code>ui.run</code> inspects its signature automatically!).</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
+
+<span class="tok-kw">def</span> main() -&gt; <span class="tok-kw">None</span>:
+    celsius = <span class="tok-num">22.0</span>
+
+    <span class="tok-kw">def</span> draw() -&gt; <span class="tok-kw">None</span>:
+        <span class="tok-kw">nonlocal</span> celsius
+        fahrenheit = celsius * <span class="tok-num">9.0</span> / <span class="tok-num">5.0</span> + <span class="tok-num">32.0</span>
+
+        <span class="tok-kw">with</span> ui.column(
+            width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>, pad=<span class="tok-num">28</span>, gap=<span class="tok-num">16</span>,
+            align=ui.<span class="tok-cls">Align</span>.<span class="tok-cls">CENTER</span>, justify=ui.<span class="tok-cls">Justify</span>.<span class="tok-cls">CENTER</span>, bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">BACKGROUND</span>,
+        ):
+            <span class="tok-kw">with</span> ui.card(width=<span class="tok-num">380</span>, pad=<span class="tok-num">24</span>, gap=<span class="tok-num">14</span>):
+                <span class="tok-kw">with</span> ui.row(align=ui.<span class="tok-cls">Align</span>.<span class="tok-cls">CENTER</span>):
+                    ui.heading(<span class="tok-str">&quot;Thermostat&quot;</span>, level=<span class="tok-num">2</span>)
+                    ui.spacer()
+                    ui.theme_toggle()
+
+                celsius = ui.slider(<span class="tok-str">&quot;Temperature&quot;</span>, celsius, -<span class="tok-num">10.0</span>, <span class="tok-num">45.0</span>, step=<span class="tok-num">0.5</span>, show_value=<span class="tok-kw">True</span>, format=<span class="tok-str">&quot;%.1f °C&quot;</span>)
+                ui.metric(<span class="tok-str">&quot;Fahrenheit&quot;</span>, f<span class="tok-str">&quot;{fahrenheit:.1f} °F&quot;</span>, delta=celsius - <span class="tok-num">20.0</span>)
+
+                <span class="tok-kw">with</span> ui.row(gap=<span class="tok-num">8</span>):
+                    <span class="tok-kw">if</span> ui.button(<span class="tok-str">&quot;Eco (19 °C)&quot;</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">CHECK</span>):
+                        celsius = <span class="tok-num">19.0</span>
+                    <span class="tok-kw">if</span> ui.button(<span class="tok-str">&quot;Comfort (22 °C)&quot;</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">PRIMARY</span>):
+                        celsius = <span class="tok-num">22.0</span>
+
+    ui.run(draw, title=<span class="tok-str">&quot;Thermostat&quot;</span>, width=<span class="tok-num">500</span>, height=<span class="tok-num">380</span>, accent=ui.<span class="tok-cls">Accent</span>.<span class="tok-cls">CORAL</span>)
+
+<span class="tok-kw">if</span> __name__ == <span class="tok-str">&quot;__main__&quot;</span>:
+    main()</code></pre></div>
+<p>Wait—notice how clean <code>nonlocal celsius</code> is for 1–3 variables. What when you have 10+ state fields? In procedural Python, put your state in a plain <code>dict</code> (or custom state object) so you never need <code>global</code> or <code>nonlocal</code>!</p>
+<hr />
+<h2 id="lesson-2-mastering-flexbox-sizing-grids">Lesson 2: Mastering Flexbox, Sizing &amp; Grids</h2>
+<p>Every container in <code>nexa</code> (<code>box</code>, <code>row</code>, <code>column</code>, <code>stack</code>, <code>grid</code>, <code>card</code>, <code>scroll</code>) uses the same single-pass constraint layout system.</p>
+<h3 id="the-5-sizing-primitives">The 5 Sizing Primitives</h3>
+<table><thead><tr><th>Sizing Spec</th><th>Meaning</th></tr></thead><tbody><tr><td><code>ui.FIT</code> <em>(or <code>None</code>)</em></td><td>Shrink-wrap to fit child content</td></tr><tr><td><code>ui.FILL</code></td><td>Stretch to 100% of available parent space</td></tr><tr><td><code>ui.GROW(weight)</code></td><td>Flex-grow proportionally along a <code>row</code> or <code>column</code> (<code>GROW(2)</code> takes 2x space of <code>GROW(1)</code>)</td></tr><tr><td><code>240</code> or <code>ui.PX(240)</code></td><td>Exact logical pixel size (automatically scaled by HiDPI <code>ctx.scale</code>)</td></tr><tr><td><code>ui.PCT(50)</code></td><td>Percentage (<code>0..100</code>) of parent dimension</td></tr></tbody></table>
+<h3 id="classic-desktop-shell-recipe-sidebar-header-scrollable-content-status-bar">Classic Desktop Shell Recipe (Sidebar + Header + Scrollable Content + Status Bar)</h3>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
+
+<span class="tok-kw">def</span> main() -&gt; <span class="tok-kw">None</span>:
+    state = {<span class="tok-str">&quot;nav&quot;</span>: <span class="tok-num">0</span>, <span class="tok-str">&quot;search&quot;</span>: <span class="tok-str">&quot;&quot;</span>}
+
+    <span class="tok-kw">def</span> draw(ctx: ui.<span class="tok-cls">UI</span>) -&gt; <span class="tok-kw">None</span>:
+        <span class="tok-kw">with</span> ctx.column(width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>, bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">BACKGROUND</span>):
+            <span class="tok-com"># Main horizontal body (GROW(1) fills everything above the status bar)</span>
+            <span class="tok-kw">with</span> ctx.row(width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">GROW</span>(<span class="tok-num">1</span>)):
+                <span class="tok-com"># Fixed 220px sidebar</span>
+                <span class="tok-kw">with</span> ctx.column(width=<span class="tok-num">220</span>, height=ui.<span class="tok-cls">FILL</span>, bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">SURFACE_MUTED</span>, pad=<span class="tok-num">12</span>, gap=<span class="tok-num">4</span>):
+                    ctx.heading(<span class="tok-str">&quot;Workspace&quot;</span>, level=<span class="tok-num">4</span>)
+                    <span class="tok-kw">for</span> i, (label, icon) <span class="tok-kw">in</span> enumerate([
+                        (<span class="tok-str">&quot;Overview&quot;</span>, ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">LAYOUT_DASHBOARD</span>),
+                        (<span class="tok-str">&quot;Activity&quot;</span>, ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">ACTIVITY</span>),
+                        (<span class="tok-str">&quot;Settings&quot;</span>, ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">SETTINGS</span>),
+                    ]):
+                        <span class="tok-kw">if</span> ctx.nav_item(label, icon=icon, selected=(state[<span class="tok-str">&quot;nav&quot;</span>] == i), group=<span class="tok-str">&quot;main&quot;</span>):
+                            state[<span class="tok-str">&quot;nav&quot;</span>] = i
+
+                <span class="tok-com"># Flexible right content pane</span>
+                <span class="tok-kw">with</span> ctx.column(width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>):
+                    <span class="tok-com"># Top header bar</span>
+                    <span class="tok-kw">with</span> ctx.row(width=ui.<span class="tok-cls">FILL</span>, pad_x=<span class="tok-num">20</span>, pad_y=<span class="tok-num">12</span>, gap=<span class="tok-num">12</span>, align=ui.<span class="tok-cls">Align</span>.<span class="tok-cls">CENTER</span>):
+                        ctx.breadcrumb([<span class="tok-str">&quot;Workspace&quot;</span>, [<span class="tok-str">&quot;Overview&quot;</span>, <span class="tok-str">&quot;Activity&quot;</span>, <span class="tok-str">&quot;Settings&quot;</span>][state[<span class="tok-str">&quot;nav&quot;</span>]]])
+                        ctx.spacer()  <span class="tok-com"># Pushes everything after it to the right!</span>
+                        state[<span class="tok-str">&quot;search&quot;</span>] = ctx.search(<span class="tok-str">&quot;q&quot;</span>, state[<span class="tok-str">&quot;search&quot;</span>], width=<span class="tok-num">220</span>, size=ui.<span class="tok-cls">ControlSize</span>.<span class="tok-cls">SM</span>)
+                        ctx.theme_toggle()
+
+                    ctx.separator()
+
+                    <span class="tok-com"># Responsive auto-wrapping card grid inside a scroll container</span>
+                    <span class="tok-kw">with</span> ctx.scroll(<span class="tok-str">&quot;body_scroll&quot;</span>, width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>, pad=<span class="tok-num">20</span>, gap=<span class="tok-num">16</span>):
+                        <span class="tok-kw">with</span> ctx.grid(columns=<span class="tok-num">3</span>, min_column_width=<span class="tok-num">180</span>, gap=<span class="tok-num">14</span>, width=ui.<span class="tok-cls">FILL</span>):
+                            <span class="tok-kw">for</span> k <span class="tok-kw">in</span> range(<span class="tok-num">6</span>):
+                                <span class="tok-kw">with</span> ctx.card(pad=<span class="tok-num">16</span>, gap=<span class="tok-num">6</span>):
+                                    ctx.secondary(f<span class="tok-str">&quot;Node #{k + 1}&quot;</span>)
+                                    ctx.heading(f<span class="tok-str">&quot;{94 + k}.2%&quot;</span>, level=<span class="tok-num">3</span>)
+                                    ctx.badge(<span class="tok-str">&quot;Healthy&quot;</span>, tone=ui.<span class="tok-cls">Tone</span>.<span class="tok-cls">SUCCESS</span>, dot=<span class="tok-kw">True</span>)
+
+            <span class="tok-com"># Bottom status bar</span>
+            <span class="tok-kw">with</span> ctx.status_bar():
+                ctx.status_bar_text(<span class="tok-str">&quot;Connected&quot;</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">CIRCLE_CHECK</span>, tone=ui.<span class="tok-cls">Tone</span>.<span class="tok-cls">SUCCESS</span>)
+                ctx.status_bar_spacer()
+                ctx.status_bar_item(<span class="tok-str">&quot;60 FPS&quot;</span>)
+
+    <span class="tok-kw">with</span> ui.<span class="tok-cls">App</span>(<span class="tok-str">&quot;Layout Recipe&quot;</span>, width=<span class="tok-num">960</span>, height=<span class="tok-num">620</span>, theme=ui.<span class="tok-cls">ThemeMode</span>.<span class="tok-cls">DARK</span>, accent=ui.<span class="tok-cls">Accent</span>.<span class="tok-cls">BLUE</span>) <span class="tok-kw">as</span> app:
+        app.run(draw)
+
+<span class="tok-kw">if</span> __name__ == <span class="tok-str">&quot;__main__&quot;</span>:
+    main()</code></pre></div>
+<hr />
+<h2 id="lesson-3-procedural-decomposition-plain-functions-state-dict">Lesson 3: Procedural Decomposition (Plain Functions + State Dict)</h2>
+<p>As a procedural app grows beyond ~100 lines, split your UI into plain functions that accept <code>(ctx: ui.UI, state: dict)</code>. Notice how readable, modular, and testable this is—no inheritance required:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">def</span> draw_toolbar(ctx: ui.<span class="tok-cls">UI</span>, state: dict) -&gt; <span class="tok-kw">None</span>:
+    <span class="tok-kw">with</span> ctx.toolbar():
+        <span class="tok-kw">if</span> ctx.toolbar_button(ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">PLUS</span>, label=<span class="tok-str">&quot;New Item&quot;</span>, tooltip=<span class="tok-str">&quot;Ctrl+N&quot;</span>):
+            state[<span class="tok-str">&quot;items&quot;</span>].append({<span class="tok-str">&quot;title&quot;</span>: <span class="tok-str">&quot;Untitled&quot;</span>, <span class="tok-str">&quot;done&quot;</span>: <span class="tok-kw">False</span>})
+        ctx.toolbar_separator()
+        state[<span class="tok-str">&quot;hide_done&quot;</span>] = ctx.toolbar_toggle(state[<span class="tok-str">&quot;hide_done&quot;</span>], ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">FILTER</span>, tooltip=<span class="tok-str">&quot;Hide completed&quot;</span>)
+        ctx.toolbar_spacer()
+        ctx.theme_toggle()
+
+<span class="tok-kw">def</span> draw_item_list(ctx: ui.<span class="tok-cls">UI</span>, state: dict) -&gt; <span class="tok-kw">None</span>:
+    <span class="tok-kw">with</span> ctx.scroll(<span class="tok-str">&quot;items&quot;</span>, width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>, pad=<span class="tok-num">20</span>, gap=<span class="tok-num">8</span>):
+        <span class="tok-kw">for</span> idx, item <span class="tok-kw">in</span> enumerate(state[<span class="tok-str">&quot;items&quot;</span>]):
+            <span class="tok-kw">if</span> state[<span class="tok-str">&quot;hide_done&quot;</span>] <span class="tok-kw">and</span> item[<span class="tok-str">&quot;done&quot;</span>]:
+                <span class="tok-kw">continue</span>
+            <span class="tok-kw">with</span> ctx.id_scope(idx):
+                <span class="tok-kw">with</span> ctx.card(pad=<span class="tok-num">12</span>):
+                    <span class="tok-kw">with</span> ctx.row(align=ui.<span class="tok-cls">Align</span>.<span class="tok-cls">CENTER</span>, gap=<span class="tok-num">10</span>):
+                        item[<span class="tok-str">&quot;done&quot;</span>] = ctx.checkbox(<span class="tok-str">&quot;##chk&quot;</span>, item[<span class="tok-str">&quot;done&quot;</span>])
+                        item[<span class="tok-str">&quot;title&quot;</span>] = ctx.inline_edit(<span class="tok-str">&quot;title&quot;</span>, item[<span class="tok-str">&quot;title&quot;</span>], width=ui.<span class="tok-cls">FILL</span>)
+                        <span class="tok-kw">if</span> ctx.icon_button(ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">TRASH</span>, tooltip=<span class="tok-str">&quot;Remove&quot;</span>):
+                            state[<span class="tok-str">&quot;items&quot;</span>].pop(idx)
+                            <span class="tok-kw">break</span></code></pre></div>
+<hr />
+<h2 id="lesson-4-manual-frame-loop-while-app-frame">Lesson 4: Manual Frame Loop (<code>while app.frame():</code>)</h2>
+<p><code>app.run(draw)</code> is simply a convenience loop around <code>app.frame()</code>. Whenever you want explicit per-frame control—for example, draining a network queue, stepping a physics simulation, or driving custom frame timing—write the <code>while app.frame():</code> loop directly:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
+
+<span class="tok-kw">with</span> ui.<span class="tok-cls">App</span>(<span class="tok-str">&quot;Manual Loop&quot;</span>, width=<span class="tok-num">520</span>, height=<span class="tok-num">320</span>, theme=ui.<span class="tok-cls">ThemeMode</span>.<span class="tok-cls">DARK</span>, accent=ui.<span class="tok-cls">Accent</span>.<span class="tok-cls">AMBER</span>) <span class="tok-kw">as</span> app:
+    ctx = app.ui
+    clicks = <span class="tok-num">0</span>
+
+    <span class="tok-kw">while</span> app.frame(wait=<span class="tok-kw">True</span>):
+        <span class="tok-kw">if</span> ctx.shortcut(ui.<span class="tok-cls">Mod</span>.<span class="tok-cls">PRIMARY</span>, ui.<span class="tok-cls">Key</span>.<span class="tok-cls">Q</span>):
+            app.quit()
+
+        <span class="tok-kw">with</span> ctx.column(width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>, pad=<span class="tok-num">24</span>, gap=<span class="tok-num">12</span>, bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">BACKGROUND</span>):
+            ctx.heading(f<span class="tok-str">&quot;Frame #{ctx.frame_count}&quot;</span>, level=<span class="tok-num">2</span>)
+            ctx.secondary(f<span class="tok-str">&quot;Delta time: {ctx.dt * 1000:.2f} ms  ·  Scale: {ctx.scale:.1f}x&quot;</span>)
+            <span class="tok-kw">if</span> ctx.button(<span class="tok-str">&quot;Trigger Toast&quot;</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">BELL</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">PRIMARY</span>):
+                clicks += <span class="tok-num">1</span>
+                ctx.toast(f<span class="tok-str">&quot;Notification #{clicks}&quot;</span>, description=<span class="tok-str">&quot;Dispatched from manual loop&quot;</span>, tone=ui.<span class="tok-cls">Tone</span>.<span class="tok-cls">INFO</span>)</code></pre></div>
+<hr />
+<h2 id="lesson-5-complete-procedural-project-expense-budget-tracker">Lesson 5: Complete Procedural Project — Expense &amp; Budget Tracker</h2>
+<p>Below is a complete, 100% standalone procedural application combining <strong>split panes</strong>, <strong>forms &amp; money input</strong>, <strong>keyboard shortcuts (<code>Ctrl+K</code> command palette)</strong>, <strong>donut chart</strong>, and <strong>sortable table</strong>:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-str">&quot;&quot;&quot;Complete procedural project: Personal Expense &amp; Budget Tracker.&quot;&quot;&quot;</span>
+
+<span class="tok-kw">from</span> __future__ <span class="tok-kw">import</span> annotations
+<span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
+
+<span class="tok-cls">CATEGORIES</span> = [<span class="tok-str">&quot;Housing&quot;</span>, <span class="tok-str">&quot;Food&quot;</span>, <span class="tok-str">&quot;Transport&quot;</span>, <span class="tok-str">&quot;Software&quot;</span>]
+<span class="tok-cls">CAT_TONES</span> = [ui.<span class="tok-cls">Tone</span>.<span class="tok-cls">VIOLET</span>, ui.<span class="tok-cls">Tone</span>.<span class="tok-cls">SUCCESS</span>, ui.<span class="tok-cls">Tone</span>.<span class="tok-cls">INFO</span>, ui.<span class="tok-cls">Tone</span>.<span class="tok-cls">WARNING</span>]
+
+<span class="tok-kw">def</span> draw_form_pane(ctx: ui.<span class="tok-cls">UI</span>, st: dict) -&gt; <span class="tok-kw">None</span>:
+    <span class="tok-kw">with</span> ctx.column(width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>, bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">SURFACE_MUTED</span>, pad=<span class="tok-num">18</span>, gap=<span class="tok-num">14</span>):
+        <span class="tok-kw">with</span> ctx.row(align=ui.<span class="tok-cls">Align</span>.<span class="tok-cls">CENTER</span>):
+            ctx.heading(<span class="tok-str">&quot;Add Expense&quot;</span>, level=<span class="tok-num">3</span>)
+            ctx.spacer()
+            ctx.theme_toggle()
+
+        st[<span class="tok-str">&quot;title&quot;</span>] = ctx.input(<span class="tok-str">&quot;exp_title&quot;</span>, st[<span class="tok-str">&quot;title&quot;</span>], label=<span class="tok-str">&quot;Description&quot;</span>, placeholder=<span class="tok-str">&quot;e.g. Cloud hosting&quot;</span>)
+        st[<span class="tok-str">&quot;amount&quot;</span>] = ctx.money_input(<span class="tok-str">&quot;exp_amt&quot;</span>, st[<span class="tok-str">&quot;amount&quot;</span>], label=<span class="tok-str">&quot;Amount&quot;</span>, symbol=<span class="tok-str">&quot;$&quot;</span>, code=<span class="tok-str">&quot;USD&quot;</span>)
+        st[<span class="tok-str">&quot;cat&quot;</span>] = ctx.select(<span class="tok-str">&quot;exp_cat&quot;</span>, <span class="tok-cls">CATEGORIES</span>, st[<span class="tok-str">&quot;cat&quot;</span>], label=<span class="tok-str">&quot;Category&quot;</span>)
+
+        err = st[<span class="tok-str">&quot;error&quot;</span>]
+        <span class="tok-kw">if</span> err:
+            ctx.alert(err, tone=ui.<span class="tok-cls">Tone</span>.<span class="tok-cls">DANGER</span>)
+
+        <span class="tok-kw">if</span> ctx.button(<span class="tok-str">&quot;Record Expense&quot;</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">PLUS</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">PRIMARY</span>, full_width=<span class="tok-kw">True</span>):
+            <span class="tok-kw">if</span> <span class="tok-kw">not</span> st[<span class="tok-str">&quot;title&quot;</span>].strip():
+                st[<span class="tok-str">&quot;error&quot;</span>] = <span class="tok-str">&quot;Please enter a description.&quot;</span>
+            <span class="tok-kw">elif</span> st[<span class="tok-str">&quot;amount&quot;</span>] &lt;= <span class="tok-num">0</span>:
+                st[<span class="tok-str">&quot;error&quot;</span>] = <span class="tok-str">&quot;Amount must be greater than $0.00.&quot;</span>
+            <span class="tok-kw">else</span>:
+                st[<span class="tok-str">&quot;error&quot;</span>] = <span class="tok-str">&quot;&quot;</span>
+                st[<span class="tok-str">&quot;rows&quot;</span>].append((st[<span class="tok-str">&quot;title&quot;</span>].strip(), st[<span class="tok-str">&quot;cat&quot;</span>], round(st[<span class="tok-str">&quot;amount&quot;</span>], <span class="tok-num">2</span>)))
+                ctx.toast(<span class="tok-str">&quot;Expense added&quot;</span>, description=st[<span class="tok-str">&quot;title&quot;</span>].strip(), tone=ui.<span class="tok-cls">Tone</span>.<span class="tok-cls">SUCCESS</span>)
+                st[<span class="tok-str">&quot;title&quot;</span>] = <span class="tok-str">&quot;&quot;</span>
+
+        ctx.separator()
+        totals = [sum(r[<span class="tok-num">2</span>] <span class="tok-kw">for</span> r <span class="tok-kw">in</span> st[<span class="tok-str">&quot;rows&quot;</span>] <span class="tok-kw">if</span> r[<span class="tok-num">1</span>] == c) <span class="tok-kw">for</span> c <span class="tok-kw">in</span> range(len(<span class="tok-cls">CATEGORIES</span>))]
+        ctx.secondary(<span class="tok-str">&quot;Category Breakdown&quot;</span>)
+        ctx.donut_chart(<span class="tok-str">&quot;cat_donut&quot;</span>, totals, <span class="tok-cls">CATEGORIES</span>, height=<span class="tok-num">180</span>, format=<span class="tok-str">&quot;$%.0f&quot;</span>)
+
+<span class="tok-kw">def</span> draw_ledger_pane(ctx: ui.<span class="tok-cls">UI</span>, st: dict) -&gt; <span class="tok-kw">None</span>:
+    total = sum(r[<span class="tok-num">2</span>] <span class="tok-kw">for</span> r <span class="tok-kw">in</span> st[<span class="tok-str">&quot;rows&quot;</span>])
+    budget = <span class="tok-num">2500.0</span>
+
+    <span class="tok-kw">with</span> ctx.column(width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>, bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">BACKGROUND</span>, pad=<span class="tok-num">24</span>, gap=<span class="tok-num">16</span>):
+        <span class="tok-kw">with</span> ctx.row(gap=<span class="tok-num">16</span>, width=ui.<span class="tok-cls">FILL</span>):
+            <span class="tok-kw">with</span> ctx.card(width=ui.<span class="tok-cls">GROW</span>(<span class="tok-num">1</span>), pad=<span class="tok-num">16</span>, gap=<span class="tok-num">6</span>):
+                ctx.secondary(<span class="tok-str">&quot;Total Spent&quot;</span>)
+                ctx.number_roll(<span class="tok-str">&quot;spent_roll&quot;</span>, f<span class="tok-str">&quot;${total:,.2f}&quot;</span>, font=ui.<span class="tok-cls">FontRole</span>.<span class="tok-cls">DISPLAY</span>, size=<span class="tok-num">24</span>)
+            <span class="tok-kw">with</span> ctx.card(width=ui.<span class="tok-cls">GROW</span>(<span class="tok-num">1</span>), pad=<span class="tok-num">16</span>, gap=<span class="tok-num">8</span>):
+                ctx.meter(<span class="tok-str">&quot;Monthly Budget&quot;</span>, total, budget, <span class="tok-str">&quot;USD&quot;</span>)
+
+        cols = [
+            ui.<span class="tok-cls">TableColumn</span>(<span class="tok-str">&quot;Description&quot;</span>, width=ui.<span class="tok-cls">GROW</span>(<span class="tok-num">2</span>), sortable=<span class="tok-kw">True</span>),
+            ui.<span class="tok-cls">TableColumn</span>(<span class="tok-str">&quot;Category&quot;</span>, width=<span class="tok-num">130</span>),
+            ui.<span class="tok-cls">TableColumn</span>(<span class="tok-str">&quot;Amount&quot;</span>, width=<span class="tok-num">110</span>, align=ui.<span class="tok-cls">TextAlign</span>.<span class="tok-cls">RIGHT</span>, sortable=<span class="tok-kw">True</span>),
+        ]
+        rows = list(st[<span class="tok-str">&quot;rows&quot;</span>])
+        <span class="tok-kw">if</span> st[<span class="tok-str">&quot;sort&quot;</span>].column == <span class="tok-num">0</span>:
+            rows.sort(key=<span class="tok-kw">lambda</span> r: r[<span class="tok-num">0</span>].lower(), reverse=st[<span class="tok-str">&quot;sort&quot;</span>].descending)
+        <span class="tok-kw">elif</span> st[<span class="tok-str">&quot;sort&quot;</span>].column == <span class="tok-num">2</span>:
+            rows.sort(key=<span class="tok-kw">lambda</span> r: r[<span class="tok-num">2</span>], reverse=st[<span class="tok-str">&quot;sort&quot;</span>].descending)
+
+        <span class="tok-kw">with</span> ctx.table(<span class="tok-str">&quot;ledger_tbl&quot;</span>, cols, sort=st[<span class="tok-str">&quot;sort&quot;</span>], height=ui.<span class="tok-cls">FILL</span>, striped=<span class="tok-kw">True</span>) <span class="tok-kw">as</span> tbl:
+            <span class="tok-kw">if</span> tbl:
+                <span class="tok-kw">for</span> desc, cat_idx, amt <span class="tok-kw">in</span> rows:
+                    tbl.row()
+                    tbl.cell_text(desc)
+                    tbl.cell()
+                    ctx.badge(<span class="tok-cls">CATEGORIES</span>[cat_idx], tone=<span class="tok-cls">CAT_TONES</span>[cat_idx], size=ui.<span class="tok-cls">ControlSize</span>.<span class="tok-cls">SM</span>)
+                    tbl.cell_text(f<span class="tok-str">&quot;${amt:,.2f}&quot;</span>)
+        <span class="tok-kw">if</span> tbl.sort is <span class="tok-kw">not</span> <span class="tok-kw">None</span>:
+            st[<span class="tok-str">&quot;sort&quot;</span>] = tbl.sort
+
+<span class="tok-kw">def</span> main() -&gt; <span class="tok-kw">None</span>:
+    state = {
+        <span class="tok-str">&quot;title&quot;</span>: <span class="tok-str">&quot;&quot;</span>,
+        <span class="tok-str">&quot;amount&quot;</span>: <span class="tok-num">49.00</span>,
+        <span class="tok-str">&quot;cat&quot;</span>: <span class="tok-num">3</span>,
+        <span class="tok-str">&quot;error&quot;</span>: <span class="tok-str">&quot;&quot;</span>,
+        <span class="tok-str">&quot;split&quot;</span>: <span class="tok-num">0.34</span>,
+        <span class="tok-str">&quot;palette&quot;</span>: <span class="tok-kw">False</span>,
+        <span class="tok-str">&quot;sort&quot;</span>: ui.<span class="tok-cls">TableSort</span>(<span class="tok-num">2</span>, <span class="tok-kw">True</span>),
+        <span class="tok-str">&quot;rows&quot;</span>: [
+            (<span class="tok-str">&quot;Apartment Rent&quot;</span>, <span class="tok-num">0</span>, <span class="tok-num">1250.00</span>),
+            (<span class="tok-str">&quot;Weekly Groceries&quot;</span>, <span class="tok-num">1</span>, <span class="tok-num">142.80</span>),
+            (<span class="tok-str">&quot;Metro Pass&quot;</span>, <span class="tok-num">2</span>, <span class="tok-num">65.00</span>),
+            (<span class="tok-str">&quot;Dev Server &amp; Domains&quot;</span>, <span class="tok-num">3</span>, <span class="tok-num">38.50</span>),
+        ],
+    }
+    commands = [
+        ui.<span class="tok-cls">Command</span>(<span class="tok-str">&quot;Clear all expenses&quot;</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">TRASH</span>, group=<span class="tok-str">&quot;Ledger&quot;</span>),
+        ui.<span class="tok-cls">Command</span>(<span class="tok-str">&quot;Toggle Dark/Light Theme&quot;</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">MOON</span>, group=<span class="tok-str">&quot;View&quot;</span>, shortcut=<span class="tok-str">&quot;Ctrl D&quot;</span>),
+    ]
+
+    <span class="tok-kw">def</span> draw(ctx: ui.<span class="tok-cls">UI</span>) -&gt; <span class="tok-kw">None</span>:
+        <span class="tok-kw">if</span> ctx.shortcut(ui.<span class="tok-cls">Mod</span>.<span class="tok-cls">PRIMARY</span>, ui.<span class="tok-cls">Key</span>.<span class="tok-cls">K</span>):
+            state[<span class="tok-str">&quot;palette&quot;</span>] = <span class="tok-kw">True</span>
+
+        <span class="tok-kw">with</span> ctx.split(<span class="tok-str">&quot;root_split&quot;</span>, state[<span class="tok-str">&quot;split&quot;</span>], min_first=<span class="tok-num">290</span>, min_second=<span class="tok-num">420</span>, width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>) <span class="tok-kw">as</span> sp:
+            draw_form_pane(ctx, state)
+            sp.next()
+            draw_ledger_pane(ctx, state)
+        state[<span class="tok-str">&quot;split&quot;</span>] = sp.ratio
+
+        state[<span class="tok-str">&quot;palette&quot;</span>], picked = ctx.command_palette(state[<span class="tok-str">&quot;palette&quot;</span>], commands)
+        <span class="tok-kw">if</span> picked == <span class="tok-num">0</span>:
+            state[<span class="tok-str">&quot;rows&quot;</span>].clear()
+        <span class="tok-kw">elif</span> picked == <span class="tok-num">1</span>:
+            ctx.theme_mode = ui.<span class="tok-cls">ThemeMode</span>.<span class="tok-cls">LIGHT</span> <span class="tok-kw">if</span> ctx.theme_mode == ui.<span class="tok-cls">ThemeMode</span>.<span class="tok-cls">DARK</span> <span class="tok-kw">else</span> ui.<span class="tok-cls">ThemeMode</span>.<span class="tok-cls">DARK</span>
+
+    <span class="tok-kw">with</span> ui.<span class="tok-cls">App</span>(<span class="tok-str">&quot;Budget Ledger — nexa&quot;</span>, width=<span class="tok-num">1020</span>, height=<span class="tok-num">660</span>, theme=ui.<span class="tok-cls">ThemeMode</span>.<span class="tok-cls">DARK</span>, accent=ui.<span class="tok-cls">Accent</span>.<span class="tok-cls">GREEN</span>) <span class="tok-kw">as</span> app:
+        app.run(draw)
+
+<span class="tok-kw">if</span> __name__ == <span class="tok-str">&quot;__main__&quot;</span>:
+    main()</code></pre></div>
+<hr />
+<h2 id="next-steps">Next Steps</h2>
+<p>Ready to scale up to multi-screen applications with reusable custom components, routing history, and reactive stores? Continue to <strong><a href="tutorial-oop.html">Object-Oriented (OOP) Architecture →</a></strong>.</p><div class="pager-nav"><a class="pager-card prev" href="getting-started.html"><span>← Previous</span><strong>Getting Started</strong></a><a class="pager-card next" href="tutorial-oop.html"><span>Next →</span><strong>Object-Oriented (OOP)</strong></a></div>
+          </article>
+
+          <!-- Subtle Closing Procedural Topographic Band -->
+          <section class="home-cta compact" id="docs-cta-band">
+            <div class="home-cta-body">
+              <h2>Explore the 13 runnable examples</h2>
+              <p>Every tutorial &amp; 1.1 studio pattern—including the complete <code>zero_to_hero.py</code> Pulse Studio capstone—is ready to run inside <code>examples/</code>.</p>
+              <div class="hero-actions">
+                <a class="btn btn-primary" href="https://github.com/x017/nexa/tree/main/examples" target="_blank" rel="noopener">Browse examples/ →</a>
+                <a class="btn" href="wiki.html">Open Docs Wiki</a>
+                <a class="btn" href="index.html">Back to Overview</a>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <!-- Right Table of Contents -->
+        <aside class="docs-toc" aria-label="On this page">
+          <div class="toc-title">On this page</div>
+          <nav id="docs-toc-links"><a class="toc-link" href="#lesson-1-top-level-functional-basics" data-anchor="lesson-1-top-level-functional-basics">Lesson 1: Top-Level Functional Basics</a><a class="toc-link" href="#lesson-2-mastering-flexbox-sizing-grids" data-anchor="lesson-2-mastering-flexbox-sizing-grids">Lesson 2: Mastering Flexbox, Sizing &amp; Grids</a><a class="toc-link" href="#lesson-3-procedural-decomposition-plain-functions-state-dict" data-anchor="lesson-3-procedural-decomposition-plain-functions-state-dict">Lesson 3: Procedural Decomposition (Plain Functions + State Dict)</a><a class="toc-link" href="#lesson-4-manual-frame-loop-while-app-frame" data-anchor="lesson-4-manual-frame-loop-while-app-frame">Lesson 4: Manual Frame Loop (while app.frame():)</a><a class="toc-link" href="#lesson-5-complete-procedural-project-expense-budget-tracker" data-anchor="lesson-5-complete-procedural-project-expense-budget-tracker">Lesson 5: Complete Procedural Project — Expense &amp; Budget Tracker</a><a class="toc-link" href="#next-steps" data-anchor="next-steps">Next Steps</a></nav>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/search-index.js?v=1.2.0" defer></script>
+  <script src="assets/dither.js?v=1.2.0" defer></script>
+  <script src="assets/site.js?v=1.2.0" defer></script>
+</body>
+</html>

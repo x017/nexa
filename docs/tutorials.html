@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorials — nexa Documentation</title>
+  <meta name="description" content="Step-by-step nexa Python UI tutorials: 11-module 0-to-Hero masterclass, Functional/Procedural closures, OOP Application/Router/Store, OKLCH theming, and asyncio." />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.2.0" />
+  <link rel="stylesheet" href="assets/styles.css?v=1.2.0" />
+  <script>
+    try {
+      const saved = localStorage.getItem("nexa_theme");
+      const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+    } catch (e) {}
+  </script>
+</head>
+<body class="guide-mode">
+  <!-- Sticky Top Bar with Reading Progress Hairline -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html">
+        <svg class="brand-mark-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+          <path d="M12 3.4 L20.6 12 L12 20.6 L3.4 12 Z" stroke="currentColor" stroke-opacity="0.34" stroke-width="1.35" stroke-linejoin="round"/>
+          <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M12 5.2 C12 9.4 14.6 12 18.8 12 C14.6 12 12 14.6 12 18.8 C12 14.6 9.4 12 5.2 12 C9.4 12 12 9.4 12 5.2 Z M12 9.8 L14.2 12 L12 14.2 L9.8 12 Z"
+                fill="currentColor"/>
+          <circle cx="12" cy="3.4" r="1.9" fill="var(--accent)"/>
+          <circle cx="20.6" cy="12" r="1.7" fill="currentColor"/>
+          <circle cx="12" cy="20.6" r="1.7" fill="currentColor"/>
+          <circle cx="3.4" cy="12" r="1.7" fill="currentColor"/>
+        </svg>
+        <span>nexa</span>
+        <span class="brand-badge">Docs</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="nav-link" href="index.html">Overview</a>
+        <a class="nav-link" data-nav="wiki" href="wiki.html">Wiki</a>
+        <a class="nav-link" data-nav="guide" href="getting-started.html">Guide</a>
+        <a class="nav-link active" data-nav="tutorials" href="tutorials.html">Tutorials</a>
+        <a class="nav-link" data-nav="components" href="components.html">Components</a>
+        <a class="nav-link" data-nav="changelog" href="changelog.html">Changelog</a>
+      </nav>
+      <div class="topbar-right">
+        <div class="accent-strip" id="header-accent-strip" title="Switch live OKLCH accent"></div>
+        <a class="icon-btn" href="https://github.com/x017/nexa" target="_blank" rel="noopener" aria-label="Source on GitHub" title="Source on GitHub">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+        </a>
+        <button class="icon-btn" id="theme-toggle-btn" type="button" aria-label="Switch theme"></button>
+      </div>
+    </div>
+    <div class="read-progress" id="read-progress"></div>
+  </header>
+
+  <!-- Documentation Layout Shell -->
+  <div class="docs-shell">
+    <!-- Left Chapter Navigation + Instant Filter -->
+    <aside class="docs-sidebar" aria-label="Documentation chapters">
+      <div class="search-box">
+        <input id="docs-search-input" type="search" placeholder="Filter wiki, tutorials &amp; widgets…" autocomplete="off" />
+        <span class="search-kbd">Ctrl K</span>
+      </div>
+      <div class="search-results" id="docs-search-results"></div>
+      <nav id="docs-sidebar-nav"><div class="sidebar-group-title">Explore</div><a class="sidebar-link" href="wiki.html">Docs Wiki <span class="badge-new">WIKI</span></a><a class="sidebar-link active" href="tutorials.html">All Tutorials Overview</a><a class="sidebar-link" href="components.html">Component Explorer <span class="badge-new">1.1</span></a><a class="sidebar-link" href="changelog.html">Changelog</a><div class="sidebar-group-title">Start Here</div><a class="sidebar-link" href="zero-to-hero.html">0 to Hero: Full Tutorial <span class="badge-new">FULL</span></a><a class="sidebar-link" href="getting-started.html">Getting Started</a><div class="sidebar-group-title">Tutorials</div><a class="sidebar-link" href="tutorial-functional.html">Functional &amp; Procedural</a><a class="sidebar-link" href="tutorial-oop.html">Object-Oriented (OOP)</a><a class="sidebar-link" href="theming-and-styling.html">Theming, Accents &amp; Icons</a><a class="sidebar-link" href="concurrency-and-async.html">Concurrency &amp; Asyncio</a><a class="sidebar-link" href="advanced-rendering-and-packaging.html">Canvas, GPU &amp; Packaging</a><div class="sidebar-group-title">API Reference</div><a class="sidebar-link" href="components-reference.html">160+ Components Reference</a></nav>
+    </aside>
+
+    <!-- Main Content Area with Procedural Topographic Backdrop -->
+    <div class="docs-content-grid docs-main-wrap">
+      <div class="docs-art" id="docs-hero-art"></div>
+
+      <div class="docs-page-inner">
+        <main class="docs-main">
+          <article class="prose" id="docs-article">
+<h1 id="step-by-step-tutorials">Step-by-Step Tutorials</h1>
+<p>Every tutorial in <code>nexa</code> contains complete, standalone Python programs tested automatically in CI. Start with the comprehensive <strong>0 → Hero Full Tutorial</strong> below, browse the <a href="wiki.html">Documentation Wiki</a>, or dive into a focused topic guide.</p>
+<div class="hero-course-banner">
+  <div class="tutorial-hub-top">
+    <span class="tutorial-hub-num">FEATURED FULL COURSE · 11 MODULES · 11 RUNNABLE APPS</span>
+    <span class="badge-new">0 → Hero</span>
+  </div>
+  <h2><a href="zero-to-hero.html">Zero to Hero: The Complete <code>nexa</code> Masterclass →</a></h2>
+  <p>Go from installing <code>nexa-ui</code> and opening your first 15-line native window all the way to building, testing, and freezing <strong>Pulse Studio</strong>—a multi-pane OOP desktop IDE &amp; telemetry workbench with docking, 50k virtualized grids, code &amp; diff editors, GFM checklists, live charts, flame profilers, and worker streams.</p>
+  <div class="module-jump-strip"><a class="module-jump-pill" href="zero-to-hero.html#how-this-tutorial-is-organized-complete-syntax-guide">Syntax &amp; Sections Guide</a><a class="module-jump-pill" href="zero-to-hero.html#module-0-zero-setup-first-window-the-immediate-mode-mental-model">M0</a><a class="module-jump-pill" href="zero-to-hero.html#module-1-layout-mastery-flexbox-responsive-grids-scroll-split-panes">M1</a><a class="module-jump-pill" href="zero-to-hero.html#module-2-forms-pickers-validation-keyboard-shortcuts">M2</a><a class="module-jump-pill" href="zero-to-hero.html#module-3-desktop-chrome-menus-tabs-dialogs-sheets-command-palette">M3</a><a class="module-jump-pill" href="zero-to-hero.html#module-4-high-density-data-markdown-code-editor-diffs-charts">M4</a><a class="module-jump-pill" href="zero-to-hero.html#module-5-studio-creative-tools-dockspace-node-graphs-curves-timelines-custom-sdf-canvas">M5</a><a class="module-jump-pill" href="zero-to-hero.html#module-6-scaling-architecture-functional-vs-procedural-vs-object-oriented">M6</a><a class="module-jump-pill" href="zero-to-hero.html#module-7-design-system-mastery-themes-8-oklch-accents-34-tokens-fonts-bidi-rtl">M7</a><a class="module-jump-pill" href="zero-to-hero.html#module-8-concurrency-worker-pools-streaming-ai-cooperative-asyncio">M8</a><a class="module-jump-pill" href="zero-to-hero.html#module-9-the-hero-capstone-building-pulse-studio-end-to-end">M9</a><a class="module-jump-pill" href="zero-to-hero.html#module-10-testing-in-headless-pytest-custom-gpu-engines-shipping-standalone-binaries">M10</a></div>
+  <div style="margin-top: 4px;">
+    <a class="btn btn-primary" href="zero-to-hero.html">Start 0 → Hero Full Tutorial →</a>
+  </div>
+</div>
+<h2 id="focused-deep-dive-guides">Focused Deep-Dive Guides</h2>
+<div class="tutorials-hub-grid"><a class="tutorial-hub-card" href="getting-started.html"><div class="tutorial-hub-top"><span class="tutorial-hub-num">CHAPTER 01 · Core Model</span><span class="tutorial-hub-meta">5 min</span></div><h3>Getting Started &amp; Mental Model</h3><p>Install nexa-ui, open your first native window, and learn value-returning widgets, IDs, and scopes.</p></a><a class="tutorial-hub-card" href="tutorial-functional.html"><div class="tutorial-hub-top"><span class="tutorial-hub-num">CHAPTER 02 · ui.run &amp; ctx</span><span class="tutorial-hub-meta">12 min</span></div><h3>Functional &amp; Procedural Coding</h3><p>Build concise closures with ui.run(draw), decompose procedural helpers, and create a complete Budget Tracker.</p></a><a class="tutorial-hub-card" href="tutorial-oop.html"><div class="tutorial-hub-top"><span class="tutorial-hub-num">CHAPTER 03 · Component &amp; Store</span><span class="tutorial-hub-meta">15 min</span></div><h3>Object-Oriented Architecture</h3><p>Scale multi-screen apps with Application, auto-scoped Component classes, Router, View, and reactive Store[T].</p></a><a class="tutorial-hub-card" href="theming-and-styling.html"><div class="tutorial-hub-top"><span class="tutorial-hub-num">CHAPTER 04 · 8 OKLCH Accents</span><span class="tutorial-hub-meta">8 min</span></div><h3>Theming, OKLCH Accents &amp; Icons</h3><p>Master Light &amp; Dark modes, all 8 perceptual OKLCH accents, 34 semantic tokens, custom .ttf fonts &amp; 168 Lucide icons.</p></a><a class="tutorial-hub-card" href="concurrency-and-async.html"><div class="tutorial-hub-top"><span class="tutorial-hub-num">CHAPTER 05 · GIL-Free</span><span class="tutorial-hub-meta">10 min</span></div><h3>Concurrency, Asyncio &amp; Networking</h3><p>Run worker pools, token streams, thread-safe Channel[T], LogBuffer, and cooperative asyncio without dropping 60fps.</p></a><a class="tutorial-hub-card" href="advanced-rendering-and-packaging.html"><div class="tutorial-hub-top"><span class="tutorial-hub-num">CHAPTER 06 · CI &amp; Freezing</span><span class="tutorial-hub-meta">10 min</span></div><h3>Vector Canvas, Custom GPU &amp; Packaging</h3><p>Vector canvas drawing, headless pytest screenshot verification, custom GPU backends, --rtl shaping &amp; PyInstaller/Nuitka.</p></a></div>
+<div class="changelog-entry" style="margin-top: 24px;">
+  <h2 id="looking-for-widget-signatures">Looking for widget signatures or the Wiki index?</h2>
+  <p>Browse the <a href="wiki.html">nexa Documentation Wiki</a>, filter widgets in the <a href="components.html">160+ Component Explorer</a>, or read the single-page <a href="components-reference.html">Complete API Reference</a>.</p>
+</div>
+          </article>
+
+          <!-- Subtle Closing Procedural Topographic Band -->
+          <section class="home-cta compact" id="docs-cta-band">
+            <div class="home-cta-body">
+              <h2>Explore the 13 runnable examples</h2>
+              <p>Every tutorial &amp; 1.1 studio pattern—including the complete <code>zero_to_hero.py</code> Pulse Studio capstone—is ready to run inside <code>examples/</code>.</p>
+              <div class="hero-actions">
+                <a class="btn btn-primary" href="https://github.com/x017/nexa/tree/main/examples" target="_blank" rel="noopener">Browse examples/ →</a>
+                <a class="btn" href="wiki.html">Open Docs Wiki</a>
+                <a class="btn" href="index.html">Back to Overview</a>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <!-- Right Table of Contents -->
+        <aside class="docs-toc" aria-label="On this page">
+          <div class="toc-title">On this page</div>
+          <nav id="docs-toc-links"><a class="toc-link" href="zero-to-hero.html">00. 0 → Hero</a><a class="toc-link" href="getting-started.html">01. Start</a><a class="toc-link" href="tutorial-functional.html">02. Functional</a><a class="toc-link" href="tutorial-oop.html">03. OOP</a><a class="toc-link" href="theming-and-styling.html">04. Theming</a><a class="toc-link" href="concurrency-and-async.html">05. Async &amp; Threads</a><a class="toc-link" href="advanced-rendering-and-packaging.html">06. GPU &amp; Packaging</a></nav>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/search-index.js?v=1.2.0" defer></script>
+  <script src="assets/dither.js?v=1.2.0" defer></script>
+  <script src="assets/site.js?v=1.2.0" defer></script>
+</body>
+</html>
