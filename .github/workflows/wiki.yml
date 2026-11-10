@@ -6,7 +6,9 @@ on:
     branches: ["main"]
     paths:
       - "docs/**"
+      - "wiki/**"
       - ".github/workflows/wiki.yml"
+  gollum:
   workflow_dispatch:
 
 permissions:
@@ -23,7 +25,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Generate GitHub Wiki Markdown pages
+      - name: Verify and generate GitHub Wiki Markdown pages
         run: python3 docs/build_docs_bundle.py --export-wiki /tmp/wiki-export
 
       - name: Upload generated Wiki pages artifact
@@ -32,23 +34,29 @@ jobs:
           name: nexa-github-wiki-pages
           path: /tmp/wiki-export/*.md
 
-      - name: Publish to GitHub Wiki repository (if initialized)
+      - name: Publish to GitHub Wiki repository
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           WIKI_URL="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git"
           if ! git ls-remote "${WIKI_URL}" >/dev/null 2>&1; then
-            echo "::notice title=Initialize GitHub Wiki once::Visit https://github.com/${GITHUB_REPOSITORY}/wiki, click 'Create the first page' -> 'Save Page' once to provision .wiki.git, then re-run 'Sync Docs to GitHub Wiki' to populate all 11 Wiki pages automatically."
+            echo "::notice title=Initialize GitHub Wiki once::Open https://github.com/${GITHUB_REPOSITORY}/wiki/_new and click 'Save Page' once; the 'gollum' webhook will immediately populate all 11 Wiki pages automatically."
             {
               echo "### GitHub Wiki One-Time Initialization Needed"
-              echo "GitHub provisions \`${GITHUB_REPOSITORY}.wiki.git\` only after the first page is saved in the web UI:"
-              echo "1. Open <https://github.com/${GITHUB_REPOSITORY}/wiki> and click **Create the first page** → **Save Page**."
-              echo "2. Re-run **Sync Docs to GitHub Wiki** (or push to \`main\`) to publish \`Home.md\`, \`_Sidebar.md\`, \`_Footer.md\`, and all 8 documentation chapters."
+              echo "GitHub does not create \`${GITHUB_REPOSITORY}.wiki.git\` via API/tokens until the first page is saved once in the web UI:"
+              echo "1. Open <https://github.com/${GITHUB_REPOSITORY}/wiki/_new> and click **Save Page** (no typing needed)."
+              echo "2. This workflow listens to the \`gollum\` Wiki event and will automatically populate \`Home\`, \`_Sidebar\`, \`_Footer\`, and all 8 chapters within seconds!"
             } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 
           git clone --depth 1 "${WIKI_URL}" /tmp/wiki-repo
+          if [ "${EVENT_NAME}" = "gollum" ] && [ -f /tmp/wiki-repo/_Sidebar.md ]; then
+            echo "Wiki already initialized and synced; skipping overwrite on manual Wiki edit."
+            exit 0
+          fi
+
           cp /tmp/wiki-export/*.md /tmp/wiki-repo/
           cd /tmp/wiki-repo
           git config user.name "github-actions[bot]"
