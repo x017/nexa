@@ -219,3 +219,44 @@ def test_cui_1_1_treetable_dockspace_and_creative_tools() -> None:
         assert ctx.dock_load("wb_dock", saved_layout)
         rgba = ctx.render_rgba()
         assert len(rgba) == 1280 * 920 * 4
+
+
+def test_added_helpers_and_aliases_work_end_to_end(tmp_path) -> None:
+    assert ui.TabsVariant.LINE == ui.TabsVariant.UNDERLINE
+    assert ui.TreeScope is ui.OpenStateScope
+    assert ui.SwipeItemScope is ui.SwipeScope
+
+    md_res = ui.MarkdownResult(task_offset=3, task_line=1, task_checked=True)
+    assert ui.markdown_apply_task("- [ ] Ship release", md_res) == "- [x] Ship release"
+
+    png_path = tmp_path / "tiny.png"
+    ui.write_png(png_path, bytes([40, 120, 220, 255] * 16), 4, 4)
+    png_bytes = png_path.read_bytes()
+
+    with ui.SoftwareRenderer() as sw, ui.Context(width=320, height=200, renderer=sw) as ctx:
+        tex, w, h = ctx.image_load_bytes(png_bytes)
+        assert tex != 0 and (w, h) == (4, 4)
+        with ctx.frame():
+            with ctx.tree("Root", is_open=True) as tr:
+                assert tr.expanded is True
+                if tr:
+                    ctx.label("Child")
+            ctx.button("Delete")
+            ctx.confirm_popover_open("del_pop")
+            ctx.confirm_popover("del_pop", title="Sure?", danger=True)
+            ctx.canvas(
+                "bez_cv",
+                120,
+                60,
+                lambda c, r: c.draw_bezier(
+                    (r.x, r.y),
+                    (r.x + 40, r.y),
+                    (r.x + 80, r.y + 50),
+                    (r.x + 120, r.y + 50),
+                    ui.Color.ACCENT,
+                    2.0,
+                ),
+            )
+            ctx.image(tex, width=16, height=16)
+        ctx.image_destroy(tex)
+

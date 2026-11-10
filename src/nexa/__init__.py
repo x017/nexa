@@ -22,6 +22,29 @@ from .render import (
     native_version,
     write_png,
 )
+from .scopes import (
+    BoxScope,
+    CardScope,
+    CardStackScope,
+    CarouselScope,
+    ConditionalScope,
+    DataGridScope,
+    KanbanColumnScope,
+    KanbanScope,
+    NodeEditorScope,
+    NodeScope,
+    OpenStateScope,
+    PathBarMenuScope,
+    ReorderScope,
+    SimpleScope,
+    SplitScope,
+    SwipeItemScope,
+    SwipeScope,
+    TableScope,
+    TreeScope,
+    TreeTableScope,
+    VirtualListScope,
+)
 from .theme import ThemeProxy, accent_name, mix_colors, oklch, with_alpha
 from .types import (
     FILL,
@@ -64,6 +87,7 @@ from .types import (
     Direction,
     DocTab,
     DocTabsResult,
+    DropResult,
     Elevation,
     FileDialogKind,
     FilterField,
@@ -79,6 +103,7 @@ from .types import (
     HexResult,
     HexSelection,
     InputFlags,
+    InputResult,
     Justify,
     KanbanMove,
     Key,
@@ -143,7 +168,7 @@ from .types import (
     VoiceState,
 )
 from .ui import Context, UI
-from .widgets.data import diff_compute, diff_words, tree_sort
+from .widgets.data import diff_compute, diff_words, markdown_apply_task, tree_sort
 from .widgets.tools import LogBuffer, curve_eval, flame_sort, gradient_eval
 
 __version__ = "1.1.0"
@@ -155,10 +180,20 @@ globals().update(FUNCTIONAL_EXPORTS)
 globals().update(
     diff_compute=diff_compute,
     diff_words=diff_words,
+    markdown_apply_task=markdown_apply_task,
     tree_sort=tree_sort,
     flame_sort=flame_sort,
     curve_eval=curve_eval,
     gradient_eval=gradient_eval,
+)
+
+__all__ = sorted(
+    [
+        name
+        for name in globals()
+        if not name.startswith("_") and name not in ("Any", "FUNCTIONAL_EXPORTS")
+    ]
+    + ["AsyncBridge", "run_app_async", "aio", "build"]
 )
 
 

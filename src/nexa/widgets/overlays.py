@@ -102,6 +102,10 @@ class OverlaysMixin:
         self._record_change(confirmed)
         return confirmed
 
+    def confirm_popover_open(self, id: str) -> None:
+        """Open a ``confirm_popover`` anchored to the preceding widget (alias for ``popover_open``)."""
+        self.popover_open(id)
+
     def tooltip(self, text: str) -> None:
         self._lib.cui_tooltip(self._ctx, encode_str(text, self._frame_keepalive))
 
