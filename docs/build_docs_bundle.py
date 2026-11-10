@@ -975,6 +975,9 @@ def build_bundle() -> None:
         encoding="utf-8",
     )
 
+    # 5. Always keep committed `wiki/` directory in sync with `docs/*.md`
+    export_github_wiki(DOCS_DIR.parent / "wiki")
+
 
 def export_github_wiki(out_dir: pathlib.Path) -> list[pathlib.Path]:
     """Export GitHub-Wiki-ready Markdown files (`Home.md`, `_Sidebar.md`, `_Footer.md`, + 8 chapters)."""

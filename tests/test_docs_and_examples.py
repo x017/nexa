@@ -195,6 +195,7 @@ def test_docs_bundle_is_in_sync(tmp_path: pathlib.Path) -> None:
     spec.loader.exec_module(mod)
 
     docs_dir = ROOT / "docs"
+    wiki_dir = ROOT / "wiki"
     generated_files = [
         docs_dir / "assets" / "search-index.js",
         docs_dir / "wiki.html",
@@ -203,11 +204,15 @@ def test_docs_bundle_is_in_sync(tmp_path: pathlib.Path) -> None:
         docs_dir / "components.html",
         docs_dir / "changelog.html",
         *[docs_dir / f"{slug}.html" for slug, *_ in mod.CHAPTERS],
+        wiki_dir / "Home.md",
+        wiki_dir / "_Sidebar.md",
+        wiki_dir / "_Footer.md",
+        *[wiki_dir / f"{wiki_name}.md" for _s, _t, _g, _f, wiki_name, _n in mod.CHAPTERS],
     ]
     before = {p: p.read_text(encoding="utf-8") for p in generated_files}
     mod.build_bundle()
     after = {p: p.read_text(encoding="utf-8") for p in generated_files}
-    assert before == after, "Static docs/wiki HTML or search-index.js is out of sync; run `python3 docs/build_docs_bundle.py`"
+    assert before == after, "Static docs/wiki HTML, wiki/*.md, or search-index.js is out of sync; run `python3 docs/build_docs_bundle.py`"
     assert not (docs_dir / "assets" / "docs-data.js").exists(), "Legacy 432 KB docs-data.js should not exist"
 
     # Verify search-index.js parses cleanly and covers all chapters + Wiki
