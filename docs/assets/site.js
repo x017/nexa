@@ -131,7 +131,7 @@
   const PARADIGMS = {
     functional: {
       file: "hello_functional.py",
-      guideLink: "guide.html#tutorial-functional",
+      guideLink: "tutorial-functional.html",
       guideLabel: "Read Functional Tutorial →",
       code: `<span class="tok-kw">import</span> <span class="tok-cls">nexa</span> <span class="tok-kw">as</span> ui
 
@@ -157,7 +157,7 @@
     },
     procedural: {
       file: "ledger_procedural.py",
-      guideLink: "guide.html#tutorial-functional",
+      guideLink: "tutorial-functional.html#lesson-3-procedural-decomposition-plain-functions-state-dict",
       guideLabel: "Read Procedural Guide →",
       code: `<span class="tok-kw">import</span> <span class="tok-cls">nexa</span> <span class="tok-kw">as</span> ui
 
@@ -185,7 +185,7 @@
     },
     oop: {
       file: "studio_oop.py",
-      guideLink: "guide.html#tutorial-oop",
+      guideLink: "tutorial-oop.html",
       guideLabel: "Read OOP Architecture Tutorial →",
       code: `<span class="tok-kw">import</span> <span class="tok-cls">nexa</span> <span class="tok-kw">as</span> ui
 
@@ -250,11 +250,15 @@
     } catch (e) {}
   }
 
+  function prefersMedia(query) {
+    return typeof window.matchMedia === "function" && window.matchMedia(query).matches;
+  }
+
   const savedTheme = storageGet("nexa_theme");
   let currentTheme =
     savedTheme === "dark" || savedTheme === "light"
       ? savedTheme
-      : matchMedia("(prefers-color-scheme: dark)").matches
+      : prefersMedia("(prefers-color-scheme: dark)")
       ? "dark"
       : "light";
   let currentAccent = storageGet("nexa_accent") || "VIOLET";
@@ -381,7 +385,7 @@
       });
       homeHeroArt.appendChild(heroDither);
 
-      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (!prefersMedia("(prefers-reduced-motion: reduce)")) {
         let ticking = false;
         window.addEventListener(
           "scroll",
@@ -589,88 +593,6 @@
     }
   }
 
-  // ---- Special Views for `guide.html` (#tutorials, #components, #changelog) ----
-  function buildTutorialsHubHtml(docsData) {
-    const heroChapter = docsData && Array.isArray(docsData.chapters) ? docsData.chapters.find((c) => c.slug === "zero-to-hero") : null;
-    const syntaxToc =
-      heroChapter && Array.isArray(heroChapter.toc)
-        ? heroChapter.toc.find((t) => t.title.toLowerCase().includes("syntax guide"))
-        : null;
-    const syntaxPill = syntaxToc
-      ? `<a class="module-jump-pill" href="#zero-to-hero--${escapeHtml(syntaxToc.id)}">Syntax &amp; Sections Guide</a>`
-      : "";
-    const modulePills =
-      heroChapter && Array.isArray(heroChapter.toc)
-        ? syntaxPill +
-          heroChapter.toc
-            .filter((t) => /^Module\s+\d+/i.test(t.title))
-            .map((t) => {
-              const shortLbl = t.title.split(":")[0].replace("Module ", "M").trim();
-              return `<a class="module-jump-pill" href="#zero-to-hero--${escapeHtml(t.id)}">${escapeHtml(shortLbl)}</a>`;
-            })
-            .join("")
-        : "";
-
-    const cards = TUTORIAL_TRACK.filter((t) => t.slug !== "zero-to-hero")
-      .map(
-        (t) => `<a class="tutorial-hub-card" href="#${t.slug}" data-doc-link="${t.slug}">
-        <div class="tutorial-hub-top">
-          <span class="tutorial-hub-num">CHAPTER ${t.num} · ${escapeHtml(t.tag)}</span>
-          <span class="tutorial-hub-meta">${escapeHtml(t.time)}</span>
-        </div>
-        <h3>${escapeHtml(t.fullTitle)}</h3>
-        <p>${escapeHtml(t.desc)}</p>
-      </a>`
-      )
-      .join("");
-
-    return `
-      <h1>Step-by-Step Tutorials</h1>
-      <p>Every tutorial in <code>nexa</code> contains complete, standalone Python programs tested automatically in CI. Start with the comprehensive <strong>0 → Hero Full Tutorial</strong> below, or dive into a focused topic guide.</p>
-      <div class="hero-course-banner">
-        <div class="tutorial-hub-top">
-          <span class="tutorial-hub-num">FEATURED FULL COURSE · 11 MODULES · 11 RUNNABLE APPS</span>
-          <span class="badge-new">0 → Hero</span>
-        </div>
-        <h2><a href="#zero-to-hero" data-doc-link="zero-to-hero" style="color: inherit; text-decoration: none;">Zero to Hero: The Complete <code>nexa</code> Masterclass →</a></h2>
-        <p>Go from installing <code>nexa</code> and opening your first 15-line native window all the way to building, testing, and freezing <strong>Pulse Studio</strong>—a multi-pane OOP desktop IDE &amp; telemetry workbench with docking, 50k virtualized grids, code &amp; diff editors, GFM checklists, live charts, flame profilers, and worker streams.</p>
-        ${modulePills ? `<div class="module-jump-strip">${modulePills}</div>` : ""}
-        <div style="margin-top: 4px;">
-          <a class="btn btn-primary" href="#zero-to-hero" data-doc-link="zero-to-hero">Start 0 → Hero Full Tutorial →</a>
-        </div>
-      </div>
-      <h2>Focused Deep-Dive Guides</h2>
-      <div class="tutorials-hub-grid">${cards}</div>
-      <div class="changelog-entry" style="margin-top: 24px;">
-        <h2>Looking for widget signatures?</h2>
-        <p>Explore the interactive <a href="#components" data-doc-link="components">160+ Component Explorer</a> (including all 12 new CUI 1.1 components) or read the single-page <a href="#components-reference" data-doc-link="components-reference">Complete API Reference</a>.</p>
-      </div>
-    `;
-  }
-
-  function buildComponentCatalogHtml() {
-    const domains = ["All", "New in 1.1", "Layout", "Chrome & Dock", "Data & Code", "Tools & Studio", "Charts", "Planning", "AI & Social", "Controls & Overlays"];
-    return `
-      <h1>Interactive Component Explorer <span class="badge-new">160+ Widgets</span></h1>
-      <p>Filter across all 20 native C99 widget domains, inspect Pythonic signatures, or jump to the full <a href="#components-reference" data-doc-link="components-reference">Markdown Signature Reference →</a></p>
-      <div class="catalog-controls">
-        <div class="catalog-search-row">
-          <input id="catalog-filter-input" type="search" placeholder="Search dockspace, tree_table, diff_view, flame_graph, kanban, charts…" autocomplete="off" />
-          <span class="catalog-count" id="catalog-count-label"></span>
-        </div>
-        <div class="catalog-filter-row" id="catalog-domain-chips">
-          ${domains
-            .map(
-              (d, i) =>
-                `<button class="catalog-chip${i === 0 ? " active" : ""}" type="button" data-domain="${escapeHtml(d)}">${escapeHtml(d)}</button>`
-            )
-            .join("")}
-        </div>
-      </div>
-      <div class="catalog-grid" id="catalog-cards-grid"></div>
-    `;
-  }
-
   function mountCatalogInteractivity(root) {
     const input = root.querySelector("#catalog-filter-input");
     const chips = root.querySelector("#catalog-domain-chips");
@@ -716,36 +638,10 @@
       chips.querySelectorAll(".catalog-chip").forEach((b) => b.classList.toggle("active", b === btn));
       update();
     });
-    update();
   }
 
-  function buildChangelogHtml() {
-    return `
-      <h1>Changelog</h1>
-      <p>Release history for <code>nexa</code> and its vendored C99 <a href="https://github.com/yappologistic/CUI" target="_blank" rel="noopener">CUI</a> core.</p>
-      <div class="changelog-entry">
-        <h2>v1.1.0 <span class="badge-new">Latest · CUI 1.1 Sync</span></h2>
-        <ul>
-          <li><strong>Multi-split Docking Workspaces</strong>: Added <code>ui.dockspace</code>, <code>ui.dock_panel</code>, <code>ui.dock_save</code>, and <code>ui.dock_load</code> with interactive tab dragging, split previews, and layout serialization.</li>
-          <li><strong>Tree Table &amp; Editable Path Bar</strong>: Added virtualized multi-column <code>ui.tree_table</code> + <code>ui.tree_sort</code> and breadcrumb/editable <code>ui.path_bar</code> + <code>ui.path_bar_menu</code>.</li>
-          <li><strong>Rich Markdown, Source Code Editor &amp; Diff Viewer</strong>: Added CommonMark/GFM <code>ui.markdown</code> (with interactive task checkboxes and <code>chat_message(..., markdown=True)</code>), multi-line syntax-highlighted <code>ui.code_editor</code>, and side-by-side/inline <code>ui.diff_view</code> + headless <code>ui.diff_compute</code> &amp; <code>ui.diff_words</code>.</li>
-          <li><strong>Systems &amp; Creative Studio Widgets</strong>: Added binary <code>ui.hex_view</code>, profiler <code>ui.flame_graph</code> + <code>ui.flame_sort</code>, Bezier <code>ui.curve_editor</code> + <code>ui.curve_eval</code>, perceptual OKLab <code>ui.gradient_editor</code> + <code>ui.gradient_eval</code>, and multi-track <code>ui.timeline_editor</code>.</li>
-          <li><strong>Optional Bidirectional &amp; Arabic Shaping</strong>: Build with <code>python3 -m nexa.build --rtl</code> (or <code>NEXA_TEXT_SHAPING=1</code>) for UAX #9 BiDi paragraphs and Arabic-script OpenType glyph shaping.</li>
-          <li><strong>New Flagship Example</strong>: Added <code>examples/workbench.py</code> combining all 1.1 studio &amp; developer widgets.</li>
-        </ul>
-      </div>
-      <div class="changelog-entry">
-        <h2>v1.0.0</h2>
-        <ul>
-          <li>Initial C99 + Python zero-dependency architecture covering 150+ immediate-mode components, OpenGL 3.3 + multi-threaded SIMD software renderer, Functional/Procedural/OOP paradigms, 8 OKLCH accents, and GIL-free <code>BackgroundRunner</code> / <code>asyncio</code> integration.</li>
-        </ul>
-      </div>
-    `;
-  }
-
-  // ---- Documentation Portal (`guide.html`) Initializer ----
+  // ---- Multi-Page Static Documentation & Wiki Progressive Enhancer ----
   function initDocsPortal() {
-    const docsData = window.NEXA_DOCS || window.YAPPS_DOCS;
     const navRoot = document.getElementById("docs-sidebar-nav");
     const articleRoot = document.getElementById("docs-article");
     const tocRoot = document.getElementById("docs-toc-links");
@@ -754,169 +650,7 @@
     if (!navRoot || !articleRoot) return;
 
     document.body.classList.add("guide-mode");
-    if (!docsData || !Array.isArray(docsData.chapters)) {
-      articleRoot.innerHTML = `<h1>Documentation Bundle Unavailable</h1><p>Run <code>python3 docs/build_docs_bundle.py</code> to build <code>docs/assets/docs-data.js</code>.</p>`;
-      return;
-    }
-
-    const chapters = docsData.chapters;
-    const SPECIAL_SLUGS = new Set(["tutorials", "components", "changelog"]);
-    let activeSlug = "";
-
-    function updateTopbarActive(slug) {
-      document.querySelectorAll(".topbar .nav-link").forEach((a) => {
-        const navKey = a.dataset.nav || "";
-        let isAct = false;
-        if (navKey === "guide") isAct = slug === "getting-started";
-        else if (navKey === "tutorials")
-          isAct =
-            slug === "zero-to-hero" ||
-            slug === "tutorials" ||
-            slug === "tutorial-functional" ||
-            slug === "tutorial-oop" ||
-            slug === "theming-and-styling" ||
-            slug === "concurrency-and-async" ||
-            slug === "advanced-rendering-and-packaging";
-        else if (navKey === "components") isAct = slug === "components" || slug === "components-reference";
-        else if (navKey === "changelog") isAct = slug === "changelog";
-        a.classList.toggle("active", isAct);
-      });
-    }
-
-    function renderSidebar(currentSlug) {
-      const groups = [];
-      chapters.forEach((ch) => {
-        let g = groups.find((x) => x.name === ch.group);
-        if (!g) {
-          g = { name: ch.group, items: [] };
-          groups.push(g);
-        }
-        g.items.push(ch);
-      });
-
-      const specialHtml =
-        `<div class="sidebar-group-title">Explore</div>` +
-        `<a class="sidebar-link${currentSlug === "tutorials" ? " active" : ""}" href="#tutorials" data-chapter="tutorials">All Tutorials Overview</a>` +
-        `<a class="sidebar-link${currentSlug === "components" ? " active" : ""}" href="#components" data-chapter="components">Component Explorer <span class="badge-new">1.1</span></a>` +
-        `<a class="sidebar-link${currentSlug === "changelog" ? " active" : ""}" href="#changelog" data-chapter="changelog">Changelog</a>`;
-
-      const chaptersHtml = groups
-        .map(
-          (g) =>
-            `<div class="sidebar-group-title">${escapeHtml(g.name)}</div>` +
-            g.items
-              .map((ch) => {
-                const isAct = ch.slug === currentSlug;
-                const subHtml =
-                  isAct && ch.toc && ch.toc.length
-                    ? `<div class="sidebar-sublinks">${ch.toc
-                        .map(
-                          (t) =>
-                            `<a class="sidebar-sublink" href="#${ch.slug}--${t.id}" data-anchor="${t.id}">${escapeHtml(t.title)}</a>`
-                        )
-                        .join("")}</div>`
-                    : "";
-                const badgeHtml = ch.slug === "zero-to-hero" ? ' <span class="badge-new">FULL</span>' : "";
-                return `<a class="sidebar-link${isAct ? " active" : ""}" href="#${ch.slug}" data-chapter="${ch.slug}">${escapeHtml(ch.title)}${badgeHtml}</a>${subHtml}`;
-              })
-              .join("")
-        )
-        .join("");
-
-      navRoot.innerHTML = specialHtml + chaptersHtml;
-    }
-
-    function buildTutorialTrackBar(currentSlug) {
-      if (!TUTORIAL_TRACK.some((t) => t.slug === currentSlug)) return "";
-      return `<div class="tutorial-track" aria-label="Tutorial curriculum">
-        <span class="tutorial-track-label">Tutorials</span>
-        ${TUTORIAL_TRACK.map(
-          (t) =>
-            `<a class="track-step${t.slug === currentSlug ? " active" : ""}" href="#${t.slug}" data-doc-link="${t.slug}">
-              <span class="track-step-num">${t.num}</span>
-              <span>${escapeHtml(t.short)}</span>
-            </a>`
-        ).join("")}
-      </div>`;
-    }
-
-    function renderChapter(slug, anchorId) {
-      if (SPECIAL_SLUGS.has(slug)) {
-        activeSlug = slug;
-        renderSidebar(slug);
-        updateTopbarActive(slug);
-        if (slug === "tutorials") {
-          articleRoot.innerHTML = buildTutorialsHubHtml(docsData);
-          document.title = "Tutorials — nexa Documentation";
-          if (tocRoot) tocRoot.innerHTML = TUTORIAL_TRACK.map((t) => `<a class="toc-link" href="#${t.slug}" data-doc-link="${t.slug}">${t.num}. ${escapeHtml(t.short)}</a>`).join("");
-        } else if (slug === "components") {
-          articleRoot.innerHTML = buildComponentCatalogHtml();
-          document.title = "160+ Component Explorer — nexa Documentation";
-          mountCatalogInteractivity(articleRoot);
-          if (tocRoot) tocRoot.innerHTML = `<a class="toc-link" href="#components-reference" data-doc-link="components-reference">Full Markdown Signatures →</a>`;
-        } else {
-          articleRoot.innerHTML = buildChangelogHtml();
-          document.title = "Changelog — nexa Documentation";
-          if (tocRoot) tocRoot.innerHTML = "";
-        }
-        window.scrollTo({ top: 0, behavior: "auto" });
-        return;
-      }
-
-      const idx = chapters.findIndex((c) => c.slug === slug);
-      const ch = idx >= 0 ? chapters[idx] : chapters[0];
-      const realIdx = idx >= 0 ? idx : 0;
-
-      if (activeSlug !== ch.slug) {
-        activeSlug = ch.slug;
-        renderSidebar(ch.slug);
-        updateTopbarActive(ch.slug);
-
-        const prev = realIdx > 0 ? chapters[realIdx - 1] : null;
-        const next = realIdx < chapters.length - 1 ? chapters[realIdx + 1] : null;
-        const trackHtml = buildTutorialTrackBar(ch.slug);
-
-        const pagerHtml = `<div class="pager-nav">
-          ${
-            prev
-              ? `<a class="pager-card prev" href="#${prev.slug}" data-doc-link="${prev.slug}">
-                   <span>← Previous</span><strong>${escapeHtml(prev.title)}</strong>
-                 </a>`
-              : `<div></div>`
-          }
-          ${
-            next
-              ? `<a class="pager-card next" href="#${next.slug}" data-doc-link="${next.slug}">
-                   <span>Next →</span><strong>${escapeHtml(next.title)}</strong>
-                 </a>`
-              : `<div></div>`
-          }
-        </div>`;
-
-        articleRoot.innerHTML = trackHtml + ch.html + pagerHtml;
-        document.title = `${ch.title} — nexa Documentation`;
-
-        if (tocRoot) {
-          tocRoot.innerHTML = ch.toc
-            .map(
-              (t) =>
-                `<a class="toc-link" href="#${ch.slug}--${t.id}" data-anchor="${t.id}">${escapeHtml(t.title)}</a>`
-            )
-            .join("");
-        }
-
-        bindCopyButtons(articleRoot);
-      }
-
-      if (anchorId) {
-        const target = document.getElementById(anchorId);
-        if (target) {
-          target.scrollIntoView({ behavior: "smooth", block: "start" });
-          return;
-        }
-      }
-      window.scrollTo({ top: 0, behavior: "auto" });
-    }
+    mountCatalogInteractivity(articleRoot);
 
     function updateActiveTocOnScroll() {
       const headings = Array.from(articleRoot.querySelectorAll("h2[id]"));
@@ -955,44 +689,15 @@
       { passive: true }
     );
 
-    function syncFromHash() {
-      const raw = (window.location.hash || "").replace(/^#/, "");
-      if (!raw) {
-        renderChapter(chapters[0].slug, "");
-        updateActiveTocOnScroll();
-        return;
-      }
-      const sep = raw.indexOf("--");
-      const slug = sep >= 0 ? raw.slice(0, sep) : raw;
-      const anchor = sep >= 0 ? raw.slice(sep + 2) : "";
-      renderChapter(slug, anchor);
-      updateActiveTocOnScroll();
-    }
-
-    window.addEventListener("hashchange", syncFromHash);
-
     document.addEventListener("click", (ev) => {
-      const docLink = ev.target.closest("[data-doc-link], [data-chapter]");
-      if (docLink) {
-        ev.preventDefault();
-        const slug = docLink.dataset.docLink || docLink.dataset.chapter;
-        const targetHash = `#${slug}`;
-        if (window.location.hash !== targetHash) {
-          window.location.hash = targetHash;
-        } else {
-          renderChapter(slug, "");
-          updateActiveTocOnScroll();
-        }
-        return;
-      }
       const anchorLink = ev.target.closest("[data-anchor]");
-      if (anchorLink) {
-        ev.preventDefault();
-        const aid = anchorLink.dataset.anchor;
-        history.replaceState(null, "", `#${activeSlug}--${aid}`);
-        const el = document.getElementById(aid);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      if (!anchorLink) return;
+      const aid = anchorLink.dataset.anchor;
+      const el = document.getElementById(aid);
+      if (!el) return;
+      ev.preventDefault();
+      history.replaceState(null, "", `#${aid}`);
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
     if (searchInput && searchResults) {
@@ -1003,7 +708,8 @@
           searchResults.innerHTML = "";
           return;
         }
-        const docHits = docsData.search
+        const searchArr = Array.isArray(window.NEXA_SEARCH) ? window.NEXA_SEARCH : [];
+        const docHits = searchArr
           .filter(
             (item) =>
               item.heading.toLowerCase().includes(q) ||
@@ -1012,7 +718,7 @@
           )
           .slice(0, 8)
           .map((h) => ({
-            href: h.anchor ? `#${h.slug}--${h.anchor}` : `#${h.slug}`,
+            href: h.anchor ? `${h.page}#${h.anchor}` : h.page,
             title: `${h.chapter} · ${h.heading}`,
             sub: `${h.text.slice(0, 95)}…`,
           }));
@@ -1022,7 +728,7 @@
         )
           .slice(0, 4)
           .map((it) => ({
-            href: "#components",
+            href: "components.html",
             title: `Widget · ${it.name}${it.isNew ? " (1.1)" : ""}`,
             sub: it.sig,
           }));
@@ -1065,7 +771,7 @@
       });
     }
 
-    syncFromHash();
+    updateActiveTocOnScroll();
   }
 
   document.addEventListener("DOMContentLoaded", () => {

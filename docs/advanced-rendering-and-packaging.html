@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Canvas, GPU &amp; Packaging — nexa Documentation</title>
+  <meta name="description" content="Canvas, GPU &amp; Packaging — step-by-step guide and runnable Python examples for nexa (nexa-ui)." />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.2.0" />
+  <link rel="stylesheet" href="assets/styles.css?v=1.2.0" />
+  <script>
+    try {
+      const saved = localStorage.getItem("nexa_theme");
+      const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+    } catch (e) {}
+  </script>
+</head>
+<body class="guide-mode">
+  <!-- Sticky Top Bar with Reading Progress Hairline -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html">
+        <svg class="brand-mark-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+          <path d="M12 3.4 L20.6 12 L12 20.6 L3.4 12 Z" stroke="currentColor" stroke-opacity="0.34" stroke-width="1.35" stroke-linejoin="round"/>
+          <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M12 5.2 C12 9.4 14.6 12 18.8 12 C14.6 12 12 14.6 12 18.8 C12 14.6 9.4 12 5.2 12 C9.4 12 12 9.4 12 5.2 Z M12 9.8 L14.2 12 L12 14.2 L9.8 12 Z"
+                fill="currentColor"/>
+          <circle cx="12" cy="3.4" r="1.9" fill="var(--accent)"/>
+          <circle cx="20.6" cy="12" r="1.7" fill="currentColor"/>
+          <circle cx="12" cy="20.6" r="1.7" fill="currentColor"/>
+          <circle cx="3.4" cy="12" r="1.7" fill="currentColor"/>
+        </svg>
+        <span>nexa</span>
+        <span class="brand-badge">Docs</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="nav-link" href="index.html">Overview</a>
+        <a class="nav-link" data-nav="wiki" href="wiki.html">Wiki</a>
+        <a class="nav-link" data-nav="guide" href="getting-started.html">Guide</a>
+        <a class="nav-link active" data-nav="tutorials" href="tutorials.html">Tutorials</a>
+        <a class="nav-link" data-nav="components" href="components.html">Components</a>
+        <a class="nav-link" data-nav="changelog" href="changelog.html">Changelog</a>
+      </nav>
+      <div class="topbar-right">
+        <div class="accent-strip" id="header-accent-strip" title="Switch live OKLCH accent"></div>
+        <a class="icon-btn" href="https://github.com/x017/nexa" target="_blank" rel="noopener" aria-label="Source on GitHub" title="Source on GitHub">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+        </a>
+        <button class="icon-btn" id="theme-toggle-btn" type="button" aria-label="Switch theme"></button>
+      </div>
+    </div>
+    <div class="read-progress" id="read-progress"></div>
+  </header>
+
+  <!-- Documentation Layout Shell -->
+  <div class="docs-shell">
+    <!-- Left Chapter Navigation + Instant Filter -->
+    <aside class="docs-sidebar" aria-label="Documentation chapters">
+      <div class="search-box">
+        <input id="docs-search-input" type="search" placeholder="Filter wiki, tutorials &amp; widgets…" autocomplete="off" />
+        <span class="search-kbd">Ctrl K</span>
+      </div>
+      <div class="search-results" id="docs-search-results"></div>
+      <nav id="docs-sidebar-nav"><div class="sidebar-group-title">Explore</div><a class="sidebar-link" href="wiki.html">Docs Wiki <span class="badge-new">WIKI</span></a><a class="sidebar-link" href="tutorials.html">All Tutorials Overview</a><a class="sidebar-link" href="components.html">Component Explorer <span class="badge-new">1.1</span></a><a class="sidebar-link" href="changelog.html">Changelog</a><div class="sidebar-group-title">Start Here</div><a class="sidebar-link" href="zero-to-hero.html">0 to Hero: Full Tutorial <span class="badge-new">FULL</span></a><a class="sidebar-link" href="getting-started.html">Getting Started</a><div class="sidebar-group-title">Tutorials</div><a class="sidebar-link" href="tutorial-functional.html">Functional &amp; Procedural</a><a class="sidebar-link" href="tutorial-oop.html">Object-Oriented (OOP)</a><a class="sidebar-link" href="theming-and-styling.html">Theming, Accents &amp; Icons</a><a class="sidebar-link" href="concurrency-and-async.html">Concurrency &amp; Asyncio</a><a class="sidebar-link active" href="advanced-rendering-and-packaging.html">Canvas, GPU &amp; Packaging</a><div class="sidebar-sublinks"><a class="sidebar-sublink" href="#1-custom-vector-canvas-persistent-state-buffer" data-anchor="1-custom-vector-canvas-persistent-state-buffer">1. Custom Vector canvas &amp; Persistent state_buffer</a><a class="sidebar-sublink" href="#2-automated-headless-ui-testing-png-snapshots" data-anchor="2-automated-headless-ui-testing-png-snapshots">2. Automated Headless UI Testing &amp; PNG Snapshots</a><a class="sidebar-sublink" href="#3-custom-gpu-backends-customrenderer-drawdata" data-anchor="3-custom-gpu-backends-customrenderer-drawdata">3. Custom GPU Backends (CustomRenderer &amp; DrawData)</a><a class="sidebar-sublink" href="#4-minimal-stripped-builds-single-file-executables" data-anchor="4-minimal-stripped-builds-single-file-executables">4. Minimal Stripped Builds &amp; Single-File Executables</a></div><div class="sidebar-group-title">API Reference</div><a class="sidebar-link" href="components-reference.html">160+ Components Reference</a></nav>
+    </aside>
+
+    <!-- Main Content Area with Procedural Topographic Backdrop -->
+    <div class="docs-content-grid docs-main-wrap">
+      <div class="docs-art" id="docs-hero-art"></div>
+
+      <div class="docs-page-inner">
+        <main class="docs-main">
+          <article class="prose" id="docs-article">
+<div class="tutorial-track" aria-label="Tutorial curriculum"><span class="tutorial-track-label">Tutorials</span><a class="track-step" href="zero-to-hero.html"><span class="track-step-num">00</span><span>0 → Hero</span></a><a class="track-step" href="getting-started.html"><span class="track-step-num">01</span><span>Start</span></a><a class="track-step" href="tutorial-functional.html"><span class="track-step-num">02</span><span>Functional</span></a><a class="track-step" href="tutorial-oop.html"><span class="track-step-num">03</span><span>OOP</span></a><a class="track-step" href="theming-and-styling.html"><span class="track-step-num">04</span><span>Theming</span></a><a class="track-step" href="concurrency-and-async.html"><span class="track-step-num">05</span><span>Async &amp; Threads</span></a><a class="track-step active" href="advanced-rendering-and-packaging.html"><span class="track-step-num">06</span><span>GPU &amp; Packaging</span></a></div><h1 id="custom-canvas-headless-testing-custom-gpu-packaging">Custom Canvas, Headless Testing, Custom GPU &amp; Packaging</h1>
+<p>Beyond its 150+ built-in components, <code>nexa</code> exposes every low-level primitive of the underlying C99 engine so you can build custom vector instruments, write deterministic CI tests, plug into Vulkan/Metal/Direct3D/<code>wgpu</code>, or ship tiny standalone binaries.</p>
+<hr />
+<h2 id="1-custom-vector-canvas-persistent-state-buffer">1. Custom Vector <code>canvas</code> &amp; Persistent <code>state_buffer</code></h2>
+<p>Reserve layout space with <code>ctx.canvas(id, width, height, paint_fn)</code>—<code>nexa</code> runs flexbox layout first, then invokes <code>paint_fn(ctx, rect)</code> with the resolved screen <code>Rect(x, y, w, h)</code> and returns a <code>CanvasResult</code> (<code>rect</code>, <code>mouse</code>, <code>hovered</code>, <code>pressed</code>, <code>clicked</code>):</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">import</span> math
+<span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
+
+<span class="tok-kw">def</span> main() -&gt; <span class="tok-kw">None</span>:
+    <span class="tok-kw">def</span> draw(ctx: ui.<span class="tok-cls">UI</span>) -&gt; <span class="tok-kw">None</span>:
+        <span class="tok-kw">with</span> ctx.column(width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>, pad=<span class="tok-num">20</span>, bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">BACKGROUND</span>):
+            <span class="tok-kw">def</span> paint_scope(c: ui.<span class="tok-cls">UI</span>, r: ui.<span class="tok-cls">Rect</span>) -&gt; <span class="tok-kw">None</span>:
+                <span class="tok-kw">with</span> c.clip_scope(r):
+                    c.draw_rect_gradient(r, <span class="tok-str">&quot;#0f172a&quot;</span>, <span class="tok-str">&quot;#1e293b&quot;</span>, radius=<span class="tok-num">12</span>)
+                    pts = [
+                        (r.x + (i / <span class="tok-num">80.0</span>) * r.w, r.y + r.h * <span class="tok-num">0.5</span> + math.sin(c.time * <span class="tok-num">4.0</span> + i * <span class="tok-num">0.2</span>) * (r.h * <span class="tok-num">0.3</span>))
+                        <span class="tok-kw">for</span> i <span class="tok-kw">in</span> range(<span class="tok-num">81</span>)
+                    ]
+                    c.draw_polyline(pts, ui.<span class="tok-cls">Color</span>.hex(<span class="tok-str">&quot;#53dca6&quot;</span>), thickness=<span class="tok-num">2.2</span>)
+                    c.draw_text(<span class="tok-str">&quot;Live SDF Oscilloscope&quot;</span>, (r.x + <span class="tok-num">16</span>, r.y + <span class="tok-num">14</span>), <span class="tok-str">&quot;#e2e8f0&quot;</span>, size=<span class="tok-num">13</span>)
+
+            res = ctx.canvas(<span class="tok-str">&quot;osc&quot;</span>, ui.<span class="tok-cls">FILL</span>, ui.<span class="tok-cls">FILL</span>, paint_scope)
+            <span class="tok-kw">if</span> res.hovered:
+                ctx.request_redraw()  <span class="tok-com"># Animate continuously while hovered</span>
+
+    <span class="tok-kw">with</span> ui.<span class="tok-cls">App</span>(<span class="tok-str">&quot;Custom Canvas&quot;</span>, width=<span class="tok-num">640</span>, height=<span class="tok-num">360</span>, theme=ui.<span class="tok-cls">ThemeMode</span>.<span class="tok-cls">DARK</span>) <span class="tok-kw">as</span> app:
+        app.run(draw)
+
+<span class="tok-kw">if</span> __name__ == <span class="tok-str">&quot;__main__&quot;</span>:
+    main()</code></pre></div>
+<p>Need C-managed per-widget byte storage for a custom control? <code>mv = ctx.state_buffer(&quot;my_knob&quot;, 16)</code> returns a zero-initialized writable <code>memoryview</code> persisted in CUI&#x27;s widget state hash table (automatically garbage-collected if the widget stops rendering).</p>
+<hr />
+<h2 id="2-automated-headless-ui-testing-png-snapshots">2. Automated Headless UI Testing &amp; PNG Snapshots</h2>
+<p>You can test <strong>every click, keystroke, text edit, and file drop</strong> in <code>pytest</code> at thousands of frames per second without opening an OS window:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
+
+<span class="tok-kw">def</span> test_login_form(tmp_path):
+    <span class="tok-kw">with</span> ui.<span class="tok-cls">SoftwareRenderer</span>(threads=<span class="tok-num">2</span>) <span class="tok-kw">as</span> sw, ui.<span class="tok-cls">UI</span>(width=<span class="tok-num">480</span>, height=<span class="tok-num">320</span>, renderer=sw) <span class="tok-kw">as</span> ctx:
+        username = <span class="tok-str">&quot;&quot;</span>
+        submitted = <span class="tok-kw">False</span>
+
+        <span class="tok-com"># Frame 1: Render &amp; locate widget rectangles</span>
+        <span class="tok-kw">with</span> ctx.frame():
+            <span class="tok-kw">with</span> ctx.column(pad=<span class="tok-num">24</span>, gap=<span class="tok-num">12</span>):
+                username = ctx.input(<span class="tok-str">&quot;user&quot;</span>, username, autofocus=<span class="tok-kw">True</span>)
+                <span class="tok-kw">if</span> ctx.button(<span class="tok-str">&quot;Sign In&quot;</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">PRIMARY</span>):
+                    submitted = <span class="tok-kw">True</span>
+                btn_id = ctx.last_id
+
+        btn_rect = ctx.get_rect(btn_id)
+
+        <span class="tok-com"># Frame 2: Type UTF-8 text into focused input</span>
+        ctx.input_text(<span class="tok-str">&quot;ada_lovelace&quot;</span>)
+        <span class="tok-kw">with</span> ctx.frame():
+            <span class="tok-kw">with</span> ctx.column(pad=<span class="tok-num">24</span>, gap=<span class="tok-num">12</span>):
+                username = ctx.input(<span class="tok-str">&quot;user&quot;</span>, username)
+                ctx.button(<span class="tok-str">&quot;Sign In&quot;</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">PRIMARY</span>)
+        <span class="tok-kw">assert</span> username == <span class="tok-str">&quot;ada_lovelace&quot;</span>
+
+        <span class="tok-com"># Frame 3 &amp; 4: Click the Sign In button (press + release)</span>
+        ctx.input_click(btn_rect.x + <span class="tok-num">10</span>, btn_rect.y + <span class="tok-num">10</span>)
+        <span class="tok-kw">with</span> ctx.frame():
+            <span class="tok-kw">with</span> ctx.column(pad=<span class="tok-num">24</span>, gap=<span class="tok-num">12</span>):
+                username = ctx.input(<span class="tok-str">&quot;user&quot;</span>, username)
+                submitted |= ctx.button(<span class="tok-str">&quot;Sign In&quot;</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">PRIMARY</span>)
+        ctx.input_mouse_button(ui.<span class="tok-cls">MouseButton</span>.<span class="tok-cls">LEFT</span>, <span class="tok-kw">False</span>)
+        <span class="tok-kw">with</span> ctx.frame():
+            <span class="tok-kw">with</span> ctx.column(pad=<span class="tok-num">24</span>, gap=<span class="tok-num">12</span>):
+                username = ctx.input(<span class="tok-str">&quot;user&quot;</span>, username)
+                submitted |= ctx.button(<span class="tok-str">&quot;Sign In&quot;</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">PRIMARY</span>)
+
+        <span class="tok-kw">assert</span> submitted is <span class="tok-kw">True</span>
+        <span class="tok-kw">assert</span> ctx.render_to_png(tmp_path / <span class="tok-str">&quot;login_verified.png&quot;</span>)</code></pre></div>
+<hr />
+<h2 id="3-custom-gpu-backends-customrenderer-drawdata">3. Custom GPU Backends (<code>CustomRenderer</code> &amp; <code>DrawData</code>)</h2>
+<p>Want to render <code>nexa</code> inside your own <strong>Vulkan</strong>, <strong>Metal</strong>, <strong>Direct3D 12</strong>, <strong><code>wgpu</code></strong>, or <strong><code>moderngl</code></strong> swapchain?</p>
+<ol><li>Supply texture atlas callbacks via <code>ui.CustomRenderer(on_create=..., on_update=..., on_destroy=...)</code>.</li><li>Call <code>ctx.set_viewport(w, h, dpi_scale)</code>, inject OS events via <code>ctx.input_*</code>, and run <code>dd = ctx.end_frame()</code>.</li><li>Upload <code>dd.vertices_bytes()</code> (<code>64</code> bytes per <code>cui_vertex</code> SDF primitive) and <code>dd.indices_bytes()</code> (<code>uint32</code>), then iterate <code>for cmd in dd.commands():</code> (<code>clip</code>, <code>texture</code>, <code>index_offset</code>, <code>index_count</code>).</li></ol>
+<hr />
+<h2 id="4-minimal-stripped-builds-single-file-executables">4. Minimal Stripped Builds &amp; Single-File Executables</h2>
+<p>Compile a stripped custom shared library removing unused subsystems via CLI or environment variables:</p>
+<div class="code-panel"><div class="code-header"><span>bash</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code># Default full build (~820 KB: SW + GL 3.3 + OS Windowing + Embedded Fonts + PNG/JPEG + 160+ widgets)
+python3 -m nexa.build
+
+# Enable Unicode BiDi paragraphs &amp; Arabic-script OpenType glyph shaping (CUI 1.1)
+python3 -m nexa.build --rtl
+
+# Minimal LTO build with Software Renderer (~672 KB)
+python3 -m nexa.build --minimal --lto
+
+# Ultra-minimal Core-Only LTO build for custom GPU engines (~660 KB)
+python3 -m nexa.build --minimal --no-sw --lto</code></pre></div>
+<h3 id="freezing-with-pyinstaller-or-nuitka">Freezing with PyInstaller or Nuitka</h3>
+<p><code>nexa</code> registers an automatic PyInstaller hook (<code>nexa._pyinstaller</code>) that bundles <code>libnexa_cui</code> and excludes build-time compiler helpers (<code>nexa.build</code>, <code>setuptools</code>, <code>distutils</code>):</p>
+<div class="code-panel"><div class="code-header"><span>bash</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code># PyInstaller single-file binary
+pyinstaller --onefile $(python3 -c &quot;import nexa.build as b; print(&#x27; &#x27;.join(b.freeze_flags(&#x27;pyinstaller&#x27;)))&quot;) app.py
+
+# Nuitka standalone native compilation
+python3 -m nuitka --onefile $(python3 -c &quot;import nexa.build as b; print(&#x27; &#x27;.join(b.freeze_flags(&#x27;nuitka&#x27;)))&quot;) app.py</code></pre></div><div class="pager-nav"><a class="pager-card prev" href="concurrency-and-async.html"><span>← Previous</span><strong>Concurrency &amp; Asyncio</strong></a><a class="pager-card next" href="components-reference.html"><span>Next →</span><strong>160+ Components Reference</strong></a></div>
+          </article>
+
+          <!-- Subtle Closing Procedural Topographic Band -->
+          <section class="home-cta compact" id="docs-cta-band">
+            <div class="home-cta-body">
+              <h2>Explore the 13 runnable examples</h2>
+              <p>Every tutorial &amp; 1.1 studio pattern—including the complete <code>zero_to_hero.py</code> Pulse Studio capstone—is ready to run inside <code>examples/</code>.</p>
+              <div class="hero-actions">
+                <a class="btn btn-primary" href="https://github.com/x017/nexa/tree/main/examples" target="_blank" rel="noopener">Browse examples/ →</a>
+                <a class="btn" href="wiki.html">Open Docs Wiki</a>
+                <a class="btn" href="index.html">Back to Overview</a>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <!-- Right Table of Contents -->
+        <aside class="docs-toc" aria-label="On this page">
+          <div class="toc-title">On this page</div>
+          <nav id="docs-toc-links"><a class="toc-link" href="#1-custom-vector-canvas-persistent-state-buffer" data-anchor="1-custom-vector-canvas-persistent-state-buffer">1. Custom Vector canvas &amp; Persistent state_buffer</a><a class="toc-link" href="#2-automated-headless-ui-testing-png-snapshots" data-anchor="2-automated-headless-ui-testing-png-snapshots">2. Automated Headless UI Testing &amp; PNG Snapshots</a><a class="toc-link" href="#3-custom-gpu-backends-customrenderer-drawdata" data-anchor="3-custom-gpu-backends-customrenderer-drawdata">3. Custom GPU Backends (CustomRenderer &amp; DrawData)</a><a class="toc-link" href="#4-minimal-stripped-builds-single-file-executables" data-anchor="4-minimal-stripped-builds-single-file-executables">4. Minimal Stripped Builds &amp; Single-File Executables</a></nav>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/search-index.js?v=1.2.0" defer></script>
+  <script src="assets/dither.js?v=1.2.0" defer></script>
+  <script src="assets/site.js?v=1.2.0" defer></script>
+</body>
+</html>

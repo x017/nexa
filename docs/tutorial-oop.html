@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Object-Oriented (OOP) — nexa Documentation</title>
+  <meta name="description" content="Object-Oriented (OOP) — step-by-step guide and runnable Python examples for nexa (nexa-ui)." />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.2.0" />
+  <link rel="stylesheet" href="assets/styles.css?v=1.2.0" />
+  <script>
+    try {
+      const saved = localStorage.getItem("nexa_theme");
+      const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+    } catch (e) {}
+  </script>
+</head>
+<body class="guide-mode">
+  <!-- Sticky Top Bar with Reading Progress Hairline -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html">
+        <svg class="brand-mark-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+          <path d="M12 3.4 L20.6 12 L12 20.6 L3.4 12 Z" stroke="currentColor" stroke-opacity="0.34" stroke-width="1.35" stroke-linejoin="round"/>
+          <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M12 5.2 C12 9.4 14.6 12 18.8 12 C14.6 12 12 14.6 12 18.8 C12 14.6 9.4 12 5.2 12 C9.4 12 12 9.4 12 5.2 Z M12 9.8 L14.2 12 L12 14.2 L9.8 12 Z"
+                fill="currentColor"/>
+          <circle cx="12" cy="3.4" r="1.9" fill="var(--accent)"/>
+          <circle cx="20.6" cy="12" r="1.7" fill="currentColor"/>
+          <circle cx="12" cy="20.6" r="1.7" fill="currentColor"/>
+          <circle cx="3.4" cy="12" r="1.7" fill="currentColor"/>
+        </svg>
+        <span>nexa</span>
+        <span class="brand-badge">Docs</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="nav-link" href="index.html">Overview</a>
+        <a class="nav-link" data-nav="wiki" href="wiki.html">Wiki</a>
+        <a class="nav-link" data-nav="guide" href="getting-started.html">Guide</a>
+        <a class="nav-link active" data-nav="tutorials" href="tutorials.html">Tutorials</a>
+        <a class="nav-link" data-nav="components" href="components.html">Components</a>
+        <a class="nav-link" data-nav="changelog" href="changelog.html">Changelog</a>
+      </nav>
+      <div class="topbar-right">
+        <div class="accent-strip" id="header-accent-strip" title="Switch live OKLCH accent"></div>
+        <a class="icon-btn" href="https://github.com/x017/nexa" target="_blank" rel="noopener" aria-label="Source on GitHub" title="Source on GitHub">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+        </a>
+        <button class="icon-btn" id="theme-toggle-btn" type="button" aria-label="Switch theme"></button>
+      </div>
+    </div>
+    <div class="read-progress" id="read-progress"></div>
+  </header>
+
+  <!-- Documentation Layout Shell -->
+  <div class="docs-shell">
+    <!-- Left Chapter Navigation + Instant Filter -->
+    <aside class="docs-sidebar" aria-label="Documentation chapters">
+      <div class="search-box">
+        <input id="docs-search-input" type="search" placeholder="Filter wiki, tutorials &amp; widgets…" autocomplete="off" />
+        <span class="search-kbd">Ctrl K</span>
+      </div>
+      <div class="search-results" id="docs-search-results"></div>
+      <nav id="docs-sidebar-nav"><div class="sidebar-group-title">Explore</div><a class="sidebar-link" href="wiki.html">Docs Wiki <span class="badge-new">WIKI</span></a><a class="sidebar-link" href="tutorials.html">All Tutorials Overview</a><a class="sidebar-link" href="components.html">Component Explorer <span class="badge-new">1.1</span></a><a class="sidebar-link" href="changelog.html">Changelog</a><div class="sidebar-group-title">Start Here</div><a class="sidebar-link" href="zero-to-hero.html">0 to Hero: Full Tutorial <span class="badge-new">FULL</span></a><a class="sidebar-link" href="getting-started.html">Getting Started</a><div class="sidebar-group-title">Tutorials</div><a class="sidebar-link" href="tutorial-functional.html">Functional &amp; Procedural</a><a class="sidebar-link active" href="tutorial-oop.html">Object-Oriented (OOP)</a><div class="sidebar-sublinks"><a class="sidebar-sublink" href="#functional-procedural-vs-oop-side-by-side" data-anchor="functional-procedural-vs-oop-side-by-side">Functional/Procedural vs. OOP: Side-by-Side</a><a class="sidebar-sublink" href="#lesson-1-subclassing-ui-application" data-anchor="lesson-1-subclassing-ui-application">Lesson 1: Subclassing ui.Application</a><a class="sidebar-sublink" href="#lesson-2-reusable-ui-component-automatic-id-isolation" data-anchor="lesson-2-reusable-ui-component-automatic-id-isolation">Lesson 2: Reusable ui.Component &amp; Automatic ID Isolation</a><a class="sidebar-sublink" href="#lesson-3-multi-screen-navigation-with-ui-view-ui-router" data-anchor="lesson-3-multi-screen-navigation-with-ui-view-ui-router">Lesson 3: Multi-Screen Navigation with ui.View &amp; ui.Router</a><a class="sidebar-sublink" href="#lesson-4-reactive-state-with-ui-store-t" data-anchor="lesson-4-reactive-state-with-ui-store-t">Lesson 4: Reactive State with ui.Store[T]</a><a class="sidebar-sublink" href="#lesson-5-complete-oop-capstone-incident-response-console" data-anchor="lesson-5-complete-oop-capstone-incident-response-console">Lesson 5: Complete OOP Capstone — Incident Response Console</a><a class="sidebar-sublink" href="#next-steps" data-anchor="next-steps">Next Steps</a></div><a class="sidebar-link" href="theming-and-styling.html">Theming, Accents &amp; Icons</a><a class="sidebar-link" href="concurrency-and-async.html">Concurrency &amp; Asyncio</a><a class="sidebar-link" href="advanced-rendering-and-packaging.html">Canvas, GPU &amp; Packaging</a><div class="sidebar-group-title">API Reference</div><a class="sidebar-link" href="components-reference.html">160+ Components Reference</a></nav>
+    </aside>
+
+    <!-- Main Content Area with Procedural Topographic Backdrop -->
+    <div class="docs-content-grid docs-main-wrap">
+      <div class="docs-art" id="docs-hero-art"></div>
+
+      <div class="docs-page-inner">
+        <main class="docs-main">
+          <article class="prose" id="docs-article">
+<div class="tutorial-track" aria-label="Tutorial curriculum"><span class="tutorial-track-label">Tutorials</span><a class="track-step" href="zero-to-hero.html"><span class="track-step-num">00</span><span>0 → Hero</span></a><a class="track-step" href="getting-started.html"><span class="track-step-num">01</span><span>Start</span></a><a class="track-step" href="tutorial-functional.html"><span class="track-step-num">02</span><span>Functional</span></a><a class="track-step active" href="tutorial-oop.html"><span class="track-step-num">03</span><span>OOP</span></a><a class="track-step" href="theming-and-styling.html"><span class="track-step-num">04</span><span>Theming</span></a><a class="track-step" href="concurrency-and-async.html"><span class="track-step-num">05</span><span>Async &amp; Threads</span></a><a class="track-step" href="advanced-rendering-and-packaging.html"><span class="track-step-num">06</span><span>GPU &amp; Packaging</span></a></div><h1 id="tutorial-object-oriented-oop-architecture">Tutorial: Object-Oriented (OOP) Architecture</h1>
+<p>When your application grows into multiple views, reusable widget cards, shared state stores, and background workers, <code>nexa</code> provides a clean, zero-boilerplate Object-Oriented layer built directly on top of its immediate-mode engine:</p>
+<ul><li><strong><code>ui.Application</code></strong> — Top-level application class managing the native <code>App</code> window, <code>Router</code>, <code>BackgroundRunner</code>, and lifecycle (<code>setup</code>, <code>build</code>, <code>on_close</code>).</li><li><strong><code>ui.Component</code></strong> — Reusable, stateful or stateless UI building block with <strong>automatic ID-scope isolation</strong> (<code>on_mount</code>, <code>build</code>, <code>on_unmount</code>).</li><li><strong><code>ui.View</code></strong> &amp; <strong><code>ui.Router</code></strong> — Named screens with parameterized navigation (<code>push</code>, <code>replace</code>, <code>back</code>, <code>forward</code>) and <code>on_enter</code> / <code>on_leave</code> hooks.</li><li><strong><code>ui.Store[T]</code></strong> — Observable state container with <code>update()</code>, <code>subscribe()</code>, and automatic native event-loop wakeup.</li></ul>
+<hr />
+<h2 id="functional-procedural-vs-oop-side-by-side">Functional/Procedural vs. OOP: Side-by-Side</h2>
+<p>Both paradigms call the <strong>exact same widget methods</strong> and can even be mixed inside the same frame!</p>
+<table><thead><tr><th>Question</th><th>Functional / Procedural (<code>ui.run</code> / plain <code>def</code>)</th><th>Object-Oriented (<code>Application</code> / <code>Component</code> / <code>View</code>)</th></tr></thead><tbody><tr><td><strong>Best for</strong></td><td>Scripts, single-window utilities, data dashboards, quick tools</td><td>Multi-screen desktop apps, reusable widget libraries, team codebases</td></tr><tr><td><strong>State storage</strong></td><td>Closures (<code>nonlocal</code>) or passed <code>dict</code> / state objects</td><td>Instance attributes (<code>self.count</code>) and shared <code>ui.Store[T]</code></td></tr><tr><td><strong>Widget ID scoping</strong></td><td>Manual <code>with ctx.id_scope(key):</code> in loops</td><td><strong>Automatic</strong>—every <code>Component(key)</code> scopes all child widgets!</td></tr><tr><td><strong>Screen routing</strong></td><td><code>if tab == 0: ... elif tab == 1: ...</code></td><td><code>self.router.push(&quot;project&quot;, id=42)</code> + <code>back()</code> / <code>forward()</code> history</td></tr><tr><td><strong>Background workers</strong></td><td><code>runner = ui.BackgroundRunner.for_app(app)</code></td><td>Built-in <code>self.runner</code> &amp; lazy <code>self.async_bridge</code> on <code>Application</code></td></tr></tbody></table>
+<hr />
+<h2 id="lesson-1-subclassing-ui-application">Lesson 1: Subclassing <code>ui.Application</code></h2>
+<p>You can configure window defaults either as <strong>class attributes</strong> or via <strong><code>super().__init__(...)</code></strong> arguments:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
+
+<span class="tok-kw">class</span> <span class="tok-cls">CounterApp</span>(ui.<span class="tok-cls">Application</span>):
+    title = <span class="tok-str">&quot;OOP Counter&quot;</span>
+    width = <span class="tok-num">560</span>
+    height = <span class="tok-num">360</span>
+    theme = ui.<span class="tok-cls">ThemeMode</span>.<span class="tok-cls">DARK</span>
+    accent = ui.<span class="tok-cls">Accent</span>.<span class="tok-cls">VIOLET</span>  <span class="tok-com"># Real accents: NEUTRAL, VIOLET, BLUE, GREEN, AMBER, ORANGE, CORAL, ROSE</span>
+
+    <span class="tok-kw">def</span> setup(self) -&gt; <span class="tok-kw">None</span>:
+        <span class="tok-com"># Called automatically at the end of __init__</span>
+        self.count = <span class="tok-num">0</span>
+        self.step = <span class="tok-num">1</span>
+
+    <span class="tok-kw">def</span> build(self, ctx: ui.<span class="tok-cls">UI</span>) -&gt; <span class="tok-kw">None</span>:
+        <span class="tok-kw">with</span> ctx.column(width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>, pad=<span class="tok-num">28</span>, gap=<span class="tok-num">16</span>, bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">BACKGROUND</span>):
+            ctx.heading(f<span class="tok-str">&quot;Total: {self.count}&quot;</span>, level=<span class="tok-num">1</span>)
+            self.step = int(ctx.slider(<span class="tok-str">&quot;Step size&quot;</span>, self.step, <span class="tok-num">1</span>, <span class="tok-num">10</span>, step=<span class="tok-num">1</span>, show_value=<span class="tok-kw">True</span>, format=<span class="tok-str">&quot;%.0f&quot;</span>))
+
+            <span class="tok-kw">with</span> ctx.row(gap=<span class="tok-num">10</span>):
+                <span class="tok-kw">if</span> ctx.button(f<span class="tok-str">&quot;Add +{self.step}&quot;</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">PRIMARY</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">PLUS</span>):
+                    self.count += self.step
+                <span class="tok-kw">if</span> ctx.button(<span class="tok-str">&quot;Reset&quot;</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">GHOST</span>):
+                    self.count = <span class="tok-num">0</span>
+
+    <span class="tok-kw">def</span> on_close(self) -&gt; <span class="tok-kw">None</span>:
+        <span class="tok-com"># Optional cleanup when the window closes</span>
+        <span class="tok-kw">pass</span>
+
+<span class="tok-kw">if</span> __name__ == <span class="tok-str">&quot;__main__&quot;</span>:
+    <span class="tok-cls">CounterApp</span>().run()</code></pre></div>
+<p>You can also override <code>__init__</code> and pass <code>title</code>, <code>width</code>, <code>height</code>, <code>theme</code>, <code>accent</code> directly to <code>super().__init__(&quot;Custom Title&quot;, width=720, height=420, accent=ui.Accent.GREEN)</code>.</p>
+<hr />
+<h2 id="lesson-2-reusable-ui-component-automatic-id-isolation">Lesson 2: Reusable <code>ui.Component</code> &amp; Automatic ID Isolation</h2>
+<p>In raw immediate-mode UIs, rendering two components that both contain <code>ctx.button(&quot;Increment&quot;)</code> would normally collide on the ID <code>&quot;Increment&quot;</code>.</p>
+<p><code>ui.Component</code> solves this automatically: calling <code>my_component(ctx)</code> (or <code>my_component()</code> inside a frame) wraps <code>build(ctx)</code> inside <code>with ctx.id_scope(self.key):</code>—and runs <code>on_mount(ctx)</code> once on first render!</p>
+<p>Even better: <strong><code>build(self, ctx)</code> can return a value</strong>, so parent views can react to component events naturally!</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
+
+<span class="tok-kw">class</span> <span class="tok-cls">PipelineCard</span>(ui.<span class="tok-cls">Component</span>):
+    <span class="tok-kw">def</span> __init__(self, key: str, title: str, initial_rpm: int = <span class="tok-num">120</span>) -&gt; <span class="tok-kw">None</span>:
+        super().__init__(key)  <span class="tok-com"># Pushes `key` onto CUI&#x27;s ID stack every render!</span>
+        self.title = title
+        self.rpm = initial_rpm
+        self.enabled = <span class="tok-kw">True</span>
+
+    <span class="tok-kw">def</span> on_mount(self, ctx: ui.<span class="tok-cls">UI</span>) -&gt; <span class="tok-kw">None</span>:
+        <span class="tok-com"># Runs once before the very first build()</span>
+        <span class="tok-kw">pass</span>
+
+    <span class="tok-kw">def</span> build(self, ctx: ui.<span class="tok-cls">UI</span>) -&gt; bool:
+        <span class="tok-str">&quot;&quot;&quot;Render the card and return True if the &#x27;Restart&#x27; button was clicked.&quot;&quot;&quot;</span>
+        restarted = <span class="tok-kw">False</span>
+        <span class="tok-kw">with</span> ctx.card(pad=<span class="tok-num">18</span>, gap=<span class="tok-num">12</span>, width=ui.<span class="tok-cls">GROW</span>(<span class="tok-num">1</span>)):
+            <span class="tok-kw">with</span> ctx.row(align=ui.<span class="tok-cls">Align</span>.<span class="tok-cls">CENTER</span>):
+                ctx.heading(self.title, level=<span class="tok-num">4</span>)
+                ctx.spacer()
+                <span class="tok-com"># Notice both cards have a switch &amp; buttons with the SAME labels—zero collision!</span>
+                self.enabled = ctx.switch(<span class="tok-str">&quot;##on&quot;</span>, self.enabled)
+
+            <span class="tok-kw">with</span> ctx.disabled_scope(<span class="tok-kw">not</span> self.enabled):
+                self.rpm = int(ctx.slider(<span class="tok-str">&quot;Target RPM&quot;</span>, self.rpm, <span class="tok-num">0</span>, <span class="tok-num">500</span>, step=<span class="tok-num">10</span>, show_value=<span class="tok-kw">True</span>, format=<span class="tok-str">&quot;%.0f&quot;</span>))
+                <span class="tok-kw">with</span> ctx.row(gap=<span class="tok-num">8</span>):
+                    <span class="tok-kw">if</span> ctx.button(<span class="tok-str">&quot;Boost +50&quot;</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">ZAP</span>, size=ui.<span class="tok-cls">ControlSize</span>.<span class="tok-cls">SM</span>):
+                        self.rpm = min(<span class="tok-num">500</span>, self.rpm + <span class="tok-num">50</span>)
+                    <span class="tok-kw">if</span> ctx.button(<span class="tok-str">&quot;Restart&quot;</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">OUTLINE</span>, size=ui.<span class="tok-cls">ControlSize</span>.<span class="tok-cls">SM</span>):
+                        restarted = <span class="tok-kw">True</span>
+        <span class="tok-kw">return</span> restarted
+
+<span class="tok-kw">class</span> <span class="tok-cls">DualPipelineApp</span>(ui.<span class="tok-cls">Application</span>):
+    <span class="tok-kw">def</span> __init__(self) -&gt; <span class="tok-kw">None</span>:
+        super().__init__(<span class="tok-str">&quot;Dual Pipelines&quot;</span>, width=<span class="tok-num">760</span>, height=<span class="tok-num">380</span>, theme=ui.<span class="tok-cls">ThemeMode</span>.<span class="tok-cls">DARK</span>, accent=ui.<span class="tok-cls">Accent</span>.<span class="tok-cls">GREEN</span>)
+
+    <span class="tok-kw">def</span> setup(self) -&gt; <span class="tok-kw">None</span>:
+        self.left = <span class="tok-cls">PipelineCard</span>(<span class="tok-str">&quot;pipe_a&quot;</span>, <span class="tok-str">&quot;Ingestion Cluster&quot;</span>, <span class="tok-num">180</span>)
+        self.right = <span class="tok-cls">PipelineCard</span>(<span class="tok-str">&quot;pipe_b&quot;</span>, <span class="tok-str">&quot;Inference Workers&quot;</span>, <span class="tok-num">320</span>)
+
+    <span class="tok-kw">def</span> build(self, ctx: ui.<span class="tok-cls">UI</span>) -&gt; <span class="tok-kw">None</span>:
+        <span class="tok-kw">with</span> ctx.row(width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>, pad=<span class="tok-num">24</span>, gap=<span class="tok-num">18</span>, bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">BACKGROUND</span>):
+            <span class="tok-kw">if</span> self.left(ctx):
+                ctx.toast(<span class="tok-str">&quot;Restarted Ingestion Cluster&quot;</span>, tone=ui.<span class="tok-cls">Tone</span>.<span class="tok-cls">INFO</span>)
+            <span class="tok-kw">if</span> self.right(ctx):
+                ctx.toast(<span class="tok-str">&quot;Restarted Inference Workers&quot;</span>, tone=ui.<span class="tok-cls">Tone</span>.<span class="tok-cls">INFO</span>)
+
+<span class="tok-kw">if</span> __name__ == <span class="tok-str">&quot;__main__&quot;</span>:
+    <span class="tok-cls">DualPipelineApp</span>().run()</code></pre></div>
+<hr />
+<h2 id="lesson-3-multi-screen-navigation-with-ui-view-ui-router">Lesson 3: Multi-Screen Navigation with <code>ui.View</code> &amp; <code>ui.Router</code></h2>
+<p>Every <code>ui.Application</code> comes with <code>self.router</code> pre-wired to wake the window on navigation:</p>
+<ul><li><strong><code>self.router.register(&quot;route_name&quot;, MyView(...))</code></strong> — Register a <code>View</code> instance (the first registered route becomes active automatically).</li><li><strong><code>self.router.push(&quot;detail&quot;, item_id=42)</code></strong> — Navigate forward, passing arbitrary keyword parameters to <code>DetailView.on_enter(params)</code>.</li><li><strong><code>self.router.replace(&quot;login&quot;)</code></strong> — Replace the current history entry without growing the back stack.</li><li><strong><code>self.router.back()</code> / <code>self.router.forward()</code></strong> — Navigate browser-style history (<code>can_go_back</code>, <code>can_go_forward</code>).</li><li><strong><code>self.router.render(ctx)</code></strong> — Render whichever <code>View</code> is currently active.</li></ul>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">class</span> <span class="tok-cls">ProjectDetailView</span>(ui.<span class="tok-cls">View</span>):
+    title = <span class="tok-str">&quot;Project Detail&quot;</span>
+
+    <span class="tok-kw">def</span> __init__(self, router: ui.<span class="tok-cls">Router</span>) -&gt; <span class="tok-kw">None</span>:
+        super().__init__(<span class="tok-str">&quot;detail&quot;</span>)
+        self.router = router
+        self.project_id: int = -<span class="tok-num">1</span>
+
+    <span class="tok-kw">def</span> on_enter(self, params: dict) -&gt; <span class="tok-kw">None</span>:
+        self.project_id = params.get(<span class="tok-str">&quot;project_id&quot;</span>, <span class="tok-num">1</span>)
+
+    <span class="tok-kw">def</span> on_leave(self) -&gt; <span class="tok-kw">None</span>:
+        <span class="tok-kw">pass</span>
+
+    <span class="tok-kw">def</span> build(self, ctx: ui.<span class="tok-cls">UI</span>) -&gt; <span class="tok-kw">None</span>:
+        <span class="tok-kw">with</span> ctx.column(gap=<span class="tok-num">12</span>):
+            <span class="tok-kw">if</span> ctx.button(<span class="tok-str">&quot;Back&quot;</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">ARROW_LEFT</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">GHOST</span>):
+                self.router.back()
+            ctx.heading(f<span class="tok-str">&quot;Inspecting Project #{self.project_id}&quot;</span>, level=<span class="tok-num">2</span>)</code></pre></div>
+<hr />
+<h2 id="lesson-4-reactive-state-with-ui-store-t">Lesson 4: Reactive State with <code>ui.Store[T]</code></h2>
+<p>In multi-view OOP apps, passing raw dicts between 6 views can get messy. <code>ui.Store[T]</code> holds shared state, notifies subscribers on change, and automatically wakes the UI window when mutated:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code>store = ui.<span class="tok-cls">Store</span>({<span class="tok-str">&quot;Filter&quot;</span>: <span class="tok-str">&quot;&quot;</span>, <span class="tok-str">&quot;incidents&quot;</span>: []}, wake=self.wake)
+
+<span class="tok-com"># Read current state</span>
+items = store.value[<span class="tok-str">&quot;incidents&quot;</span>]
+
+<span class="tok-com"># Mutate in-place OR return a new value — both notify subscribers and wake the window!</span>
+store.update(<span class="tok-kw">lambda</span> s: s[<span class="tok-str">&quot;incidents&quot;</span>].append({<span class="tok-str">&quot;id&quot;</span>: <span class="tok-num">1</span>, <span class="tok-str">&quot;title&quot;</span>: <span class="tok-str">&quot;API spike&quot;</span>}))</code></pre></div>
+<blockquote><p><strong>Thread-safety tip:</strong> When updating a <code>Store</code> from a background worker thread, marshal the mutation via <code>self.call_soon(lambda: store.update(...))</code> (or <code>on_done=</code> in <code>self.runner.submit(...)</code>) so state only mutates between UI frames!</p></blockquote>
+<hr />
+<h2 id="lesson-5-complete-oop-capstone-incident-response-console">Lesson 5: Complete OOP Capstone — Incident Response Console</h2>
+<p>Here is a complete, 100% standalone multi-view OOP application combining <strong><code>Application</code></strong>, <strong><code>Store</code></strong>, <strong><code>Router</code></strong>, <strong>two <code>View</code> screens (<code>OverviewView</code> &amp; <code>DetailView</code>)</strong>, <strong>reusable <code>IncidentCard</code> <code>Component</code>s</strong>, <strong>live accent switching</strong>, and <strong>background diagnostics via <code>self.runner</code></strong>:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-str">&quot;&quot;&quot;Complete OOP Capstone: Multi-View Incident Response Console.&quot;&quot;&quot;</span>
+
+<span class="tok-kw">from</span> __future__ <span class="tok-kw">import</span> annotations
+<span class="tok-kw">import</span> time
+<span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
+
+
+<span class="tok-kw">class</span> <span class="tok-cls">IncidentCard</span>(ui.<span class="tok-cls">Component</span>):
+    <span class="tok-str">&quot;&quot;&quot;Reusable incident summary card with automatic ID scoping.&quot;&quot;&quot;</span>
+
+    <span class="tok-kw">def</span> __init__(self, incident_id: int) -&gt; <span class="tok-kw">None</span>:
+        super().__init__(f<span class="tok-str">&quot;inc_{incident_id}&quot;</span>)
+        self.incident_id = incident_id
+
+    <span class="tok-kw">def</span> build(self, ctx: ui.<span class="tok-cls">UI</span>, item: dict) -&gt; str | <span class="tok-kw">None</span>:
+        action: str | <span class="tok-kw">None</span> = <span class="tok-kw">None</span>
+        tone = ui.<span class="tok-cls">Tone</span>.<span class="tok-cls">SUCCESS</span> <span class="tok-kw">if</span> item[<span class="tok-str">&quot;resolved&quot;</span>] <span class="tok-kw">else</span> ui.<span class="tok-cls">Tone</span>.<span class="tok-cls">DANGER</span>
+        <span class="tok-kw">with</span> ctx.card(pad=<span class="tok-num">16</span>, gap=<span class="tok-num">10</span>, width=ui.<span class="tok-cls">FILL</span>):
+            <span class="tok-kw">with</span> ctx.row(align=ui.<span class="tok-cls">Align</span>.<span class="tok-cls">CENTER</span>, gap=<span class="tok-num">10</span>):
+                ctx.badge(<span class="tok-str">&quot;Resolved&quot;</span> <span class="tok-kw">if</span> item[<span class="tok-str">&quot;resolved&quot;</span>] <span class="tok-kw">else</span> <span class="tok-str">&quot;Open&quot;</span>, tone=tone, dot=<span class="tok-kw">True</span>)
+                ctx.text(item[<span class="tok-str">&quot;title&quot;</span>], font=ui.<span class="tok-cls">FontRole</span>.<span class="tok-cls">MEDIUM</span>, size=<span class="tok-num">15</span>)
+                ctx.spacer()
+                ctx.muted(f<span class="tok-str">&quot;#{item[&#x27;id&#x27;]} · {item[&#x27;service&#x27;]}&quot;</span>)
+
+            <span class="tok-kw">with</span> ctx.row(gap=<span class="tok-num">8</span>):
+                <span class="tok-kw">if</span> ctx.button(<span class="tok-str">&quot;Inspect&quot;</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">ARROW_RIGHT</span>, size=ui.<span class="tok-cls">ControlSize</span>.<span class="tok-cls">SM</span>):
+                    action = <span class="tok-str">&quot;inspect&quot;</span>
+                <span class="tok-kw">if</span> <span class="tok-kw">not</span> item[<span class="tok-str">&quot;resolved&quot;</span>]:
+                    <span class="tok-kw">if</span> ctx.button(<span class="tok-str">&quot;Resolve&quot;</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">CHECK</span>, size=ui.<span class="tok-cls">ControlSize</span>.<span class="tok-cls">SM</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">PRIMARY</span>):
+                        action = <span class="tok-str">&quot;resolve&quot;</span>
+        <span class="tok-kw">return</span> action
+
+
+<span class="tok-kw">class</span> <span class="tok-cls">OverviewView</span>(ui.<span class="tok-cls">View</span>):
+    title = <span class="tok-str">&quot;Incidents&quot;</span>
+    icon = ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">ACTIVITY</span>
+
+    <span class="tok-kw">def</span> __init__(self, store: ui.<span class="tok-cls">Store</span>[dict], router: ui.<span class="tok-cls">Router</span>) -&gt; <span class="tok-kw">None</span>:
+        super().__init__(<span class="tok-str">&quot;overview&quot;</span>)
+        self.store = store
+        self.router = router
+        self.cards: dict[int, <span class="tok-cls">IncidentCard</span>] = {}
+        self.new_title = <span class="tok-str">&quot;&quot;</span>
+        self.new_service = <span class="tok-num">0</span>
+
+    <span class="tok-kw">def</span> _create_incident(self, title: str, service: str) -&gt; <span class="tok-kw">None</span>:
+        <span class="tok-kw">def</span> _mutate(s: dict) -&gt; <span class="tok-kw">None</span>:
+            s[<span class="tok-str">&quot;incidents&quot;</span>].insert(<span class="tok-num">0</span>, {
+                <span class="tok-str">&quot;id&quot;</span>: s[<span class="tok-str">&quot;next_id&quot;</span>],
+                <span class="tok-str">&quot;title&quot;</span>: title,
+                <span class="tok-str">&quot;service&quot;</span>: service,
+                <span class="tok-str">&quot;resolved&quot;</span>: <span class="tok-kw">False</span>,
+                <span class="tok-str">&quot;notes&quot;</span>: <span class="tok-str">&quot;Investigating root cause.&quot;</span>,
+            })
+            s[<span class="tok-str">&quot;next_id&quot;</span>] += <span class="tok-num">1</span>
+
+        self.store.update(_mutate)
+
+    <span class="tok-kw">def</span> build(self, ctx: ui.<span class="tok-cls">UI</span>) -&gt; <span class="tok-kw">None</span>:
+        services = [<span class="tok-str">&quot;Auth API&quot;</span>, <span class="tok-str">&quot;Edge Gateway&quot;</span>, <span class="tok-str">&quot;Billing DB&quot;</span>, <span class="tok-str">&quot;Search Index&quot;</span>]
+        items = self.store.value[<span class="tok-str">&quot;incidents&quot;</span>]
+        open_cnt = sum(<span class="tok-num">1</span> <span class="tok-kw">for</span> x <span class="tok-kw">in</span> items <span class="tok-kw">if</span> <span class="tok-kw">not</span> x[<span class="tok-str">&quot;resolved&quot;</span>])
+
+        <span class="tok-kw">with</span> ctx.column(width=ui.<span class="tok-cls">FILL</span>, gap=<span class="tok-num">18</span>):
+            <span class="tok-kw">with</span> ctx.grid(columns=<span class="tok-num">2</span>, min_column_width=<span class="tok-num">220</span>, gap=<span class="tok-num">14</span>, width=ui.<span class="tok-cls">FILL</span>):
+                <span class="tok-kw">with</span> ctx.card(pad=<span class="tok-num">16</span>, gap=<span class="tok-num">4</span>):
+                    ctx.secondary(<span class="tok-str">&quot;Active Incidents&quot;</span>)
+                    ctx.heading(str(open_cnt), level=<span class="tok-num">2</span>)
+                <span class="tok-kw">with</span> ctx.card(pad=<span class="tok-num">16</span>, gap=<span class="tok-num">4</span>):
+                    ctx.secondary(<span class="tok-str">&quot;Total Logged&quot;</span>)
+                    ctx.heading(str(len(items)), level=<span class="tok-num">2</span>)
+
+            <span class="tok-kw">with</span> ctx.card(pad=<span class="tok-num">16</span>, gap=<span class="tok-num">12</span>, width=ui.<span class="tok-cls">FILL</span>):
+                ctx.label(<span class="tok-str">&quot;Report New Incident&quot;</span>)
+                <span class="tok-kw">with</span> ctx.row(gap=<span class="tok-num">10</span>, align=ui.<span class="tok-cls">Align</span>.<span class="tok-cls">END</span>, wrap=<span class="tok-kw">True</span>):
+                    self.new_title = ctx.input(<span class="tok-str">&quot;title&quot;</span>, self.new_title, placeholder=<span class="tok-str">&quot;Describe issue...&quot;</span>, width=ui.<span class="tok-cls">GROW</span>(<span class="tok-num">2</span>))
+                    self.new_service = ctx.select(<span class="tok-str">&quot;svc&quot;</span>, services, self.new_service, width=<span class="tok-num">160</span>)
+                    <span class="tok-kw">if</span> ctx.button(<span class="tok-str">&quot;Create&quot;</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">PLUS</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">PRIMARY</span>):
+                        <span class="tok-kw">if</span> self.new_title.strip():
+                            self._create_incident(self.new_title.strip(), services[self.new_service])
+                            self.new_title = <span class="tok-str">&quot;&quot;</span>
+
+            <span class="tok-kw">for</span> item <span class="tok-kw">in</span> items:
+                iid = item[<span class="tok-str">&quot;id&quot;</span>]
+                card = self.cards.setdefault(iid, <span class="tok-cls">IncidentCard</span>(iid))
+                <span class="tok-com"># Invoke Component.build inside its automatic ID scope!</span>
+                <span class="tok-kw">with</span> ctx.id_scope(card.key):
+                    act = card.build(ctx, item)
+                <span class="tok-kw">if</span> act == <span class="tok-str">&quot;inspect&quot;</span>:
+                    self.router.push(<span class="tok-str">&quot;detail&quot;</span>, id=iid)
+                <span class="tok-kw">elif</span> act == <span class="tok-str">&quot;resolve&quot;</span>:
+                    self.store.update(<span class="tok-kw">lambda</span> s, target=iid: next(
+                        x.__setitem__(<span class="tok-str">&quot;resolved&quot;</span>, <span class="tok-kw">True</span>) <span class="tok-kw">for</span> x <span class="tok-kw">in</span> s[<span class="tok-str">&quot;incidents&quot;</span>] <span class="tok-kw">if</span> x[<span class="tok-str">&quot;id&quot;</span>] == target
+                    ))
+                    ctx.toast(f<span class="tok-str">&quot;Incident #{iid} marked resolved&quot;</span>, tone=ui.<span class="tok-cls">Tone</span>.<span class="tok-cls">SUCCESS</span>)
+
+
+<span class="tok-kw">class</span> <span class="tok-cls">DetailView</span>(ui.<span class="tok-cls">View</span>):
+    title = <span class="tok-str">&quot;Detail&quot;</span>
+    icon = ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">FILE_TEXT</span>
+
+    <span class="tok-kw">def</span> __init__(self, store: ui.<span class="tok-cls">Store</span>[dict], router: ui.<span class="tok-cls">Router</span>, runner: ui.<span class="tok-cls">BackgroundRunner</span>) -&gt; <span class="tok-kw">None</span>:
+        super().__init__(<span class="tok-str">&quot;detail&quot;</span>)
+        self.store = store
+        self.router = router
+        self.runner = runner
+        self.current_id = -<span class="tok-num">1</span>
+        self.diag_task: ui.<span class="tok-cls">TaskHandle</span> | <span class="tok-kw">None</span> = <span class="tok-kw">None</span>
+
+    <span class="tok-kw">def</span> on_enter(self, params: dict) -&gt; <span class="tok-kw">None</span>:
+        self.current_id = params.get(<span class="tok-str">&quot;id&quot;</span>, -<span class="tok-num">1</span>)
+        self.diag_task = <span class="tok-kw">None</span>
+
+    <span class="tok-kw">def</span> build(self, ctx: ui.<span class="tok-cls">UI</span>) -&gt; <span class="tok-kw">None</span>:
+        item = next((x <span class="tok-kw">for</span> x <span class="tok-kw">in</span> self.store.value[<span class="tok-str">&quot;incidents&quot;</span>] <span class="tok-kw">if</span> x[<span class="tok-str">&quot;id&quot;</span>] == self.current_id), <span class="tok-kw">None</span>)
+        <span class="tok-kw">if</span> item is <span class="tok-kw">None</span>:
+            ctx.empty_state(<span class="tok-str">&quot;Incident not found&quot;</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">INBOX</span>)
+            <span class="tok-kw">return</span>
+
+        <span class="tok-kw">with</span> ctx.column(width=ui.<span class="tok-cls">FILL</span>, gap=<span class="tok-num">16</span>):
+            <span class="tok-kw">with</span> ctx.row(align=ui.<span class="tok-cls">Align</span>.<span class="tok-cls">CENTER</span>, gap=<span class="tok-num">10</span>):
+                <span class="tok-kw">if</span> ctx.button(<span class="tok-str">&quot;Back to list&quot;</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">ARROW_LEFT</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">GHOST</span>):
+                    self.router.back()
+                ctx.spacer()
+                status = self.diag_task.button_status <span class="tok-kw">if</span> self.diag_task <span class="tok-kw">else</span> ui.<span class="tok-cls">Status</span>.<span class="tok-cls">IDLE</span>
+                <span class="tok-kw">if</span> ctx.status_button(<span class="tok-str">&quot;Run Diagnostics&quot;</span>, status, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">TERMINAL</span>):
+                    self.diag_task = self.runner.submit(
+                        <span class="tok-kw">lambda</span>: (time.sleep(<span class="tok-num">0.35</span>), <span class="tok-str">&quot;Latency p99=14ms, 0 packet drops&quot;</span>)[<span class="tok-num">1</span>],
+                        on_done=<span class="tok-kw">lambda</span> report: self.store.update(
+                            <span class="tok-kw">lambda</span> _s: item.__setitem__(<span class="tok-str">&quot;notes&quot;</span>, item[<span class="tok-str">&quot;notes&quot;</span>] + f<span class="tok-str">&quot;\n[Diag] {report}&quot;</span>)
+                        ),
+                    )
+
+            <span class="tok-kw">with</span> ctx.card(pad=<span class="tok-num">20</span>, gap=<span class="tok-num">12</span>, width=ui.<span class="tok-cls">FILL</span>):
+                ctx.heading(f<span class="tok-str">&quot;#{item[&#x27;id&#x27;]} — {item[&#x27;title&#x27;]}&quot;</span>, level=<span class="tok-num">2</span>)
+                ctx.secondary(f<span class="tok-str">&quot;Service: {item[&#x27;service&#x27;]}&quot;</span>)
+                item[<span class="tok-str">&quot;notes&quot;</span>] = ctx.textarea(<span class="tok-str">&quot;notes&quot;</span>, item[<span class="tok-str">&quot;notes&quot;</span>], label=<span class="tok-str">&quot;Runbook Notes&quot;</span>, height=<span class="tok-num">160</span>)
+
+
+<span class="tok-kw">class</span> <span class="tok-cls">IncidentConsoleApp</span>(ui.<span class="tok-cls">Application</span>):
+    title = <span class="tok-str">&quot;Incident Console — nexa OOP&quot;</span>
+    width = <span class="tok-num">960</span>
+    height = <span class="tok-num">660</span>
+    theme = ui.<span class="tok-cls">ThemeMode</span>.<span class="tok-cls">DARK</span>
+    accent = ui.<span class="tok-cls">Accent</span>.<span class="tok-cls">CORAL</span>
+
+    <span class="tok-kw">def</span> setup(self) -&gt; <span class="tok-kw">None</span>:
+        self.store = ui.<span class="tok-cls">Store</span>(
+            {
+                <span class="tok-str">&quot;next_id&quot;</span>: <span class="tok-num">103</span>,
+                <span class="tok-str">&quot;incidents&quot;</span>: [
+                    {<span class="tok-str">&quot;id&quot;</span>: <span class="tok-num">102</span>, <span class="tok-str">&quot;title&quot;</span>: <span class="tok-str">&quot;Elevated TLS handshake latency in EU-West&quot;</span>, <span class="tok-str">&quot;service&quot;</span>: <span class="tok-str">&quot;Edge Gateway&quot;</span>, <span class="tok-str">&quot;resolved&quot;</span>: <span class="tok-kw">False</span>, <span class="tok-str">&quot;notes&quot;</span>: <span class="tok-str">&quot;Checking upstream edge pop.&quot;</span>},
+                    {<span class="tok-str">&quot;id&quot;</span>: <span class="tok-num">101</span>, <span class="tok-str">&quot;title&quot;</span>: <span class="tok-str">&quot;Read replica lag cleared after compaction&quot;</span>, <span class="tok-str">&quot;service&quot;</span>: <span class="tok-str">&quot;Billing DB&quot;</span>, <span class="tok-str">&quot;resolved&quot;</span>: <span class="tok-kw">True</span>, <span class="tok-str">&quot;notes&quot;</span>: <span class="tok-str">&quot;Auto-compaction finished in 18s.&quot;</span>},
+                ],
+            },
+            wake=self.wake,
+        )
+        self.router.register(<span class="tok-str">&quot;overview&quot;</span>, <span class="tok-cls">OverviewView</span>(self.store, self.router))
+        self.router.register(<span class="tok-str">&quot;detail&quot;</span>, <span class="tok-cls">DetailView</span>(self.store, self.router, self.runner))
+
+    <span class="tok-kw">def</span> build(self, ctx: ui.<span class="tok-cls">UI</span>) -&gt; <span class="tok-kw">None</span>:
+        <span class="tok-kw">with</span> ctx.column(width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>, bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">BACKGROUND</span>):
+            <span class="tok-kw">with</span> ctx.row(width=ui.<span class="tok-cls">FILL</span>, pad_x=<span class="tok-num">24</span>, pad_y=<span class="tok-num">12</span>, gap=<span class="tok-num">12</span>, align=ui.<span class="tok-cls">Align</span>.<span class="tok-cls">CENTER</span>):
+                ctx.icon(ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">SHIELD</span>, <span class="tok-num">18</span>, ui.<span class="tok-cls">Color</span>.<span class="tok-cls">ACCENT</span>)
+                ctx.text(<span class="tok-str">&quot;Incident Console&quot;</span>, font=ui.<span class="tok-cls">FontRole</span>.<span class="tok-cls">MEDIUM</span>, size=<span class="tok-num">16</span>)
+                ctx.spacer()
+                accents = [ui.accent_name(a).capitalize() <span class="tok-kw">for</span> a <span class="tok-kw">in</span> ui.<span class="tok-cls">Accent</span>]
+                picked = ctx.select(<span class="tok-str">&quot;acc_sel&quot;</span>, accents, int(ctx.accent), width=<span class="tok-num">130</span>)
+                <span class="tok-kw">if</span> picked != int(ctx.accent):
+                    ctx.accent = ui.<span class="tok-cls">Accent</span>(picked)
+                ctx.theme_toggle()
+
+            ctx.separator()
+            <span class="tok-kw">with</span> ctx.scroll(<span class="tok-str">&quot;main_scroll&quot;</span>, width=ui.<span class="tok-cls">FILL</span>, height=ui.<span class="tok-cls">FILL</span>, pad=<span class="tok-num">24</span>):
+                self.router.render(ctx)
+
+
+<span class="tok-kw">if</span> __name__ == <span class="tok-str">&quot;__main__&quot;</span>:
+    <span class="tok-cls">IncidentConsoleApp</span>().run()</code></pre></div>
+<hr />
+<h2 id="next-steps">Next Steps</h2>
+<ul><li>Learn every detail of <strong>Accents, Tones, OKLCH Color Tokens, Custom Fonts, and Icons</strong> in <strong><a href="theming-and-styling.html">Theming &amp; Styling →</a></strong>.</li><li>Add <strong>async HTTP APIs, streaming LLMs, and multi-threaded workers</strong> in <strong><a href="concurrency-and-async.html">Concurrency &amp; Async →</a></strong>.</li></ul><div class="pager-nav"><a class="pager-card prev" href="tutorial-functional.html"><span>← Previous</span><strong>Functional &amp; Procedural</strong></a><a class="pager-card next" href="theming-and-styling.html"><span>Next →</span><strong>Theming, Accents &amp; Icons</strong></a></div>
+          </article>
+
+          <!-- Subtle Closing Procedural Topographic Band -->
+          <section class="home-cta compact" id="docs-cta-band">
+            <div class="home-cta-body">
+              <h2>Explore the 13 runnable examples</h2>
+              <p>Every tutorial &amp; 1.1 studio pattern—including the complete <code>zero_to_hero.py</code> Pulse Studio capstone—is ready to run inside <code>examples/</code>.</p>
+              <div class="hero-actions">
+                <a class="btn btn-primary" href="https://github.com/x017/nexa/tree/main/examples" target="_blank" rel="noopener">Browse examples/ →</a>
+                <a class="btn" href="wiki.html">Open Docs Wiki</a>
+                <a class="btn" href="index.html">Back to Overview</a>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <!-- Right Table of Contents -->
+        <aside class="docs-toc" aria-label="On this page">
+          <div class="toc-title">On this page</div>
+          <nav id="docs-toc-links"><a class="toc-link" href="#functional-procedural-vs-oop-side-by-side" data-anchor="functional-procedural-vs-oop-side-by-side">Functional/Procedural vs. OOP: Side-by-Side</a><a class="toc-link" href="#lesson-1-subclassing-ui-application" data-anchor="lesson-1-subclassing-ui-application">Lesson 1: Subclassing ui.Application</a><a class="toc-link" href="#lesson-2-reusable-ui-component-automatic-id-isolation" data-anchor="lesson-2-reusable-ui-component-automatic-id-isolation">Lesson 2: Reusable ui.Component &amp; Automatic ID Isolation</a><a class="toc-link" href="#lesson-3-multi-screen-navigation-with-ui-view-ui-router" data-anchor="lesson-3-multi-screen-navigation-with-ui-view-ui-router">Lesson 3: Multi-Screen Navigation with ui.View &amp; ui.Router</a><a class="toc-link" href="#lesson-4-reactive-state-with-ui-store-t" data-anchor="lesson-4-reactive-state-with-ui-store-t">Lesson 4: Reactive State with ui.Store[T]</a><a class="toc-link" href="#lesson-5-complete-oop-capstone-incident-response-console" data-anchor="lesson-5-complete-oop-capstone-incident-response-console">Lesson 5: Complete OOP Capstone — Incident Response Console</a><a class="toc-link" href="#next-steps" data-anchor="next-steps">Next Steps</a></nav>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/search-index.js?v=1.2.0" defer></script>
+  <script src="assets/dither.js?v=1.2.0" defer></script>
+  <script src="assets/site.js?v=1.2.0" defer></script>
+</body>
+</html>

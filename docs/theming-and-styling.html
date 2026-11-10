@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Theming, Accents &amp; Icons — nexa Documentation</title>
+  <meta name="description" content="Theming, Accents &amp; Icons — step-by-step guide and runnable Python examples for nexa (nexa-ui)." />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.2.0" />
+  <link rel="stylesheet" href="assets/styles.css?v=1.2.0" />
+  <script>
+    try {
+      const saved = localStorage.getItem("nexa_theme");
+      const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+    } catch (e) {}
+  </script>
+</head>
+<body class="guide-mode">
+  <!-- Sticky Top Bar with Reading Progress Hairline -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html">
+        <svg class="brand-mark-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+          <path d="M12 3.4 L20.6 12 L12 20.6 L3.4 12 Z" stroke="currentColor" stroke-opacity="0.34" stroke-width="1.35" stroke-linejoin="round"/>
+          <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M12 5.2 C12 9.4 14.6 12 18.8 12 C14.6 12 12 14.6 12 18.8 C12 14.6 9.4 12 5.2 12 C9.4 12 12 9.4 12 5.2 Z M12 9.8 L14.2 12 L12 14.2 L9.8 12 Z"
+                fill="currentColor"/>
+          <circle cx="12" cy="3.4" r="1.9" fill="var(--accent)"/>
+          <circle cx="20.6" cy="12" r="1.7" fill="currentColor"/>
+          <circle cx="12" cy="20.6" r="1.7" fill="currentColor"/>
+          <circle cx="3.4" cy="12" r="1.7" fill="currentColor"/>
+        </svg>
+        <span>nexa</span>
+        <span class="brand-badge">Docs</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="nav-link" href="index.html">Overview</a>
+        <a class="nav-link" data-nav="wiki" href="wiki.html">Wiki</a>
+        <a class="nav-link" data-nav="guide" href="getting-started.html">Guide</a>
+        <a class="nav-link active" data-nav="tutorials" href="tutorials.html">Tutorials</a>
+        <a class="nav-link" data-nav="components" href="components.html">Components</a>
+        <a class="nav-link" data-nav="changelog" href="changelog.html">Changelog</a>
+      </nav>
+      <div class="topbar-right">
+        <div class="accent-strip" id="header-accent-strip" title="Switch live OKLCH accent"></div>
+        <a class="icon-btn" href="https://github.com/x017/nexa" target="_blank" rel="noopener" aria-label="Source on GitHub" title="Source on GitHub">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+        </a>
+        <button class="icon-btn" id="theme-toggle-btn" type="button" aria-label="Switch theme"></button>
+      </div>
+    </div>
+    <div class="read-progress" id="read-progress"></div>
+  </header>
+
+  <!-- Documentation Layout Shell -->
+  <div class="docs-shell">
+    <!-- Left Chapter Navigation + Instant Filter -->
+    <aside class="docs-sidebar" aria-label="Documentation chapters">
+      <div class="search-box">
+        <input id="docs-search-input" type="search" placeholder="Filter wiki, tutorials &amp; widgets…" autocomplete="off" />
+        <span class="search-kbd">Ctrl K</span>
+      </div>
+      <div class="search-results" id="docs-search-results"></div>
+      <nav id="docs-sidebar-nav"><div class="sidebar-group-title">Explore</div><a class="sidebar-link" href="wiki.html">Docs Wiki <span class="badge-new">WIKI</span></a><a class="sidebar-link" href="tutorials.html">All Tutorials Overview</a><a class="sidebar-link" href="components.html">Component Explorer <span class="badge-new">1.1</span></a><a class="sidebar-link" href="changelog.html">Changelog</a><div class="sidebar-group-title">Start Here</div><a class="sidebar-link" href="zero-to-hero.html">0 to Hero: Full Tutorial <span class="badge-new">FULL</span></a><a class="sidebar-link" href="getting-started.html">Getting Started</a><div class="sidebar-group-title">Tutorials</div><a class="sidebar-link" href="tutorial-functional.html">Functional &amp; Procedural</a><a class="sidebar-link" href="tutorial-oop.html">Object-Oriented (OOP)</a><a class="sidebar-link active" href="theming-and-styling.html">Theming, Accents &amp; Icons</a><div class="sidebar-sublinks"><a class="sidebar-sublink" href="#1-light-dark-theme-modes-ui-thememode" data-anchor="1-light-dark-theme-modes-ui-thememode">1. Light &amp; Dark Theme Modes (ui.ThemeMode)</a><a class="sidebar-sublink" href="#2-the-8-built-in-ui-accent-palettes" data-anchor="2-the-8-built-in-ui-accent-palettes">2. The 8 Built-In ui.Accent Palettes</a><a class="sidebar-sublink" href="#3-semantic-ui-tones-badges-alerts-toasts-kanban-gantt" data-anchor="3-semantic-ui-tones-badges-alerts-toasts-kanban-gantt">3. Semantic ui.Tones (Badges, Alerts, Toasts, Kanban, Gantt)</a><a class="sidebar-sublink" href="#4-custom-brand-colors-live-token-overrides-perceptual-oklch" data-anchor="4-custom-brand-colors-live-token-overrides-perceptual-oklch">4. Custom Brand Colors, Live Token Overrides &amp; Perceptual OKLCH</a><a class="sidebar-sublink" href="#5-typography-custom-ttf-fonts-international-fallback" data-anchor="5-typography-custom-ttf-fonts-international-fallback">5. Typography, Custom .ttf Fonts &amp; International Fallback</a><a class="sidebar-sublink" href="#6-icons-ui-icon" data-anchor="6-icons-ui-icon">6. Icons (ui.Icon)</a></div><a class="sidebar-link" href="concurrency-and-async.html">Concurrency &amp; Asyncio</a><a class="sidebar-link" href="advanced-rendering-and-packaging.html">Canvas, GPU &amp; Packaging</a><div class="sidebar-group-title">API Reference</div><a class="sidebar-link" href="components-reference.html">160+ Components Reference</a></nav>
+    </aside>
+
+    <!-- Main Content Area with Procedural Topographic Backdrop -->
+    <div class="docs-content-grid docs-main-wrap">
+      <div class="docs-art" id="docs-hero-art"></div>
+
+      <div class="docs-page-inner">
+        <main class="docs-main">
+          <article class="prose" id="docs-article">
+<div class="tutorial-track" aria-label="Tutorial curriculum"><span class="tutorial-track-label">Tutorials</span><a class="track-step" href="zero-to-hero.html"><span class="track-step-num">00</span><span>0 → Hero</span></a><a class="track-step" href="getting-started.html"><span class="track-step-num">01</span><span>Start</span></a><a class="track-step" href="tutorial-functional.html"><span class="track-step-num">02</span><span>Functional</span></a><a class="track-step" href="tutorial-oop.html"><span class="track-step-num">03</span><span>OOP</span></a><a class="track-step active" href="theming-and-styling.html"><span class="track-step-num">04</span><span>Theming</span></a><a class="track-step" href="concurrency-and-async.html"><span class="track-step-num">05</span><span>Async &amp; Threads</span></a><a class="track-step" href="advanced-rendering-and-packaging.html"><span class="track-step-num">06</span><span>GPU &amp; Packaging</span></a></div><h1 id="theming-accents-tones-colors-typography">Theming, Accents, Tones, Colors &amp; Typography</h1>
+<p><code>nexa</code> ships with a perceptually calibrated <strong>OKLCH / OKLab</strong> design system out of the box—complete with smooth Light/Dark cross-fading, <strong>8 built-in <code>Accent</code> palettes</strong>, <strong>9 semantic <code>Tone</code>s</strong>, <strong>34 live-editable <code>Token</code> slots</strong>, embedded <strong>Inter</strong> &amp; <strong>Geist Mono</strong> typography, and <strong>168 Lucide vector icons</strong>.</p>
+<hr />
+<h2 id="1-light-dark-theme-modes-ui-thememode">1. Light &amp; Dark Theme Modes (<code>ui.ThemeMode</code>)</h2>
+<p>Switch between Light and Dark modes at startup or dynamically at runtime (surfaces and text smoothly interpolate across frames):</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
+
+<span class="tok-com"># At window creation:</span>
+app = ui.<span class="tok-cls">App</span>(<span class="tok-str">&quot;Demo&quot;</span>, theme=ui.<span class="tok-cls">ThemeMode</span>.<span class="tok-cls">DARK</span>, accent=ui.<span class="tok-cls">Accent</span>.<span class="tok-cls">VIOLET</span>)
+
+<span class="tok-com"># Inside any frame:</span>
+ctx.theme_mode = ui.<span class="tok-cls">ThemeMode</span>.<span class="tok-cls">LIGHT</span>  <span class="tok-com"># or ui.ThemeMode.DARK</span>
+ctx.theme_toggle()                   <span class="tok-com"># Built-in animated Sun/Moon icon button!</span>
+mode = ctx.theme_switcher(mode)      <span class="tok-com"># 2-segment Light/Dark pill switcher</span></code></pre></div>
+<hr />
+<h2 id="2-the-8-built-in-ui-accent-palettes">2. The 8 Built-In <code>ui.Accent</code> Palettes</h2>
+<p><code>ui.Accent</code> defines <strong>exactly 8 built-in primary highlight palettes</strong> (matching CUI&#x27;s <code>cui_accent</code> enum <code>0..7</code>):</p>
+<table><thead><tr><th>Enum Member</th><th>Value</th><th><code>ui.accent_name(...)</code></th><th>Dark Mode Hex</th><th>Light Mode Hex</th><th>Character</th></tr></thead><tbody><tr><td><code>ui.Accent.NEUTRAL</code></td><td><code>0</code></td><td><code>&quot;neutral&quot;</code></td><td><code>#e8e8e8</code></td><td><code>#1d1d1d</code></td><td>Monochrome ink / high-contrast editorial</td></tr><tr><td><code>ui.Accent.VIOLET</code></td><td><code>1</code></td><td><code>&quot;violet&quot;</code></td><td><code>#a78bff</code></td><td><code>#7747ff</code></td><td>Creative tools, AI workspaces</td></tr><tr><td><code>ui.Accent.BLUE</code></td><td><code>2</code></td><td><code>&quot;blue&quot;</code></td><td><code>#6ba3ff</code></td><td><code>#0562ef</code></td><td>Default desktop primary accent</td></tr><tr><td><code>ui.Accent.GREEN</code></td><td><code>3</code></td><td><code>&quot;green&quot;</code></td><td><code>#53dca6</code></td><td><code>#00864b</code></td><td>Finance, emerald/mint telemetry</td></tr><tr><td><code>ui.Accent.AMBER</code></td><td><code>4</code></td><td><code>&quot;amber&quot;</code></td><td><code>#ffcb62</code></td><td><code>#f3ad20</code></td><td>Warm gold instrumentation</td></tr><tr><td><code>ui.Accent.ORANGE</code></td><td><code>5</code></td><td><code>&quot;orange&quot;</code></td><td><code>#ffad5e</code></td><td><code>#c25300</code></td><td>Industrial / hardware studio</td></tr><tr><td><code>ui.Accent.CORAL</code></td><td><code>6</code></td><td><code>&quot;coral&quot;</code></td><td><code>#ff9386</code></td><td><code>#d1403a</code></td><td>Media players, warm creative apps</td></tr><tr><td><code>ui.Accent.ROSE</code></td><td><code>7</code></td><td><code>&quot;rose&quot;</code></td><td><code>#ff8bc5</code></td><td><code>#d23286</code></td><td>Vibrant magenta / pink highlight</td></tr></tbody></table>
+<blockquote class="callout-warn"><p><strong>Important:</strong> Only those 8 members exist on <code>ui.Accent</code> (<code>NEUTRAL</code>, <code>VIOLET</code>, <code>BLUE</code>, <code>GREEN</code>, <code>AMBER</code>, <code>ORANGE</code>, <code>CORAL</code>, <code>ROSE</code>). Names like <code>Accent.MINT</code>, <code>Accent.CYAN</code>, or <code>Accent.TEAL</code> do <strong>not</strong> exist on <code>ui.Accent</code> (<code>GREEN</code> is an emerald-mint <code>#53dca6</code> in dark mode, and <code>Tone.TEAL</code> exists on <code>ui.Tone</code> for badges/events!). Want <strong>any custom hex or OKLCH brand color</strong> (such as Mint <code>#10b981</code> or Cyan <code>#06b6d4</code>) as your app&#x27;s primary accent? Override <code>Token.ACCENT</code> directly on <code>ctx.theme</code>—see Section 4 below!</p></blockquote>
+<h3 id="enumerating-all-accents-dynamically">Enumerating All Accents Dynamically</h3>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-com"># Clean Python iteration over all 8 accents:</span>
+labels = [ui.accent_name(a).capitalize() <span class="tok-kw">for</span> a <span class="tok-kw">in</span> ui.<span class="tok-cls">Accent</span>]
+chosen = ctx.segmented(<span class="tok-str">&quot;accent_picker&quot;</span>, labels, int(ctx.accent))
+<span class="tok-kw">if</span> chosen != int(ctx.accent):
+    ctx.accent = ui.<span class="tok-cls">Accent</span>(chosen)</code></pre></div>
+<hr />
+<h2 id="3-semantic-ui-tones-badges-alerts-toasts-kanban-gantt">3. Semantic <code>ui.Tone</code>s (Badges, Alerts, Toasts, Kanban, Gantt)</h2>
+<p>While <code>ui.Accent</code> controls the <em>entire window&#x27;s</em> primary highlight palette, <strong><code>ui.Tone</code></strong> colors individual status elements (<code>badge</code>, <code>alert</code>, <code>banner</code>, <code>toast</code>, <code>CalEvent</code>, <code>GanttTask</code>, <code>SwipeAction</code>, <code>status_bar_text</code>) so semantic meanings stay consistent regardless of theme:</p>
+<table><thead><tr><th><code>ui.Tone</code> Member</th><th>Typical Use</th></tr></thead><tbody><tr><td><code>ui.Tone.NEUTRAL</code></td><td>Default subtle chip/tag</td></tr><tr><td><code>ui.Tone.INFO</code></td><td>Informational sky-blue notice</td></tr><tr><td><code>ui.Tone.SUCCESS</code></td><td>Completed, paid, online, passing</td></tr><tr><td><code>ui.Tone.WARNING</code></td><td>Pending, degraded, caution</td></tr><tr><td><code>ui.Tone.DANGER</code></td><td>Error, destructive action, overdue</td></tr><tr><td><code>ui.Tone.VIOLET</code></td><td>Category tag / purple highlight</td></tr><tr><td><code>ui.Tone.TEAL</code></td><td>Category tag / teal-mint highlight</td></tr><tr><td><code>ui.Tone.ROSE</code></td><td>Category tag / rose highlight</td></tr><tr><td><code>ui.Tone.ACCENT</code></td><td>Tracks whichever <code>ui.Accent</code> is currently active</td></tr></tbody></table>
+<hr />
+<h2 id="4-custom-brand-colors-live-token-overrides-perceptual-oklch">4. Custom Brand Colors, Live <code>Token</code> Overrides &amp; Perceptual OKLCH</h2>
+<p>Every color in <code>nexa</code> can be passed as:</p>
+<ul><li>A <strong><code>ui.Color(r, g, b, a=255)</code></strong> value</li><li>A hex string: <strong><code>&quot;#10b981&quot;</code></strong> or <strong><code>ui.Color.hex(&quot;#10b981&quot;)</code></strong> (6-digit <code>#RRGGBB</code> or 8-digit <code>#RRGGBBAA</code>)</li><li>An RGB/RGBA tuple: <strong><code>(16, 185, 129)</code></strong> or <strong><code>(16, 185, 129, 200)</code></strong></li><li>A live semantic <strong><code>ui.Token</code></strong> or <strong><code>ui.Color.ACCENT</code></strong> / <strong><code>ui.Color.BACKGROUND</code></strong> / <strong><code>ui.Color.SURFACE</code></strong> / <strong><code>ui.Color.series(0..5)</code></strong> (resolved dynamically against the current Light/Dark theme!)</li></ul>
+<h3 id="customizing-any-theme-token-live-ctx-theme">Customizing Any Theme Token Live (<code>ctx.theme[...]</code>)</h3>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-com"># Set a custom Mint/Cyan brand palette on top of Dark mode:</span>
+ctx.theme[ui.<span class="tok-cls">Token</span>.<span class="tok-cls">ACCENT</span>] = ui.<span class="tok-cls">Color</span>.hex(<span class="tok-str">&quot;#14b8a6&quot;</span>)
+ctx.theme[ui.<span class="tok-cls">Token</span>.<span class="tok-cls">ACCENT_STRONG</span>] = ui.<span class="tok-cls">Color</span>.hex(<span class="tok-str">&quot;#2dd4bf&quot;</span>)
+ctx.theme[ui.<span class="tok-cls">Token</span>.<span class="tok-cls">ACCENT_SUBTLE</span>] = ui.with_alpha(<span class="tok-str">&quot;#14b8a6&quot;</span>, <span class="tok-num">0.16</span>)
+ctx.theme[ui.<span class="tok-cls">Token</span>.<span class="tok-cls">ACCENT_FOREGROUND</span>] = ui.<span class="tok-cls">Color</span>.hex(<span class="tok-str">&quot;#042f2e&quot;</span>)
+
+<span class="tok-com"># Tweak corner roundness &amp; UI scale:</span>
+ctx.theme.radius_control = <span class="tok-num">8.0</span>   <span class="tok-com"># Buttons, inputs, selects</span>
+ctx.theme.radius_surface = <span class="tok-num">14.0</span>  <span class="tok-com"># Cards</span>
+ctx.theme.radius_panel = <span class="tok-num">16.0</span>    <span class="tok-com"># Dialogs, popovers, sheets</span>
+ctx.font_scale = <span class="tok-num">1.10</span>            <span class="tok-com"># 110% proportional DPI/typography scale</span>
+ctx.set_reduced_motion(<span class="tok-kw">False</span>)    <span class="tok-com"># True snaps animations for accessibility</span></code></pre></div>
+<h3 id="perceptual-color-math-oklch-mix-colors-with-alpha">Perceptual Color Math (<code>oklch</code>, <code>mix_colors</code>, <code>with_alpha</code>)</h3>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code>brand = ui.oklch(<span class="tok-num">0.68</span>, <span class="tok-num">0.16</span>, <span class="tok-num">172.0</span>)              <span class="tok-com"># Perceptually uniform Lightness, Chroma, Hue°</span>
+soft = ui.mix_colors(brand, ui.<span class="tok-cls">Color</span>.hex(<span class="tok-str">&quot;#ffffff&quot;</span>), <span class="tok-num">0.25</span>)  <span class="tok-com"># Mixed in OKLab space (no muddy grays!)</span>
+translucent = ui.with_alpha(brand, <span class="tok-num">0.20</span>)         <span class="tok-com"># Multiply alpha by 0.20</span></code></pre></div>
+<h3 id="all-34-ui-token-slots">All 34 <code>ui.Token</code> Slots</h3>
+<ul><li><strong>Surfaces</strong>: <code>BACKGROUND</code>, <code>SURFACE</code>, <code>SURFACE_RAISED</code>, <code>SURFACE_MUTED</code></li><li><strong>Text</strong>: <code>FOREGROUND</code>, <code>TEXT_SECONDARY</code>, <code>TEXT_MUTED</code></li><li><strong>Borders</strong>: <code>BORDER</code>, <code>BORDER_SUBTLE</code>, <code>BORDER_STRONG</code></li><li><strong>Accent</strong>: <code>ACCENT</code>, <code>ACCENT_STRONG</code>, <code>ACCENT_SUBTLE</code>, <code>ACCENT_FOREGROUND</code></li><li><strong>Semantic</strong>: <code>SUCCESS</code>, <code>WARNING</code>, <code>DANGER</code>, <code>INFO</code></li><li><strong>Controls</strong>: <code>CONTROL_ON</code>, <code>CONTROL_GLYPH</code>, <code>CONTROL_TRACK</code>, <code>CONTROL_TRACK_HOVER</code>, <code>CONTROL_THUMB</code>, <code>CONTROL_THUMB_ON</code></li><li><strong>States</strong>: <code>HOVER</code>, <code>ACTIVE</code>, <code>SCRIM</code>, <code>FOCUS_RING</code></li><li><strong>Data Viz</strong>: <code>SERIES_1</code>, <code>SERIES_2</code>, <code>SERIES_3</code>, <code>SERIES_4</code>, <code>SERIES_5</code>, <code>SERIES_6</code></li></ul>
+<hr />
+<h2 id="5-typography-custom-ttf-fonts-international-fallback">5. Typography, Custom <code>.ttf</code> Fonts &amp; International Fallback</h2>
+<p>Out of the box, <code>nexa</code> embeds:</p>
+<ul><li><strong>Inter</strong> (<code>FontRole.BODY</code>, <code>FontRole.MEDIUM</code>, <code>FontRole.DISPLAY</code>)</li><li><strong>Geist Mono</strong> (<code>FontRole.MONO</code>)</li><li><strong>Lucide</strong> (<code>FontRole.ICONS</code> — <code>168</code> crisp vector icons)</li></ul>
+<p>To load your own <code>.ttf</code> / <code>.otf</code> typeface or add CJK / Arabic / Persian / Emoji fallback chains:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-com"># Load primary UI font from file or bytes:</span>
+regular_id = ctx.font_load_file(<span class="tok-str">&quot;assets/PlusJakartaSans-Regular.ttf&quot;</span>)
+ctx.font_set_role(ui.<span class="tok-cls">FontRole</span>.<span class="tok-cls">BODY</span>, regular_id)
+
+<span class="tok-com"># Attach an international fallback font so missing glyphs fall through seamlessly:</span>
+rtl_or_cjk_id = ctx.font_load_file(<span class="tok-str">&quot;assets/Vazirmatn-Regular.ttf&quot;</span>)
+ctx.font_add_fallback(regular_id, rtl_or_cjk_id)</code></pre></div>
+<hr />
+<h2 id="6-icons-ui-icon">6. Icons (<code>ui.Icon</code>)</h2>
+<p>All <strong>168 bundled Lucide icons</strong> are UTF-8 string constants on <code>ui.Icon</code> and can be passed to <code>icon=</code>, <code>ui.icon(...)</code>, <code>ui.icon_button(...)</code>, <code>ui.nav_item(...)</code>, or looked up dynamically by name:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code>ui.icon(ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">SPARKLES</span>, size=<span class="tok-num">20</span>, color=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">ACCENT</span>)
+ui.button(<span class="tok-str">&quot;Deploy&quot;</span>, icon=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">ROCKET</span>, icon_right=ui.<span class="tok-cls">Icon</span>.<span class="tok-cls">ARROW_UP_RIGHT</span>)
+
+<span class="tok-com"># Dynamic lookup (case-insensitive, supports kebab/snake case):</span>
+glyph = ui.<span class="tok-cls">Icon</span>.get(<span class="tok-str">&quot;arrow-right&quot;</span>)  <span class="tok-com"># -&gt; ui.Icon.ARROW_RIGHT</span></code></pre></div>
+<p>Popular icons include:</p>
+<ul><li><strong>Navigation &amp; Arrows</strong>: <code>ARROW_LEFT</code>, <code>ARROW_RIGHT</code>, <code>ARROW_UP</code>, <code>ARROW_DOWN</code>, <code>ARROW_UP_RIGHT</code>, <code>CHEVRON_LEFT</code>, <code>CHEVRON_RIGHT</code>, <code>CHEVRON_DOWN</code>, <code>CHEVRON_UP</code>, <code>HOUSE</code>, <code>MENU</code>, <code>PANEL_LEFT</code>, <code>EXTERNAL_LINK</code></li><li><strong>Actions &amp; Editing</strong>: <code>PLUS</code>, <code>MINUS</code>, <code>X</code>, <code>CHECK</code>, <code>SEARCH</code>, <code>EDIT</code> / <code>SQUARE_PEN</code>, <code>COPY</code>, <code>TRASH</code> / <code>TRASH_2</code>, <code>SAVE</code> / <code>DOWNLOAD</code>, <code>UPLOAD</code>, <code>SHARE_2</code>, <code>REFRESH_CW</code>, <code>FILTER</code>, <code>SLIDERS_HORIZONTAL</code>, <code>SETTINGS</code></li><li><strong>Files, Code &amp; Dev</strong>: <code>FILE</code>, <code>FILE_TEXT</code>, <code>FOLDER</code>, <code>CODE</code>, <code>TERMINAL</code>, <code>GIT_BRANCH</code>, <code>DATABASE</code>, <code>CPU</code>, <code>LAYERS</code>, <code>GRID_3X3</code>, <code>COMMAND</code>, <code>BUG</code></li><li><strong>Status, Security &amp; Social</strong>: <code>CIRCLE_CHECK</code>, <code>CIRCLE_ALERT</code>, <code>TRIANGLE_ALERT</code>, <code>INFO</code>, <code>SHIELD</code>, <code>LOCK</code>, <code>USER</code>, <code>USERS</code>, <code>MAIL</code>, <code>BELL</code>, <code>HEART</code>, <code>STAR</code>, <code>PIN</code> / <code>BOOKMARK</code>, <code>THUMBS_UP</code>, <code>THUMBS_DOWN</code>, <code>SEND</code></li><li><strong>Media, AI &amp; Theme</strong>: <code>SPARKLES</code>, <code>ZAP</code>, <code>PLAY</code>, <code>PAUSE</code>, <code>VOLUME_2</code>, <code>MIC</code>, <code>IMAGE</code>, <code>CALENDAR</code>, <code>CLOCK</code>, <code>GLOBE</code>, <code>WIFI</code>, <code>SUN</code>, <code>MOON</code>, <code>PALETTE</code></li></ul><div class="pager-nav"><a class="pager-card prev" href="tutorial-oop.html"><span>← Previous</span><strong>Object-Oriented (OOP)</strong></a><a class="pager-card next" href="concurrency-and-async.html"><span>Next →</span><strong>Concurrency &amp; Asyncio</strong></a></div>
+          </article>
+
+          <!-- Subtle Closing Procedural Topographic Band -->
+          <section class="home-cta compact" id="docs-cta-band">
+            <div class="home-cta-body">
+              <h2>Explore the 13 runnable examples</h2>
+              <p>Every tutorial &amp; 1.1 studio pattern—including the complete <code>zero_to_hero.py</code> Pulse Studio capstone—is ready to run inside <code>examples/</code>.</p>
+              <div class="hero-actions">
+                <a class="btn btn-primary" href="https://github.com/x017/nexa/tree/main/examples" target="_blank" rel="noopener">Browse examples/ →</a>
+                <a class="btn" href="wiki.html">Open Docs Wiki</a>
+                <a class="btn" href="index.html">Back to Overview</a>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <!-- Right Table of Contents -->
+        <aside class="docs-toc" aria-label="On this page">
+          <div class="toc-title">On this page</div>
+          <nav id="docs-toc-links"><a class="toc-link" href="#1-light-dark-theme-modes-ui-thememode" data-anchor="1-light-dark-theme-modes-ui-thememode">1. Light &amp; Dark Theme Modes (ui.ThemeMode)</a><a class="toc-link" href="#2-the-8-built-in-ui-accent-palettes" data-anchor="2-the-8-built-in-ui-accent-palettes">2. The 8 Built-In ui.Accent Palettes</a><a class="toc-link" href="#3-semantic-ui-tones-badges-alerts-toasts-kanban-gantt" data-anchor="3-semantic-ui-tones-badges-alerts-toasts-kanban-gantt">3. Semantic ui.Tones (Badges, Alerts, Toasts, Kanban, Gantt)</a><a class="toc-link" href="#4-custom-brand-colors-live-token-overrides-perceptual-oklch" data-anchor="4-custom-brand-colors-live-token-overrides-perceptual-oklch">4. Custom Brand Colors, Live Token Overrides &amp; Perceptual OKLCH</a><a class="toc-link" href="#5-typography-custom-ttf-fonts-international-fallback" data-anchor="5-typography-custom-ttf-fonts-international-fallback">5. Typography, Custom .ttf Fonts &amp; International Fallback</a><a class="toc-link" href="#6-icons-ui-icon" data-anchor="6-icons-ui-icon">6. Icons (ui.Icon)</a></nav>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/search-index.js?v=1.2.0" defer></script>
+  <script src="assets/dither.js?v=1.2.0" defer></script>
+  <script src="assets/site.js?v=1.2.0" defer></script>
+</body>
+</html>

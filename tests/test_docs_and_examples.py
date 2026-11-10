@@ -187,54 +187,110 @@ def test_multi_view_examples_exercise_every_route_and_tab() -> None:
         assert res.returncode == 0, f"gallery.py active_tab={tab_idx} failed:\n{res.stderr}"
 
 
-def test_docs_bundle_is_in_sync() -> None:
+def test_docs_bundle_is_in_sync(tmp_path: pathlib.Path) -> None:
     bundle_script = ROOT / "docs" / "build_docs_bundle.py"
     spec = importlib.util.spec_from_file_location("_build_docs_bundle", bundle_script)
     assert spec and spec.loader
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
 
-    out_path = ROOT / "docs" / "assets" / "docs-data.js"
-    before = out_path.read_text(encoding="utf-8")
+    docs_dir = ROOT / "docs"
+    generated_files = [
+        docs_dir / "assets" / "search-index.js",
+        docs_dir / "wiki.html",
+        docs_dir / "tutorials.html",
+        docs_dir / "guide.html",
+        docs_dir / "components.html",
+        docs_dir / "changelog.html",
+        *[docs_dir / f"{slug}.html" for slug, *_ in mod.CHAPTERS],
+    ]
+    before = {p: p.read_text(encoding="utf-8") for p in generated_files}
     mod.build_bundle()
-    after = out_path.read_text(encoding="utf-8")
-    assert before == after, "docs/assets/docs-data.js is out of sync; run `python3 docs/build_docs_bundle.py`"
+    after = {p: p.read_text(encoding="utf-8") for p in generated_files}
+    assert before == after, "Static docs/wiki HTML or search-index.js is out of sync; run `python3 docs/build_docs_bundle.py`"
+    assert not (docs_dir / "assets" / "docs-data.js").exists(), "Legacy 432 KB docs-data.js should not exist"
 
-    # Ensure inline Markdown formatting leaves zero unrendered `**` or broken `](url)` links,
-    # TOC titles contain no raw Markdown markers, and chapter screenshots include dimensions
-    data, _ = json.JSONDecoder().raw_decode(after.split("window.NEXA_DOCS =", 1)[1].lstrip())
-    for ch in data["chapters"]:
-        prose = re.sub(r"<pre>.*?</pre>", "", ch["html"], flags=re.DOTALL)
-        prose_no_code = re.sub(r"<code>.*?</code>", "CODE", prose, flags=re.DOTALL)
-        assert "**" not in prose_no_code, f"Unrendered ** bold marker in {ch['slug']}"
-        assert not re.search(r"\]\([^)<]+\)", prose_no_code), f"Broken markdown link in {ch['slug']}"
-        for toc_item in ch["toc"]:
-            assert "*" not in toc_item["title"] and "`" not in toc_item["title"], (
-                f"Raw Markdown marker in TOC title of {ch['slug']}: {toc_item['title']}"
-            )
-        for img_tag in re.findall(r"<img[^>]+>", ch["html"]):
-            assert 'width="' in img_tag and 'height="' in img_tag, f"Missing dimensions on {img_tag}"
+    # Verify search-index.js parses cleanly and covers all chapters + Wiki
+    search_raw = (docs_dir / "assets" / "search-index.js").read_text(encoding="utf-8")
+    search_items, _ = json.JSONDecoder().raw_decode(search_raw.split("window.NEXA_SEARCH =", 1)[1].lstrip())
+    assert len(search_items) >= 35
+    assert any(it["page"] == "wiki.html" for it in search_items)
+
+    # Verify every static HTML page has pre-rendered sidebar + article, clean prose, and valid internal links/anchors
+    all_html_pages = sorted(docs_dir.glob("*.html"))
+    assert len(all_html_pages) == 14
+    page_ids: dict[str, set[str]] = {
+        p.name: set(re.findall(r'\bid="([^"]+)"', p.read_text(encoding="utf-8")))
+        for p in all_html_pages
+    }
+
+    for p in all_html_pages:
+        txt = p.read_text(encoding="utf-8")
+        if p.name != "index.html":
+            nav_m = re.search(r'<nav id="docs-sidebar-nav">(.*?)</nav>', txt, re.DOTALL)
+            art_m = re.search(r'<article class="prose" id="docs-article">(.*?)</article>', txt, re.DOTALL)
+            assert nav_m and len(nav_m.group(1).strip()) > 200, f"Empty static sidebar in {p.name}"
+            assert art_m and len(art_m.group(1).strip()) > 200, f"Empty static article in {p.name}"
+
+            prose = re.sub(r"<pre>.*?</pre>", "", art_m.group(1), flags=re.DOTALL)
+            prose_no_code = re.sub(r"<code>.*?</code>", "CODE", prose, flags=re.DOTALL)
+            assert "**" not in prose_no_code, f"Unrendered ** bold marker in {p.name}"
+            assert not re.search(r"\]\([^)<]+\)", prose_no_code), f"Broken markdown link in {p.name}"
+            for img_tag in re.findall(r"<img[^>]+>", art_m.group(1)):
+                assert 'width="' in img_tag and 'height="' in img_tag, f"Missing dimensions on {img_tag} in {p.name}"
+
+        # Validate every internal href across all 14 HTML pages!
+        for href in re.findall(r'href="([^"]+)"', txt):
+            if href.startswith(("http://", "https://", "mailto:")):
+                continue
+            if href.startswith("#"):
+                anchor = href[1:]
+                assert anchor in page_ids[p.name], f"{p.name} has dead local anchor #{anchor}"
+            else:
+                rel_part, _, frag = href.partition("#")
+                rel_clean = rel_part.split("?")[0]
+                target_file = docs_dir / rel_clean
+                assert target_file.is_file(), f"{p.name} links to missing file {href}"
+                if frag:
+                    assert frag in page_ids[target_file.name], (
+                        f"{p.name} links to missing anchor #{frag} in {target_file.name}"
+                    )
+
+    # Verify GitHub Wiki export generates Home.md, _Sidebar.md, _Footer.md + all 8 chapters cleanly
+    wiki_files = mod.export_github_wiki(tmp_path)
+    assert len(wiki_files) == 11
+    wiki_names = {f.stem for f in wiki_files}
+    assert {"Home", "_Sidebar", "_Footer", "Zero-to-Hero", "Getting-Started", "Components-Reference"} <= wiki_names
+    for wf in wiki_files:
+        wtxt = wf.read_text(encoding="utf-8")
+        assert "(assets/screenshots/" not in wtxt, f"Unrewritten relative screenshot in {wf.name}"
+        wtxt_no_code = re.sub(r"```[\s\S]*?```|`[^`\n]+`", "", wtxt)
+        for m in re.finditer(r"(?<!!)\[([^\]]+)\]\(([^)]+)\)", wtxt_no_code):
+            target = m.group(2)
+            if not target.startswith(("http://", "https://", "#")):
+                page_slug = target.split("#")[0]
+                assert page_slug in wiki_names, f"{wf.name} links to unknown Wiki page {target!r}"
 
     # Ensure copy buttons work over non-HTTPS origins (e.g. http://parsa.x017.ir/nexa/)
-    site_js = (ROOT / "docs" / "assets" / "site.js").read_text(encoding="utf-8")
+    site_js = (docs_dir / "assets" / "site.js").read_text(encoding="utf-8")
     assert 'execCommand("copy")' in site_js and "isSecureContext" in site_js
 
-    # Ensure docs/assets/styles.css has zero undefined var(--...) tokens and doesn't underline hub cards
-    styles_css = (ROOT / "docs" / "assets" / "styles.css").read_text(encoding="utf-8")
+    # Ensure docs/assets/styles.css has zero undefined var(--...) tokens and scopes .prose link underlines cleanly
+    styles_css = (docs_dir / "assets" / "styles.css").read_text(encoding="utf-8")
     defined_vars = set(re.findall(r"(--[a-zA-Z0-9_-]+)\s*:", styles_css)) | set(
         re.findall(r'setProperty\("(--[a-zA-Z0-9_-]+)"', site_js)
     )
     used_vars = set(re.findall(r"var\((--[a-zA-Z0-9_-]+)\)", styles_css))
     assert used_vars <= defined_vars, f"Undefined CSS custom properties: {sorted(used_vars - defined_vars)}"
-    assert ".prose a:not(.btn):not(.tutorial-hub-card)" in styles_css
+    assert ".prose a:not([class])" in styles_css
 
-    # Ensure index.html and guide.html use matching cache-busting versions on shared assets
-    index_html = (ROOT / "docs" / "index.html").read_text(encoding="utf-8")
-    guide_html = (ROOT / "docs" / "guide.html").read_text(encoding="utf-8")
+    # Ensure index.html and all docs/wiki HTML pages use matching cache-busting versions on shared assets
+    index_html = (docs_dir / "index.html").read_text(encoding="utf-8")
+    wiki_html = (docs_dir / "wiki.html").read_text(encoding="utf-8")
     for asset in ("styles.css", "site.js", "dither.js", "favicon.svg"):
         iv = re.findall(rf"assets/{re.escape(asset)}\?v=([0-9.]+)", index_html)
-        gv = re.findall(rf"assets/{re.escape(asset)}\?v=([0-9.]+)", guide_html)
-        assert iv and iv == gv, f"Asset version mismatch for {asset}: index={iv} vs guide={gv}"
+        wv = re.findall(rf"assets/{re.escape(asset)}\?v=([0-9.]+)", wiki_html)
+        assert iv and iv == wv, f"Asset version mismatch for {asset}: index={iv} vs wiki={wv}"
 
 
 def test_all_public_types_scopes_and_reference_signatures_are_exported() -> None:

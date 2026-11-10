@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documentation Wiki — nexa</title>
+  <meta name="description" content="Complete nexa Documentation Wiki: installation, UI paradigms matrix, 11-module 0-to-Hero map, 20 widget domains, and 13 runnable Python examples." />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.2.0" />
+  <link rel="stylesheet" href="assets/styles.css?v=1.2.0" />
+  <script>
+    try {
+      const saved = localStorage.getItem("nexa_theme");
+      const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+    } catch (e) {}
+  </script>
+</head>
+<body class="guide-mode">
+  <!-- Sticky Top Bar with Reading Progress Hairline -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html">
+        <svg class="brand-mark-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+          <path d="M12 3.4 L20.6 12 L12 20.6 L3.4 12 Z" stroke="currentColor" stroke-opacity="0.34" stroke-width="1.35" stroke-linejoin="round"/>
+          <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M12 5.2 C12 9.4 14.6 12 18.8 12 C14.6 12 12 14.6 12 18.8 C12 14.6 9.4 12 5.2 12 C9.4 12 12 9.4 12 5.2 Z M12 9.8 L14.2 12 L12 14.2 L9.8 12 Z"
+                fill="currentColor"/>
+          <circle cx="12" cy="3.4" r="1.9" fill="var(--accent)"/>
+          <circle cx="20.6" cy="12" r="1.7" fill="currentColor"/>
+          <circle cx="12" cy="20.6" r="1.7" fill="currentColor"/>
+          <circle cx="3.4" cy="12" r="1.7" fill="currentColor"/>
+        </svg>
+        <span>nexa</span>
+        <span class="brand-badge">Docs</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="nav-link" href="index.html">Overview</a>
+        <a class="nav-link active" data-nav="wiki" href="wiki.html">Wiki</a>
+        <a class="nav-link" data-nav="guide" href="getting-started.html">Guide</a>
+        <a class="nav-link" data-nav="tutorials" href="tutorials.html">Tutorials</a>
+        <a class="nav-link" data-nav="components" href="components.html">Components</a>
+        <a class="nav-link" data-nav="changelog" href="changelog.html">Changelog</a>
+      </nav>
+      <div class="topbar-right">
+        <div class="accent-strip" id="header-accent-strip" title="Switch live OKLCH accent"></div>
+        <a class="icon-btn" href="https://github.com/x017/nexa" target="_blank" rel="noopener" aria-label="Source on GitHub" title="Source on GitHub">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+        </a>
+        <button class="icon-btn" id="theme-toggle-btn" type="button" aria-label="Switch theme"></button>
+      </div>
+    </div>
+    <div class="read-progress" id="read-progress"></div>
+  </header>
+
+  <!-- Documentation Layout Shell -->
+  <div class="docs-shell">
+    <!-- Left Chapter Navigation + Instant Filter -->
+    <aside class="docs-sidebar" aria-label="Documentation chapters">
+      <div class="search-box">
+        <input id="docs-search-input" type="search" placeholder="Filter wiki, tutorials &amp; widgets…" autocomplete="off" />
+        <span class="search-kbd">Ctrl K</span>
+      </div>
+      <div class="search-results" id="docs-search-results"></div>
+      <nav id="docs-sidebar-nav"><div class="sidebar-group-title">Explore</div><a class="sidebar-link active" href="wiki.html">Docs Wiki <span class="badge-new">WIKI</span></a><a class="sidebar-link" href="tutorials.html">All Tutorials Overview</a><a class="sidebar-link" href="components.html">Component Explorer <span class="badge-new">1.1</span></a><a class="sidebar-link" href="changelog.html">Changelog</a><div class="sidebar-group-title">Start Here</div><a class="sidebar-link" href="zero-to-hero.html">0 to Hero: Full Tutorial <span class="badge-new">FULL</span></a><a class="sidebar-link" href="getting-started.html">Getting Started</a><div class="sidebar-group-title">Tutorials</div><a class="sidebar-link" href="tutorial-functional.html">Functional &amp; Procedural</a><a class="sidebar-link" href="tutorial-oop.html">Object-Oriented (OOP)</a><a class="sidebar-link" href="theming-and-styling.html">Theming, Accents &amp; Icons</a><a class="sidebar-link" href="concurrency-and-async.html">Concurrency &amp; Asyncio</a><a class="sidebar-link" href="advanced-rendering-and-packaging.html">Canvas, GPU &amp; Packaging</a><div class="sidebar-group-title">API Reference</div><a class="sidebar-link" href="components-reference.html">160+ Components Reference</a></nav>
+    </aside>
+
+    <!-- Main Content Area with Procedural Topographic Backdrop -->
+    <div class="docs-content-grid docs-main-wrap">
+      <div class="docs-art" id="docs-hero-art"></div>
+
+      <div class="docs-page-inner">
+        <main class="docs-main">
+          <article class="prose" id="docs-article">
+<h1 id="nexa-documentation-wiki"><code>nexa</code> Documentation Wiki</h1>
+<p>Central knowledge base for <strong><code>nexa</code></strong> (<code>pip install nexa-ui</code>, imported as <code>import nexa as ui</code>)—a zero-dependency Python port of <a href="https://github.com/yappologistic/CUI" target="_blank" rel="noopener">CUI</a> with 160+ native C99 desktop components, OpenGL 3.3 + multi-threaded SIMD software rendering, and 0% idle CPU.</p>
+
+<div class="wiki-quick-bar" id="quick-jump-installation">
+  <a class="wiki-pill primary" href="zero-to-hero.html">0 → Hero Full Course (11 Modules)</a>
+  <a class="wiki-pill" href="getting-started.html">Quickstart (5 min)</a>
+  <a class="wiki-pill" href="tutorials.html">All Tutorials Hub</a>
+  <a class="wiki-pill" href="components.html">160+ Component Explorer</a>
+  <a class="wiki-pill" href="components-reference.html">Full API Signatures</a>
+  <a class="wiki-pill" href="https://github.com/x017/nexa/wiki" target="_blank" rel="noopener">GitHub Repo Wiki ↗</a>
+</div>
+
+<div class="code-panel">
+  <div class="code-header"><span>bash · install &amp; verify</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div>
+  <pre><code>pip install nexa-ui
+python3 -c "import nexa as ui; print(ui.__version__)"</code></pre>
+</div>
+
+<blockquote class="callout-warn"><p><strong>Important:</strong> Always install <strong><code>nexa-ui</code></strong> from PyPI (<code>pip install nexa-ui</code> or <code>uv add nexa-ui</code>), <strong>not</strong> the unrelated <code>nexa</code> package, and avoid naming a local file <code>nexa.py</code> or folder <code>nexa/</code>.</p></blockquote>
+
+<h2 id="knowledge-base-by-topic">Knowledge Base by Topic</h2>
+<div class="wiki-grid">
+  <div class="wiki-card">
+    <h3><span>Core Mental Model</span> <span class="badge-new">Start</span></h3>
+    <p>Value-returning immediate mode, stable widget IDs (<code>label##id</code> &amp; <code>id_scope</code>), unconditional vs. conditional <code>with</code> scopes, and focus/submit transitions.</p>
+    <div class="wiki-card-links">
+      <a class="wiki-chip-link" href="getting-started.html#3-how-nexa-thinks-value-returning-immediate-mode">Value-Returning Model</a>
+      <a class="wiki-chip-link" href="getting-started.html#4-widget-identity-id-id-scope">IDs &amp; Scopes</a>
+      <a class="wiki-chip-link" href="getting-started.html#5-unconditional-vs-conditional-with-scopes">with Scopes</a>
+    </div>
+  </div>
+
+  <div class="wiki-card">
+    <h3><span>0 → Hero Masterclass</span> <span class="badge-new">11 Modules</span></h3>
+    <p>Progressive 4-stage curriculum building 11 runnable desktop apps culminating in <strong>Pulse Studio</strong> (<code>examples/zero_to_hero.py</code>).</p>
+    <div class="wiki-card-links">
+      <a class="wiki-chip-link" href="zero-to-hero.html#how-this-tutorial-is-organized-complete-syntax-guide">Syntax Guide</a>
+      <a class="wiki-chip-link" href="zero-to-hero.html#module-0-zero-setup-first-window-the-immediate-mode-mental-model">Module 0</a><a class="wiki-chip-link" href="zero-to-hero.html#module-1-layout-mastery-flexbox-responsive-grids-scroll-split-panes">Module 1</a><a class="wiki-chip-link" href="zero-to-hero.html#module-2-forms-pickers-validation-keyboard-shortcuts">Module 2</a><a class="wiki-chip-link" href="zero-to-hero.html#module-3-desktop-chrome-menus-tabs-dialogs-sheets-command-palette">Module 3</a><a class="wiki-chip-link" href="zero-to-hero.html#module-4-high-density-data-markdown-code-editor-diffs-charts">Module 4</a><a class="wiki-chip-link" href="zero-to-hero.html#module-5-studio-creative-tools-dockspace-node-graphs-curves-timelines-custom-sdf-canvas">Module 5</a><a class="wiki-chip-link" href="zero-to-hero.html#module-6-scaling-architecture-functional-vs-procedural-vs-object-oriented">Module 6</a><a class="wiki-chip-link" href="zero-to-hero.html#module-7-design-system-mastery-themes-8-oklch-accents-34-tokens-fonts-bidi-rtl">Module 7</a><a class="wiki-chip-link" href="zero-to-hero.html#module-8-concurrency-worker-pools-streaming-ai-cooperative-asyncio">Module 8</a><a class="wiki-chip-link" href="zero-to-hero.html#module-9-the-hero-capstone-building-pulse-studio-end-to-end">Module 9</a><a class="wiki-chip-link" href="zero-to-hero.html#module-10-testing-in-headless-pytest-custom-gpu-engines-shipping-standalone-binaries">Module 10</a>
+    </div>
+  </div>
+
+  <div class="wiki-card">
+    <h3><span>Layouts, Docking &amp; Chrome</span> <span class="badge-new">v1.1</span></h3>
+    <p>Sub-0.25ms Flexbox (<code>row</code>/<code>column</code>), CSS Grid, <code>FIT</code>/<code>FILL</code>/<code>GROW</code>/<code>PX</code>/<code>PCT</code>, draggable splits, multi-split <code>dockspace</code>, menu bars, toolbars &amp; path bars.</p>
+    <div class="wiki-card-links">
+      <a class="wiki-chip-link" href="zero-to-hero.html#module-1-layout-mastery-flexbox-responsive-grids-scroll-split-panes">Flex &amp; Grid</a>
+      <a class="wiki-chip-link" href="zero-to-hero.html#module-3-desktop-chrome-menus-tabs-dialogs-sheets-command-palette">Menus &amp; Overlays</a>
+      <a class="wiki-chip-link" href="zero-to-hero.html#module-5-studio-creative-tools-dockspace-node-graphs-curves-timelines-custom-sdf-canvas">Dockspace</a>
+    </div>
+  </div>
+
+  <div class="wiki-card">
+    <h3><span>Data Grids, Editors &amp; Charts</span> <span class="badge-new">1M+ Rows</span></h3>
+    <p>Virtualized <code>data_grid</code>, hierarchical <code>tree_table</code>, syntax <code>code_editor</code>, Myers <code>diff_view</code>, CommonMark/GFM <code>markdown</code>, and 16 native chart types.</p>
+    <div class="wiki-card-links">
+      <a class="wiki-chip-link" href="zero-to-hero.html#module-4-high-density-data-markdown-code-editor-diffs-charts">Data &amp; Code Lab</a>
+      <a class="wiki-chip-link" href="components-reference.html#10-data-virtual-lists-tables-grids-code-nexa-widgets-data">Data Signatures</a>
+      <a class="wiki-chip-link" href="components-reference.html#11-charts-data-visualization-nexa-widgets-charts">16 Charts</a>
+    </div>
+  </div>
+
+  <div class="wiki-card">
+    <h3><span>OKLCH Theming, Fonts &amp; BiDi</span> <span class="badge-new">8 Accents</span></h3>
+    <p>Smooth Light/Dark cross-fading, 8 perceptual OKLCH accents, 9 semantic tones, 34 live-editable theme tokens, custom <code>.ttf</code> fonts, 168 Lucide icons &amp; <code>--rtl</code> shaping.</p>
+    <div class="wiki-card-links">
+      <a class="wiki-chip-link" href="theming-and-styling.html#2-the-8-built-in-ui-accent-palettes">8 OKLCH Accents</a>
+      <a class="wiki-chip-link" href="theming-and-styling.html#4-custom-brand-colors-live-token-overrides-perceptual-oklch">34 Tokens</a>
+      <a class="wiki-chip-link" href="theming-and-styling.html#5-typography-custom-ttf-fonts-international-fallback">Fonts &amp; Icons</a>
+    </div>
+  </div>
+
+  <div class="wiki-card">
+    <h3><span>Async, Threads, Testing &amp; Shipping</span> <span class="badge-new">GIL-Free</span></h3>
+    <p>Non-blocking <code>BackgroundRunner</code>, <code>Channel[T]</code>, <code>LogBuffer</code>, <code>AsyncBridge</code>, headless <code>pytest</code> PNG verification, custom GPU backends &amp; PyInstaller/Nuitka.</p>
+    <div class="wiki-card-links">
+      <a class="wiki-chip-link" href="concurrency-and-async.html">Workers &amp; Asyncio</a>
+      <a class="wiki-chip-link" href="advanced-rendering-and-packaging.html#2-automated-headless-ui-testing-png-snapshots">Headless pytest</a>
+      <a class="wiki-chip-link" href="advanced-rendering-and-packaging.html#4-minimal-stripped-builds-single-file-executables">Freeze Binaries</a>
+    </div>
+  </div>
+</div>
+
+<h2 id="ui-paradigms-matrix">UI Paradigms Matrix</h2>
+<table>
+  <thead>
+    <tr><th>Paradigm</th><th>Entry Point</th><th>Best For</th><th>Guide</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Functional Closure</strong></td><td><code>ui.run(draw, ...)</code></td><td>Scripts, prototypes &amp; compact utilities (15–120 lines)</td><td><a href="tutorial-functional.html#lesson-1-top-level-functional-basics">Functional Lesson 1 →</a></td></tr>
+    <tr><td><strong>Procedural Context</strong></td><td><code>with ui.App(...) as app:</code></td><td>Explicit frame loops, multi-module helpers &amp; interactive tests</td><td><a href="tutorial-functional.html#lesson-3-procedural-decomposition-plain-functions-state-dict">Procedural Lesson 3 →</a></td></tr>
+    <tr><td><strong>Object-Oriented</strong></td><td><code>Application</code>, <code>Component</code>, <code>Router</code>, <code>Store</code></td><td>Large multi-view desktop studios with automatic ID isolation</td><td><a href="tutorial-oop.html">OOP Architecture →</a></td></tr>
+    <tr><td><strong>Headless / BYO GPU</strong></td><td><code>SoftwareRenderer</code> / <code>CustomRenderer</code></td><td>CI screenshot testing, server PNG generation &amp; Vulkan/Metal/DX12</td><td><a href="advanced-rendering-and-packaging.html">GPU &amp; Headless →</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="widget-domains-directory">Widget Domains Directory (160+ Components)</h2>
+<table>
+  <thead>
+    <tr><th>Domain</th><th>Representative Widgets</th><th>Reference Section</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Layout &amp; Containers</strong></td><td><code>row</code>, <code>column</code>, <code>grid</code>, <code>stack</code>, <code>card</code>, <code>scroll</code>, <code>split</code></td><td><a href="components-reference.html#1-layout-containers-nexa-widgets-layout">§1 Layout →</a></td></tr>
+    <tr><td><strong>Typography &amp; Actions</strong></td><td><code>heading</code>, <code>label</code>, <code>code</code>, <code>kbd</code>, <code>button</code>, <code>icon_button</code>, <code>button_group</code></td><td><a href="components-reference.html#2-text-typography-nexa-widgets-text">§2–3 Text &amp; Buttons →</a></td></tr>
+    <tr><td><strong>Selection, Inputs &amp; Pickers</strong></td><td><code>checkbox</code>, <code>switch</code>, <code>slider</code>, <code>select</code>, <code>combobox</code>, <code>input</code>, <code>money_input</code>, <code>date_picker</code>, <code>color_picker</code></td><td><a href="components-reference.html#4-selection-controls-nexa-widgets-selection">§4–6 Controls &amp; Pickers →</a></td></tr>
+    <tr><td><strong>Navigation, Overlays &amp; Feedback</strong></td><td><code>tabs</code>, <code>nav_item</code>, <code>dialog</code>, <code>sheet</code>, <code>popover</code>, <code>context_menu</code>, <code>command_palette</code>, <code>toast</code>, <code>badge</code>, <code>metric</code></td><td><a href="components-reference.html#7-navigation-nexa-widgets-navigation">§7–9 Overlays &amp; Status →</a></td></tr>
+    <tr><td><strong>Data Grids, Markdown, Code &amp; Diff</strong></td><td><code>virtual_list</code>, <code>table</code>, <code>data_grid</code>, <code>tree_table</code>, <code>markdown</code>, <code>code_editor</code>, <code>diff_view</code>, <code>json_view</code></td><td><a href="components-reference.html#10-data-virtual-lists-tables-grids-code-nexa-widgets-data">§10 Data &amp; Code →</a></td></tr>
+    <tr><td><strong>Charts &amp; Visualization</strong></td><td><code>line_chart</code>, <code>bar_chart</code>, <code>scatter_chart</code>, <code>donut_chart</code>, <code>radar_chart</code>, <code>treemap</code>, <code>sankey</code>, <code>heatmap</code>, <code>sparkline</code></td><td><a href="components-reference.html#11-charts-data-visualization-nexa-widgets-charts">§11 Charts →</a></td></tr>
+    <tr><td><strong>Studio, Docking, Planning &amp; AI</strong></td><td><code>dockspace</code>, <code>path_bar</code>, <code>hex_view</code>, <code>flame_graph</code>, <code>curve_editor</code>, <code>gradient_editor</code>, <code>timeline_editor</code>, <code>node_editor</code>, <code>kanban</code>, <code>gantt</code>, <code>chat_composer</code>, <code>voice_orb</code></td><td><a href="components-reference.html#12-19-planning-ai-social-media-motion-chrome-tools-node-canvas">§12–19 Studio, AI &amp; Chrome →</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="runnable-examples">13 Runnable Examples (<code>examples/</code>)</h2>
+<p>Run any example locally with <code>python3 examples/&lt;name&gt;.py</code>:</p>
+<table>
+  <thead>
+    <tr><th>File</th><th>Application</th><th>Highlights</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><a href="https://github.com/x017/nexa/blob/main/examples/zero_to_hero.py" target="_blank" rel="noopener"><code>examples/zero_to_hero.py</code></a></td><td><strong>Pulse Studio (0→Hero Capstone)</strong></td><td>OOP Application + Store, dockspace, tree_table, code_editor, diff_view, GFM checklist, charts &amp; flame profiler.</td></tr><tr><td><a href="https://github.com/x017/nexa/blob/main/examples/workbench.py" target="_blank" rel="noopener"><code>examples/workbench.py</code></a></td><td><strong>Workbench Studio 1.1</strong></td><td>All 12 CUI 1.1 components: dockspace, path_bar, tree_table, code_editor, diff_view, hex_view, flame_graph, curves, gradients &amp; NLE timeline.</td></tr><tr><td><a href="https://github.com/x017/nexa/blob/main/examples/gallery.py" target="_blank" rel="noopener"><code>examples/gallery.py</code></a></td><td><strong>Nodes &amp; Studio Gallery</strong></td><td>Menu bar, toolbar, dirty document tabs, pan/zoom Bezier node graph, typed property inspector &amp; C-backed log console.</td></tr><tr><td><a href="https://github.com/x017/nexa/blob/main/examples/dashboard.py" target="_blank" rel="noopener"><code>examples/dashboard.py</code></a></td><td><strong>Larkspur Analytics</strong></td><td>Animated rolling KPIs, sparklines, cubic area chart, donut breakdown, filter bar &amp; virtualized data grid.</td></tr><tr><td><a href="https://github.com/x017/nexa/blob/main/examples/tracker.py" target="_blank" rel="noopener"><code>examples/tracker.py</code></a></td><td><strong>Project Tracker</strong></td><td>Light-mode drag-and-drop Kanban board, interactive Gantt timeline, 7-day week schedule &amp; live presence rings.</td></tr><tr><td><a href="https://github.com/x017/nexa/blob/main/examples/assistant.py" target="_blank" rel="noopener"><code>examples/assistant.py</code></a></td><td><strong>Muse AI Copilot</strong></td><td>BackgroundRunner token streaming, model picker, context ring meter, execution plan &amp; reactive voice orb.</td></tr><tr><td><a href="https://github.com/x017/nexa/blob/main/examples/finance.py" target="_blank" rel="noopener"><code>examples/finance.py</code></a></td><td><strong>Market Terminal</strong></td><td>Live scrolling market ticker, rolling odometer counter, Treemap, split bar, Sankey diagram &amp; trading heatmap.</td></tr><tr><td><a href="https://github.com/x017/nexa/blob/main/examples/settings.py" target="_blank" rel="noopener"><code>examples/settings.py</code></a></td><td><strong>OOP Settings &amp; 8 Accents</strong></td><td>Multi-route Application + Router + View + Component architecture showcasing all 8 OKLCH accents.</td></tr><tr><td><a href="https://github.com/x017/nexa/blob/main/examples/async_network.py" target="_blank" rel="noopener"><code>examples/async_network.py</code></a></td><td><strong>Asyncio &amp; Worker Pools</strong></td><td>Cooperative asyncio loop, AsyncBridge, BackgroundRunner HTTP JSON fetch &amp; non-blocking progress.</td></tr><tr><td><a href="https://github.com/x017/nexa/blob/main/examples/mail.py" target="_blank" rel="noopener"><code>examples/mail.py</code></a></td><td><strong>Desktop Mail Client</strong></td><td>Three-pane resizable split layout, virtualized message list, search filter &amp; rich thread preview.</td></tr><tr><td><a href="https://github.com/x017/nexa/blob/main/examples/music.py" target="_blank" rel="noopener"><code>examples/music.py</code></a></td><td><strong>Audio Deck</strong></td><td>Transport controls, waveform/equalizer visualization, playlists &amp; smooth spring animations.</td></tr><tr><td><a href="https://github.com/x017/nexa/blob/main/examples/notes.py" target="_blank" rel="noopener"><code>examples/notes.py</code></a></td><td><strong>Markdown Notes</strong></td><td>Live CommonMark + GFM task list preview alongside multi-line editing and tag filtering.</td></tr><tr><td><a href="https://github.com/x017/nexa/blob/main/examples/hello.py" target="_blank" rel="noopener"><code>examples/hello.py</code></a></td><td><strong>Minimal Starter</strong></td><td>Smallest 15-line interactive native window using ui.run(draw).</td></tr>
+  </tbody>
+</table>
+          </article>
+
+          <!-- Subtle Closing Procedural Topographic Band -->
+          <section class="home-cta compact" id="docs-cta-band">
+            <div class="home-cta-body">
+              <h2>Explore the 13 runnable examples</h2>
+              <p>Every tutorial &amp; 1.1 studio pattern—including the complete <code>zero_to_hero.py</code> Pulse Studio capstone—is ready to run inside <code>examples/</code>.</p>
+              <div class="hero-actions">
+                <a class="btn btn-primary" href="https://github.com/x017/nexa/tree/main/examples" target="_blank" rel="noopener">Browse examples/ →</a>
+                <a class="btn" href="wiki.html">Open Docs Wiki</a>
+                <a class="btn" href="index.html">Back to Overview</a>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <!-- Right Table of Contents -->
+        <aside class="docs-toc" aria-label="On this page">
+          <div class="toc-title">On this page</div>
+          <nav id="docs-toc-links"><a class="toc-link" href="#quick-jump-installation" data-anchor="quick-jump-installation">Quick Jump &amp; Installation</a><a class="toc-link" href="#knowledge-base-by-topic" data-anchor="knowledge-base-by-topic">Knowledge Base by Topic</a><a class="toc-link" href="#ui-paradigms-matrix" data-anchor="ui-paradigms-matrix">UI Paradigms Matrix</a><a class="toc-link" href="#widget-domains-directory" data-anchor="widget-domains-directory">Widget Domains Directory</a><a class="toc-link" href="#runnable-examples" data-anchor="runnable-examples">13 Runnable Examples</a></nav>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/search-index.js?v=1.2.0" defer></script>
+  <script src="assets/dither.js?v=1.2.0" defer></script>
+  <script src="assets/site.js?v=1.2.0" defer></script>
+</body>
+</html>

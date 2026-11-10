@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>160+ Component Explorer — nexa Documentation</title>
+  <meta name="description" content="Interactive explorer for all 160+ native C99 desktop UI components in nexa across 20 widget domains." />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=1.2.0" />
+  <link rel="stylesheet" href="assets/styles.css?v=1.2.0" />
+  <script>
+    try {
+      const saved = localStorage.getItem("nexa_theme");
+      const dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.dataset.theme = dark ? "dark" : "light";
+    } catch (e) {}
+  </script>
+</head>
+<body class="guide-mode">
+  <!-- Sticky Top Bar with Reading Progress Hairline -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html">
+        <svg class="brand-mark-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+          <path d="M12 3.4 L20.6 12 L12 20.6 L3.4 12 Z" stroke="currentColor" stroke-opacity="0.34" stroke-width="1.35" stroke-linejoin="round"/>
+          <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M12 5.2 C12 9.4 14.6 12 18.8 12 C14.6 12 12 14.6 12 18.8 C12 14.6 9.4 12 5.2 12 C9.4 12 12 9.4 12 5.2 Z M12 9.8 L14.2 12 L12 14.2 L9.8 12 Z"
+                fill="currentColor"/>
+          <circle cx="12" cy="3.4" r="1.9" fill="var(--accent)"/>
+          <circle cx="20.6" cy="12" r="1.7" fill="currentColor"/>
+          <circle cx="12" cy="20.6" r="1.7" fill="currentColor"/>
+          <circle cx="3.4" cy="12" r="1.7" fill="currentColor"/>
+        </svg>
+        <span>nexa</span>
+        <span class="brand-badge">Docs</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a class="nav-link" href="index.html">Overview</a>
+        <a class="nav-link" data-nav="wiki" href="wiki.html">Wiki</a>
+        <a class="nav-link" data-nav="guide" href="getting-started.html">Guide</a>
+        <a class="nav-link" data-nav="tutorials" href="tutorials.html">Tutorials</a>
+        <a class="nav-link active" data-nav="components" href="components.html">Components</a>
+        <a class="nav-link" data-nav="changelog" href="changelog.html">Changelog</a>
+      </nav>
+      <div class="topbar-right">
+        <div class="accent-strip" id="header-accent-strip" title="Switch live OKLCH accent"></div>
+        <a class="icon-btn" href="https://github.com/x017/nexa" target="_blank" rel="noopener" aria-label="Source on GitHub" title="Source on GitHub">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+        </a>
+        <button class="icon-btn" id="theme-toggle-btn" type="button" aria-label="Switch theme"></button>
+      </div>
+    </div>
+    <div class="read-progress" id="read-progress"></div>
+  </header>
+
+  <!-- Documentation Layout Shell -->
+  <div class="docs-shell">
+    <!-- Left Chapter Navigation + Instant Filter -->
+    <aside class="docs-sidebar" aria-label="Documentation chapters">
+      <div class="search-box">
+        <input id="docs-search-input" type="search" placeholder="Filter wiki, tutorials &amp; widgets…" autocomplete="off" />
+        <span class="search-kbd">Ctrl K</span>
+      </div>
+      <div class="search-results" id="docs-search-results"></div>
+      <nav id="docs-sidebar-nav"><div class="sidebar-group-title">Explore</div><a class="sidebar-link" href="wiki.html">Docs Wiki <span class="badge-new">WIKI</span></a><a class="sidebar-link" href="tutorials.html">All Tutorials Overview</a><a class="sidebar-link active" href="components.html">Component Explorer <span class="badge-new">1.1</span></a><a class="sidebar-link" href="changelog.html">Changelog</a><div class="sidebar-group-title">Start Here</div><a class="sidebar-link" href="zero-to-hero.html">0 to Hero: Full Tutorial <span class="badge-new">FULL</span></a><a class="sidebar-link" href="getting-started.html">Getting Started</a><div class="sidebar-group-title">Tutorials</div><a class="sidebar-link" href="tutorial-functional.html">Functional &amp; Procedural</a><a class="sidebar-link" href="tutorial-oop.html">Object-Oriented (OOP)</a><a class="sidebar-link" href="theming-and-styling.html">Theming, Accents &amp; Icons</a><a class="sidebar-link" href="concurrency-and-async.html">Concurrency &amp; Asyncio</a><a class="sidebar-link" href="advanced-rendering-and-packaging.html">Canvas, GPU &amp; Packaging</a><div class="sidebar-group-title">API Reference</div><a class="sidebar-link" href="components-reference.html">160+ Components Reference</a></nav>
+    </aside>
+
+    <!-- Main Content Area with Procedural Topographic Backdrop -->
+    <div class="docs-content-grid docs-main-wrap">
+      <div class="docs-art" id="docs-hero-art"></div>
+
+      <div class="docs-page-inner">
+        <main class="docs-main">
+          <article class="prose" id="docs-article">
+<h1 id="interactive-component-explorer">Interactive Component Explorer <span class="badge-new">160+ Widgets</span></h1>
+<p>Filter across all 20 native C99 widget domains, inspect Pythonic signatures, or jump to the full <a href="components-reference.html">Markdown Signature Reference →</a></p>
+<div class="catalog-controls">
+  <div class="catalog-search-row">
+    <input id="catalog-filter-input" type="search" placeholder="Search dockspace, tree_table, diff_view, flame_graph, kanban, charts…" autocomplete="off" />
+    <span class="catalog-count" id="catalog-count-label">25 shown</span>
+  </div>
+  <div class="catalog-filter-row" id="catalog-domain-chips"><button class="catalog-chip active" type="button" data-domain="All">All</button><button class="catalog-chip" type="button" data-domain="New in 1.1">New in 1.1</button><button class="catalog-chip" type="button" data-domain="Layout">Layout</button><button class="catalog-chip" type="button" data-domain="Chrome &amp; Dock">Chrome &amp; Dock</button><button class="catalog-chip" type="button" data-domain="Data &amp; Code">Data &amp; Code</button><button class="catalog-chip" type="button" data-domain="Tools &amp; Studio">Tools &amp; Studio</button><button class="catalog-chip" type="button" data-domain="Charts">Charts</button><button class="catalog-chip" type="button" data-domain="Planning">Planning</button><button class="catalog-chip" type="button" data-domain="AI &amp; Social">AI &amp; Social</button><button class="catalog-chip" type="button" data-domain="Controls &amp; Overlays">Controls &amp; Overlays</button></div>
+</div>
+<div class="catalog-grid" id="catalog-cards-grid"><div class="catalog-card" data-card-domain="Chrome &amp; Dock" data-card-new="1"><div class="catalog-card-head"><span class="catalog-card-sig">dockspace <span class="badge-new">1.1</span></span><span class="catalog-card-domain">Chrome &amp; Dock</span></div><code>ui.dockspace(id, *, layout=None, width=None, height=None)</code><p>Multi-split tabbed docking workspace with interactive drag-to-dock drop targets and layout DSL.</p></div><div class="catalog-card" data-card-domain="Chrome &amp; Dock" data-card-new="1"><div class="catalog-card-head"><span class="catalog-card-sig">dock_panel <span class="badge-new">1.1</span></span><span class="catalog-card-domain">Chrome &amp; Dock</span></div><code>ui.dock_panel(title, is_open=None, *, icon=None, dirty=False)</code><p>Closable, dirty-aware dockable panel inside an active dockspace; pairs with dock_save() and dock_load().</p></div><div class="catalog-card" data-card-domain="Data &amp; Code" data-card-new="1"><div class="catalog-card-head"><span class="catalog-card-sig">tree_table <span class="badge-new">1.1</span></span><span class="catalog-card-domain">Data &amp; Code</span></div><code>ui.tree_table(id, columns, nodes, *, sort=None, guides=True, labels=None)</code><p>Virtualized multi-column hierarchical tree-grid with lazy child loading, indent guides, and type-ahead search.</p></div><div class="catalog-card" data-card-domain="Chrome &amp; Dock" data-card-new="1"><div class="catalog-card-head"><span class="catalog-card-sig">path_bar <span class="badge-new">1.1</span></span><span class="catalog-card-domain">Chrome &amp; Dock</span></div><code>ui.path_bar(id, segments, *, icon=None, menus=False) -&gt; PathBarResult</code><p>Editable file-manager / IDE breadcrumb address bar with click-to-edit path input and segment popup menus.</p></div><div class="catalog-card" data-card-domain="Data &amp; Code" data-card-new="1"><div class="catalog-card-head"><span class="catalog-card-sig">markdown <span class="badge-new">1.1</span></span><span class="catalog-card-domain">Data &amp; Code</span></div><code>ui.markdown(id, text, *, streaming=False, compact=False) -&gt; MarkdownResult</code><p>CommonMark + GFM renderer with headings, tables, fenced syntax blocks, GitHub alerts, and interactive task checkboxes.</p></div><div class="catalog-card" data-card-domain="Data &amp; Code" data-card-new="1"><div class="catalog-card-head"><span class="catalog-card-sig">code_editor <span class="badge-new">1.1</span></span><span class="catalog-card-domain">Data &amp; Code</span></div><code>ui.code_editor(id, text, *, lang=None, height=320) -&gt; CodeEditorResult</code><p>Multi-line source editor with syntax highlighting, undo/redo history, bracket matching, and Ctrl+F find bar.</p></div><div class="catalog-card" data-card-domain="Data &amp; Code" data-card-new="1"><div class="catalog-card-head"><span class="catalog-card-sig">diff_view <span class="badge-new">1.1</span></span><span class="catalog-card-domain">Data &amp; Code</span></div><code>ui.diff_view(id, old_text, new_text, *, mode=DiffMode.SPLIT) -&gt; DiffResult</code><p>Side-by-side or unified inline diff viewer with intraline word highlights, hunk folding, and headless diff_compute().</p></div><div class="catalog-card" data-card-domain="Tools &amp; Studio" data-card-new="1"><div class="catalog-card-head"><span class="catalog-card-sig">hex_view <span class="badge-new">1.1</span></span><span class="catalog-card-domain">Tools &amp; Studio</span></div><code>ui.hex_view(id, data, selection=None, *, ranges=None, editable=False) -&gt; HexResult</code><p>Virtualized binary hex + ASCII inspector with colored tone annotations and zero-copy bytearray nibble editing.</p></div><div class="catalog-card" data-card-domain="Tools &amp; Studio" data-card-new="1"><div class="catalog-card-head"><span class="catalog-card-sig">flame_graph <span class="badge-new">1.1</span></span><span class="catalog-card-domain">Tools &amp; Studio</span></div><code>ui.flame_graph(id, spans, *, view=None, selected=None) -&gt; FlameResult</code><p>Interactive profiler flame / icicle chart with wheel zoom, drag pan, span selection, and C99 flame_sort().</p></div><div class="catalog-card" data-card-domain="Tools &amp; Studio" data-card-new="1"><div class="catalog-card-head"><span class="catalog-card-sig">curve_editor <span class="badge-new">1.1</span></span><span class="catalog-card-domain">Tools &amp; Studio</span></div><code>ui.curve_editor(id, keys, *, show_playhead=False) -&gt; CurveResult</code><p>2D cubic Bezier, linear &amp; step keyframe curve editor with tangent handles and standalone curve_eval().</p></div><div class="catalog-card" data-card-domain="Tools &amp; Studio" data-card-new="1"><div class="catalog-card-head"><span class="catalog-card-sig">gradient_editor <span class="badge-new">1.1</span></span><span class="catalog-card-domain">Tools &amp; Studio</span></div><code>ui.gradient_editor(id, stops, *, selected=None) -&gt; GradientResult</code><p>Perceptual OKLab multi-stop color ramp editor with stop color/location/opacity controls and gradient_eval().</p></div><div class="catalog-card" data-card-domain="Tools &amp; Studio" data-card-new="1"><div class="catalog-card-head"><span class="catalog-card-sig">timeline_editor <span class="badge-new">1.1</span></span><span class="catalog-card-domain">Tools &amp; Studio</span></div><code>ui.timeline_editor(id, tracks, time, *, start=0, end=10, fps=30) -&gt; TimelineEditorResult</code><p>Multi-track keyframe dope sheet and NLE clip timeline with playhead scrubbing, mute/lock toggles, and clip trimming.</p></div><div class="catalog-card" data-card-domain="Layout" data-card-new="0"><div class="catalog-card-head"><span class="catalog-card-sig">row / column / grid / stack</span><span class="catalog-card-domain">Layout</span></div><code>ui.row(**box_opts) / ui.column(**box_opts) / ui.grid(columns=...)</code><p>Sub-quarter-millisecond Flexbox &amp; responsive CSS-Grid containers supporting FIT, FILL, GROW, PX, and PCT sizing.</p></div><div class="catalog-card" data-card-domain="Layout" data-card-new="0"><div class="catalog-card-head"><span class="catalog-card-sig">split &amp; scroll</span><span class="catalog-card-domain">Layout</span></div><code>ui.split(id, ratio, *, vertical=False) / ui.scroll(id, *, sticky_bottom=False)</code><p>Interactive draggable split panes and smooth virtualizable scroll containers with optional edge fades.</p></div><div class="catalog-card" data-card-domain="Chrome &amp; Dock" data-card-new="0"><div class="catalog-card-head"><span class="catalog-card-sig">menu_bar / toolbar / status_bar / doc_tabs</span><span class="catalog-card-domain">Chrome &amp; Dock</span></div><code>ui.menu_bar() / ui.toolbar() / ui.status_bar() / ui.doc_tabs(...)</code><p>Complete desktop application chrome with keyboard mnemonics, toggle tools, progress items, and reorderable dirty tabs.</p></div><div class="catalog-card" data-card-domain="Data &amp; Code" data-card-new="0"><div class="catalog-card-head"><span class="catalog-card-sig">data_grid</span><span class="catalog-card-domain">Data &amp; Code</span></div><code>ui.data_grid(id, columns, row_count, *, hide_checkboxes=False, anchor=None)</code><p>Spreadsheet-grade virtualized grid with column priority auto-hiding, range selection, sorting, and inline cell editing.</p></div><div class="catalog-card" data-card-domain="Data &amp; Code" data-card-new="0"><div class="catalog-card-head"><span class="catalog-card-sig">virtual_list &amp; table</span><span class="catalog-card-domain">Data &amp; Code</span></div><code>ui.virtual_list(id, count, row_h) / ui.table(id, columns, ...)</code><p>O(visible) 1,000,000-row virtual list scope and striped sortable data tables.</p></div><div class="catalog-card" data-card-domain="Data &amp; Code" data-card-new="0"><div class="catalog-card-head"><span class="catalog-card-sig">code_block &amp; json_view</span><span class="catalog-card-domain">Data &amp; Code</span></div><code>ui.code_block(id, code, *, lang=&#x27;python&#x27;) / ui.json_view(id, json_text)</code><p>Read-only syntax-highlighted source blocks with copy header and interactive collapsible JSON tree inspector.</p></div><div class="catalog-card" data-card-domain="Tools &amp; Studio" data-card-new="0"><div class="catalog-card-head"><span class="catalog-card-sig">node_editor &amp; canvas</span><span class="catalog-card-domain">Tools &amp; Studio</span></div><code>ui.node_editor(id, view) / ui.canvas(id, width, height)</code><p>Pan/zoom Bezier node graph editor with minimap and immediate SDF vector drawing canvas (lines, arcs, polygons, text).</p></div><div class="catalog-card" data-card-domain="Tools &amp; Studio" data-card-new="0"><div class="catalog-card-head"><span class="catalog-card-sig">inspector &amp; log_view</span><span class="catalog-card-domain">Tools &amp; Studio</span></div><code>ui.inspector(id) / ui.prop_float(...) / ui.log_view(id, LogBuffer)</code><p>Typed property inspector (float, int, vec2/3/4, enum, color, bool) and thread-safe C ring-buffer log console.</p></div><div class="catalog-card" data-card-domain="Charts" data-card-new="0"><div class="catalog-card-head"><span class="catalog-card-sig">line_chart / bar_chart / scatter_chart</span><span class="catalog-card-domain">Charts</span></div><code>ui.line_chart(...) / ui.bar_chart(...) / ui.scatter_chart(...)</code><p>Smooth cubic area/line charts, stacked/grouped/horizontal bars, and bubble scatter plots with hover crosshairs.</p></div><div class="catalog-card" data-card-domain="Charts" data-card-new="0"><div class="catalog-card-head"><span class="catalog-card-sig">donut / radar / treemap / sankey / heatmap</span><span class="catalog-card-domain">Charts</span></div><code>ui.donut_chart(...) / ui.treemap(...) / ui.sankey(...) / ui.heatmap(...)</code><p>16 native chart widgets including gauges, funnels, waffles, split bars, activity rings, sparklines, and GitHub calendar heatmaps.</p></div><div class="catalog-card" data-card-domain="Planning" data-card-new="0"><div class="catalog-card-head"><span class="catalog-card-sig">kanban / gantt / week_calendar</span><span class="catalog-card-domain">Planning</span></div><code>ui.kanban(id) / ui.gantt(id, tasks, ...) / ui.week_calendar(...)</code><p>Drag-and-drop Kanban boards with WIP limits, interactive Gantt timelines, and 7-day week event schedules.</p></div><div class="catalog-card" data-card-domain="AI &amp; Social" data-card-new="0"><div class="catalog-card-head"><span class="catalog-card-sig">chat_composer / reasoning / tool_call / voice_orb</span><span class="catalog-card-domain">AI &amp; Social</span></div><code>ui.chat_composer(...) / ui.reasoning(...) / ui.voice_orb(...)</code><p>Streaming AI interfaces: markdown chat bubbles, model picker, token context ring, agent plans, citations &amp; reactive voice orb.</p></div><div class="catalog-card" data-card-domain="Controls &amp; Overlays" data-card-new="0"><div class="catalog-card-head"><span class="catalog-card-sig">button / input / select / command_palette / dialog</span><span class="catalog-card-domain">Controls &amp; Overlays</span></div><code>ui.button(...) / ui.input(...) / ui.command_palette(...) / ui.dialog(...)</code><p>60+ tactile form controls, date/color pickers, OTP/money inputs, sheets, popovers, toasts, and Ctrl+K command palette.</p></div></div>
+          </article>
+
+          <!-- Subtle Closing Procedural Topographic Band -->
+          <section class="home-cta compact" id="docs-cta-band">
+            <div class="home-cta-body">
+              <h2>Explore the 13 runnable examples</h2>
+              <p>Every tutorial &amp; 1.1 studio pattern—including the complete <code>zero_to_hero.py</code> Pulse Studio capstone—is ready to run inside <code>examples/</code>.</p>
+              <div class="hero-actions">
+                <a class="btn btn-primary" href="https://github.com/x017/nexa/tree/main/examples" target="_blank" rel="noopener">Browse examples/ →</a>
+                <a class="btn" href="wiki.html">Open Docs Wiki</a>
+                <a class="btn" href="index.html">Back to Overview</a>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <!-- Right Table of Contents -->
+        <aside class="docs-toc" aria-label="On this page">
+          <div class="toc-title">On this page</div>
+          <nav id="docs-toc-links"><a class="toc-link" href="components-reference.html">Full Markdown Signatures →</a></nav>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/search-index.js?v=1.2.0" defer></script>
+  <script src="assets/dither.js?v=1.2.0" defer></script>
+  <script src="assets/site.js?v=1.2.0" defer></script>
+</body>
+</html>
