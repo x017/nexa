@@ -33,8 +33,32 @@ static const char *cui__sdl_get_clip(void *user) {
     return app->clipboard;
 }
 
+#if !defined(_WIN32)
+/* Sets an environment variable for SDL_Init to read, unless the user set it.
+ * True when it was set here, so it can be removed again. */
+static bool cui__sdl_env_set(const char *name, const char *value) {
+    return value && !getenv(name) && setenv(name, value, 1) == 0;
+}
+#endif
+
 bool cui__plat_init(cui_app *app) {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) return false;
+    /* The app ID becomes WM_CLASS (X11) and the app_id (Wayland). SDL2 reads it
+     * from these variables in SDL_Init, Wayland falling back to the X11 one;
+     * SDL3 under sdl2-compat reads the SDL_APP_ID hint, which SDL_Quit clears.
+     * Variables the user set win. The ones set here are removed once SDL_Init
+     * has read them, so neither a later app in this process nor a child
+     * process inherits this app's ID. */
+    if (app->desc.app_id) SDL_SetHint("SDL_APP_ID", app->desc.app_id);
+#if !defined(_WIN32)
+    bool set_x11 = cui__sdl_env_set("SDL_VIDEO_X11_WMCLASS", app->desc.app_id);
+    bool set_wayland = cui__sdl_env_set("SDL_VIDEO_WAYLAND_WMCLASS", app->desc.app_id);
+#endif
+    int init = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
+#if !defined(_WIN32)
+    if (set_x11) unsetenv("SDL_VIDEO_X11_WMCLASS");
+    if (set_wayland) unsetenv("SDL_VIDEO_WAYLAND_WMCLASS");
+#endif
+    if (init != 0) return false;
     cui__sdl *s = calloc(1, sizeof *s);
     if (!s) return false;
     app->plat = s;
@@ -220,6 +244,18 @@ void cui__plat_wait(cui_app *app, double timeout) {
     }
     while (SDL_PollEvent(&e)) cui__sdl_event(app, &e);
 }
+
+bool cui__plat_present_part(cui_app *app, const void *bgra, int w, int h, int stride, int x, int y, int pw, int ph) {
+    (void)app; (void)bgra; (void)w; (void)h; (void)stride; (void)x; (void)y; (void)pw; (void)ph;
+    return false;   /* the whole buffer is shown each time */
+}
+
+double cui__plat_refresh_hz(cui_app *app) {
+    SDL_DisplayMode m;
+    return SDL_GetWindowDisplayMode(cui__s(app)->win, &m) == 0 ? m.refresh_rate : 0;
+}
+
+void cui__plat_gl_release(cui_app *app) { (void)app; }   /* not used: these keep OpenGL */
 
 void cui__plat_wake(cui_app *app) {
     (void)app;

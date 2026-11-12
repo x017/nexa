@@ -61,7 +61,7 @@
         <span class="search-kbd">Ctrl K</span>
       </div>
       <div class="search-results" id="docs-search-results"></div>
-      <nav id="docs-sidebar-nav"><div class="sidebar-group-title">Explore</div><a class="sidebar-link" href="wiki.html">Docs Wiki <span class="badge-new">WIKI</span></a><a class="sidebar-link" href="tutorials.html">All Tutorials Overview</a><a class="sidebar-link" href="components.html">Component Explorer <span class="badge-new">1.1</span></a><a class="sidebar-link active" href="changelog.html">Changelog</a><div class="sidebar-group-title">Start Here</div><a class="sidebar-link" href="zero-to-hero.html">0 to Hero: Full Tutorial <span class="badge-new">FULL</span></a><a class="sidebar-link" href="getting-started.html">Getting Started</a><div class="sidebar-group-title">Tutorials</div><a class="sidebar-link" href="tutorial-functional.html">Functional &amp; Procedural</a><a class="sidebar-link" href="tutorial-oop.html">Object-Oriented (OOP)</a><a class="sidebar-link" href="theming-and-styling.html">Theming, Accents &amp; Icons</a><a class="sidebar-link" href="concurrency-and-async.html">Concurrency &amp; Asyncio</a><a class="sidebar-link" href="advanced-rendering-and-packaging.html">Canvas, GPU &amp; Packaging</a><div class="sidebar-group-title">API Reference</div><a class="sidebar-link" href="components-reference.html">160+ Components Reference</a></nav>
+      <nav id="docs-sidebar-nav"><div class="sidebar-group-title">Explore</div><a class="sidebar-link" href="wiki.html">Docs Wiki <span class="badge-new">WIKI</span></a><a class="sidebar-link" href="tutorials.html">All Tutorials Overview</a><a class="sidebar-link" href="components.html">Component Explorer <span class="badge-new">1.4</span></a><a class="sidebar-link active" href="changelog.html">Changelog</a><div class="sidebar-group-title">Start Here</div><a class="sidebar-link" href="zero-to-hero.html">0 to Hero: Full Tutorial <span class="badge-new">FULL</span></a><a class="sidebar-link" href="getting-started.html">Getting Started</a><div class="sidebar-group-title">Tutorials</div><a class="sidebar-link" href="tutorial-functional.html">Functional &amp; Procedural</a><a class="sidebar-link" href="tutorial-oop.html">Object-Oriented (OOP)</a><a class="sidebar-link" href="theming-and-styling.html">Theming, Accents &amp; Icons</a><a class="sidebar-link" href="concurrency-and-async.html">Concurrency &amp; Asyncio</a><a class="sidebar-link" href="advanced-rendering-and-packaging.html">Canvas, GPU &amp; Packaging</a><div class="sidebar-group-title">API Reference</div><a class="sidebar-link" href="components-reference.html">190+ Components Reference</a></nav>
     </aside>
 
     <!-- Main Content Area with Procedural Topographic Backdrop -->
@@ -74,7 +74,18 @@
 <h1 id="changelog">Changelog</h1>
 <p>Release history for <code>nexa</code> (<code>nexa-ui</code> on PyPI) and its vendored C99 <a href="https://github.com/yappologistic/CUI" target="_blank" rel="noopener">CUI</a> core.</p>
 <div class="changelog-entry">
-  <h2 id="v1-1-0">v1.1.0 <span class="badge-new">Latest · CUI 1.1 Sync</span></h2>
+  <h2 id="v1-4-0">v1.4.0 <span class="badge-new">Latest · CUI 1.4 Sync</span></h2>
+  <ul>
+    <li><strong>Instrument cluster</strong>: Added <code>ui.knob</code>, <code>ui.fader</code>, <code>ui.level_meter</code>, <code>ui.radial_gauge</code>, <code>ui.readout</code>, <code>ui.dot_display</code>, <code>ui.dot_chart</code>, and <code>ui.event_track</code> — every one returns the value the user dialed in.</li>
+    <li><strong>Text, media &amp; files</strong>: Right-to-left layout and text (<code>direction=ui.TextDirection.RTL</code>), embedded <strong>emoji</strong> with <code>ui.emoji_picker</code> and color-emoji font loading, a scrollback-backed <code>ui.terminal</code> via <code>ui.TerminalBuffer</code>, <code>ui.file_browser</code> / <code>ui.file_picker</code> for real directories (with an in-tree <code>ui.fs_list</code>), <code>ui.image_viewer</code>, and <code>ui.cropper</code>.</li>
+    <li><strong>Charts &amp; calendars</strong>: <code>ui.candlestick</code> for OHLC data plus <code>annotations=</code> on every chart (<code>ui.ChartAnnotation</code>), <code>ui.month_calendar</code> with events, and <code>ui.tour</code> guided app walks.</li>
+    <li><strong>Developer tools (CUI 1.3)</strong>: <code>ui.problems</code>, <code>ui.pipeline</code>, <code>ui.trace_view</code>, <code>ui.waterfall</code>, <code>ui.graph_view</code>, <code>ui.commit_graph</code>, <code>ui.keymap</code>, <code>ui.test_explorer</code>, <code>ui.stack_trace</code>, <code>ui.blame</code>, <code>ui.coverage</code>, <code>ui.regex_tester</code>, <code>ui.request_bar</code>, <code>ui.api_explorer</code>, <code>ui.feature_flags</code>, <code>ui.uptime_bars</code>, <code>ui.time_histogram</code>, <code>ui.kv_editor</code>, <code>ui.query_builder</code>, and <code>ui.schedule_picker</code> — data in as plain dicts, results out as named tuples.</li>
+    <li><strong>Context-free utilities</strong>: <code>ui.regex_search</code> (CUI's RE2-style engine with named groups), <code>ui.cron_next</code> / <code>ui.cron_describe</code>, <code>ui.url_params</code> / <code>ui.url_set_params</code>, <code>ui.http_reason</code> / <code>ui.http_method_name</code>, plus <code>ui.UI.request_wakeup</code>, <code>set_strings</code>/<code>get_strings</code>, <code>response_status</code>, and <code>is_software</code>.</li>
+    <li><strong>Engine re-sync &amp; ABI hardening</strong>: <code>csrc/</code> moved to CUI <strong>v1.4.0</strong> (434 → 501 public functions, 208 → 304 structs); <code>tools/gen_abi.py</code> regenerates the ctypes mirrors from <code>cui.h</code> and an audit proves every mirrored struct matches the compiler's <code>sizeof</code>/offsets; <code>tools/gen_devtools_bridge.py</code> generates the struct-returning bridges so ctypes never passes a struct by value.</li>
+  </ul>
+</div>
+<div class="changelog-entry">
+  <h2 id="v1-1-0">v1.1.0 <span class="badge">CUI 1.1 Sync</span></h2>
   <ul>
     <li><strong>Multi-split Docking Workspaces</strong>: Added <code>ui.dockspace</code>, <code>ui.dock_panel</code>, <code>ui.dock_save</code>, and <code>ui.dock_load</code> with interactive tab dragging, split previews, and layout serialization.</li>
     <li><strong>Tree Table &amp; Editable Path Bar</strong>: Added virtualized multi-column <code>ui.tree_table</code> + <code>ui.tree_sort</code> and breadcrumb/editable <code>ui.path_bar</code> + <code>ui.path_bar_menu</code>.</li>
@@ -108,7 +119,7 @@
         <!-- Right Table of Contents -->
         <aside class="docs-toc" aria-label="On this page">
           <div class="toc-title">On this page</div>
-          <nav id="docs-toc-links"><a class="toc-link" href="#v1-1-0" data-anchor="v1-1-0">v1.1.0</a><a class="toc-link" href="#v1-0-0" data-anchor="v1-0-0">v1.0.0</a></nav>
+          <nav id="docs-toc-links"><a class="toc-link" href="#v1-4-0" data-anchor="v1-4-0">v1.4.0</a><a class="toc-link" href="#v1-1-0" data-anchor="v1-1-0">v1.1.0</a><a class="toc-link" href="#v1-0-0" data-anchor="v1-0-0">v1.0.0</a></nav>
         </aside>
       </div>
     </div>

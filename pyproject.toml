@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nexa-ui"
-version = "1.1.0"
+version = "1.4.0"
 description = "Fast, tiny, zero-dependency immediate-mode desktop UI for Python — a Python port of CUI"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "MIT"

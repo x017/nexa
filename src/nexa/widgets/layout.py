@@ -17,7 +17,7 @@ from .._cdefs import (
     to_c_size,
 )
 from ..scopes import BoxScope, CardScope, SimpleScope, SplitScope
-from ..types import Align, ColorLike, Direction, Elevation, Justify, Rect, SizeLike
+from ..types import Align, ColorLike, Direction, Elevation, Justify, Rect, SizeLike, TextDirection
 
 
 def _build_box_opts(
@@ -57,6 +57,7 @@ def _build_box_opts(
     scroll_y: bool = False,
     clip: bool = False,
     opacity: float = 0.0,
+    direction: TextDirection = TextDirection.INHERIT,
 ) -> CuiBox:
     opts = CuiBox()
     opts.id = encode_opt(id, keep)
@@ -93,6 +94,7 @@ def _build_box_opts(
     opts.scroll_y = bool(scroll_y)
     opts.clip = bool(clip)
     opts.opacity = float(opacity)
+    opts.direction = int(direction)
     keep.append(opts)
     return opts
 

@@ -31,7 +31,7 @@ CHAPTERS = [
     ("theming-and-styling", "Theming, Accents & Icons", "Tutorials", "theming-and-styling.md", "Theming-Accents-and-Icons", "tutorials"),
     ("concurrency-and-async", "Concurrency & Asyncio", "Tutorials", "concurrency-and-async.md", "Concurrency-and-Asyncio", "tutorials"),
     ("advanced-rendering-and-packaging", "Canvas, GPU & Packaging", "Tutorials", "advanced-rendering-and-packaging.md", "Canvas-GPU-and-Packaging", "tutorials"),
-    ("components-reference", "160+ Components Reference", "API Reference", "components-reference.md", "Components-Reference", "components"),
+    ("components-reference", "190+ Components Reference", "API Reference", "components-reference.md", "Components-Reference", "components"),
 ]
 
 TUTORIAL_TRACK = [
@@ -126,6 +126,45 @@ CATALOG_ITEMS = [
     {"name": "kanban / gantt / week_calendar", "sig": "ui.kanban(id) / ui.gantt(id, tasks, ...) / ui.week_calendar(...)", "domain": "Planning", "isNew": False, "desc": "Drag-and-drop Kanban boards with WIP limits, interactive Gantt timelines, and 7-day week event schedules."},
     {"name": "chat_composer / reasoning / tool_call / voice_orb", "sig": "ui.chat_composer(...) / ui.reasoning(...) / ui.voice_orb(...)", "domain": "AI & Social", "isNew": False, "desc": "Streaming AI interfaces: markdown chat bubbles, model picker, token context ring, agent plans, citations & reactive voice orb."},
     {"name": "button / input / select / command_palette / dialog", "sig": "ui.button(...) / ui.input(...) / ui.command_palette(...) / ui.dialog(...)", "domain": "Controls & Overlays", "isNew": False, "desc": "60+ tactile form controls, date/color pickers, OTP/money inputs, sheets, popovers, toasts, and Ctrl+K command palette."},
+    {"name": "knob", "sig": "ui.knob(id, value, min=0, max=1, *, label=None, unit=None, bipolar=False) -> float", "domain": "Instruments", "isNew": True, "desc": "Rotary dial with drag/wheel input, dB or linear scale, and the value it returns on change; double-click resets."},
+    {"name": "fader", "sig": "ui.fader(id, value, min=0, max=1, *, ticks=(), meter=None, horizontal=False) -> float", "domain": "Instruments", "isNew": True, "desc": "Console fader with tick marks and an optional dB meter strip beside the track."},
+    {"name": "level_meter", "sig": "ui.level_meter(id, levels, *, min_db=-48, max_db=6, segmented=True) -> bool", "domain": "Instruments", "isNew": True, "desc": "Multi-channel segmented dB meter with peak hold and decay."},
+    {"name": "radial_gauge", "sig": "ui.radial_gauge(id, value, *, min=0, max=100, bands=(), target=None)", "domain": "Instruments", "isNew": True, "desc": "Sweeping arc gauge with tone bands and an optional target needle."},
+    {"name": "readout", "sig": "ui.readout(label, value, *, unit=None, detail=None, tone=Tone.NEUTRAL, accent=False)", "domain": "Instruments", "isNew": True, "desc": "Big-number instrument readout with a unit suffix and a small detail line."},
+    {"name": "dot_display", "sig": "ui.dot_display(text, *, pitch=0, accent=False, marquee=False)", "domain": "Instruments", "isNew": True, "desc": "Dot-matrix style display for clock and hardware readouts."},
+    {"name": "dot_chart", "sig": "ui.dot_chart(id, series, *, x_units='number', annotations=()) -> DotChartResult", "domain": "Instruments", "isNew": True, "desc": "Dot/heatmap chart for sparse event data over a day, with hover readout and annotations."},
+    {"name": "event_track", "sig": "ui.event_track(id, times, *, capacity=256, min=0, max=24) -> EventTrackResult", "domain": "Instruments", "isNew": True, "desc": "Timeline strip of point events the user can add, drag and delete."},
+    {"name": "candlestick", "sig": "ui.candlestick(id, candles, *, labels=None, overlays=(), ohlc=False) -> int", "domain": "Charts", "isNew": True, "desc": "Financial OHLC candlestick chart with an optional volume strip and overlays; returns the hovered index."},
+    {"name": "image_viewer", "sig": "ui.image_viewer(id, texture, image_width, image_height, view) -> ImageView", "domain": "Media", "isNew": True, "desc": "Zoomable, pannable image viewer with a toolbar and checkerboard transparency."},
+    {"name": "cropper", "sig": "ui.cropper(id, texture, image_width, image_height, crop, *, aspect=0) -> (Rect, bool)", "domain": "Media", "isNew": True, "desc": "Crop rectangle editor with handles, aspect lock, and a round-mask preview."},
+    {"name": "emoji", "sig": "ui.emoji(text, *, size=16)", "domain": "Media", "isNew": True, "desc": "Draw an emoji glyph from the embedded color-emoji table."},
+    {"name": "emoji_picker", "sig": "ui.emoji_picker(id, *, height=280, recent='', no_search=False) -> str | None", "domain": "Media", "isNew": True, "desc": "Searchable emoji grid grouped by category; returns the picked emoji."},
+    {"name": "terminal", "sig": "ui.terminal(id, buffer, *, height=320, prompt=None, no_input=False) -> TerminalResult", "domain": "Text & Code", "isNew": True, "desc": "Terminal panel over a TerminalBuffer: scrollback, ANSI colours and a command line."},
+    {"name": "month_calendar", "sig": "ui.month_calendar(id, month, events=(), *, selected=None, cell_height=104) -> MonthResult", "domain": "Planning", "isNew": True, "desc": "Month grid with multi-day events, day selection, and month navigation."},
+    {"name": "tour", "sig": "ui.tour(id, steps, step, *, padding=6, block_target=False) -> (int, str)", "domain": "Controls & Overlays", "isNew": True, "desc": "Guided product tour: a card anchored to any widget id with next/back/done actions."},
+    {"name": "file_browser", "sig": "ui.file_browser(id, path, *, filter=None, folders_only=False) -> FileBrowserResult", "domain": "Files", "isNew": True, "desc": "Real-directory browser with sorting, filter, places sidebar and history; returns the updated folder."},
+    {"name": "file_picker", "sig": "ui.file_picker(id, path, *, save=False, folders=False, filter=None) -> FilePickerResult", "domain": "Files", "isNew": True, "desc": "Open/save dialog over the file browser with a filename field and filter."},
+    {"name": "fs_list", "sig": "ui.fs_list(path='.', *, hidden=False) -> list[FileEntry]", "domain": "Files", "isNew": True, "desc": "Headless directory listing behind the browser, usable outside a frame."},
+    {"name": "problems", "sig": "ui.problems(id, diagnostics, *, no_toolbar=False) -> ProblemsResult", "domain": "Dev Tools", "isNew": True, "desc": "Filterable build and lint problems panel with severity icons and jump-to-line."},
+    {"name": "pipeline", "sig": "ui.pipeline(id, stages, jobs=(), *, selected=-1) -> PipelineResult", "domain": "Dev Tools", "isNew": True, "desc": "CI/CD pipeline of stage columns with job badges, durations and retries."},
+    {"name": "schedule_picker", "sig": "ui.schedule_picker(id, cron='0 9 * * *') -> ScheduleResult", "domain": "Dev Tools", "isNew": True, "desc": "Cron builder with presets, a plain-language description and the next run times."},
+    {"name": "keymap", "sig": "ui.keymap(id, bindings, *, categories=()) -> KeymapResult", "domain": "Dev Tools", "isNew": True, "desc": "Searchable keyboard-shortcut cheatsheet with conflict detection."},
+    {"name": "commit_graph", "sig": "ui.commit_graph(id, commits, *, height=280) -> CommitGraphResult", "domain": "Dev Tools", "isNew": True, "desc": "Git history graph with branch lanes, refs, merges and author/date columns."},
+    {"name": "graph_view", "sig": "ui.graph_view(id, nodes, edges=(), *, top_down=True) -> GraphResult", "domain": "Dev Tools", "isNew": True, "desc": "Node/edge dependency graph with pan, zoom and selection."},
+    {"name": "waterfall", "sig": "ui.waterfall(id, requests, *, dom_loaded=-1, loaded=-1) -> WaterfallResult", "domain": "Dev Tools", "isNew": True, "desc": "Network waterfall with request phases, sizes and DOMContentLoaded/load markers."},
+    {"name": "trace_view", "sig": "ui.trace_view(id, tracks, spans, view=None, selected=-1) -> TraceResult", "domain": "Dev Tools", "isNew": True, "desc": "Timeline trace viewer with nested tracks, zoom/pan, markers and span selection."},
+    {"name": "regex_tester", "sig": "ui.regex_tester(id, pattern='', text='') -> RegexTesterResult", "domain": "Dev Tools", "isNew": True, "desc": "Live regular-expression playground with match highlighting and error text."},
+    {"name": "test_explorer", "sig": "ui.test_explorer(id, items) -> TestExplorerResult", "domain": "Dev Tools", "isNew": True, "desc": "Test tree with pass/fail/skip badges, durations, messages and run buttons."},
+    {"name": "stack_trace", "sig": "ui.stack_trace(id, frames, *, title='', message='') -> StackTraceResult", "domain": "Dev Tools", "isNew": True, "desc": "Crash report with expandable source excerpts and file/line links."},
+    {"name": "request_bar", "sig": "ui.request_bar(id, method=0, url='') -> RequestBarResult", "domain": "Dev Tools", "isNew": True, "desc": "HTTP method picker, URL field and Send button for API clients."},
+    {"name": "api_explorer", "sig": "ui.api_explorer(id, endpoints) -> ApiExplorerResult", "domain": "Dev Tools", "isNew": True, "desc": "Browsable API reference with method badges, params and a try-it button."},
+    {"name": "feature_flags", "sig": "ui.feature_flags(id, flags, envs=()) -> FeatureFlagsResult", "domain": "Dev Tools", "isNew": True, "desc": "Flag table with per-environment switches and rollout percentages."},
+    {"name": "uptime_bars", "sig": "ui.uptime_bars(id, services) -> UptimeResult", "domain": "Dev Tools", "isNew": True, "desc": "Status-page uptime bars with per-day health and tooltips."},
+    {"name": "time_histogram", "sig": "ui.time_histogram(id, start, bucket_seconds, series) -> TimeHistogramResult", "domain": "Dev Tools", "isNew": True, "desc": "Stacked histogram over time with a draggable brush selection."},
+    {"name": "coverage", "sig": "ui.coverage(id, files, *, low=0.5, high=0.8) -> CoverageResult", "domain": "Dev Tools", "isNew": True, "desc": "Coverage report with per-file line, branch and function heat bars."},
+    {"name": "blame", "sig": "ui.blame(id, lines, line_commit, commits) -> BlameResult", "domain": "Dev Tools", "isNew": True, "desc": "git blame view: source lines tinted by commit with author and age gutters."},
+    {"name": "kv_editor", "sig": "ui.kv_editor(id, pairs=(), *, capacity=32) -> KvEditorResult", "domain": "Dev Tools", "isNew": True, "desc": "Editable key/value rows with enable toggles and secret masking."},
+    {"name": "query_builder", "sig": "ui.query_builder(id, fields, nodes=()) -> QueryBuilderResult", "domain": "Dev Tools", "isNew": True, "desc": "Nested AND/OR rule builder over typed fields, with query_text() and query_match() helpers."},
 ]
 
 EXAMPLES_LIST = [
@@ -397,7 +436,7 @@ def render_sidebar_html(current_slug: str, parsed_chapters: list[dict]) -> str:
     special_links = [
         ("wiki", "wiki.html", 'Docs Wiki <span class="badge-new">WIKI</span>'),
         ("tutorials", "tutorials.html", "All Tutorials Overview"),
-        ("components", "components.html", 'Component Explorer <span class="badge-new">1.1</span>'),
+        ("components", "components.html", 'Component Explorer <span class="badge-new">1.4</span>'),
         ("changelog", "changelog.html", "Changelog"),
     ]
     special_html = '<div class="sidebar-group-title">Explore</div>' + "".join(
@@ -655,8 +694,8 @@ def build_components_explorer_html() -> str:
         f"</div>"
         for it in CATALOG_ITEMS
     )
-    return f"""<h1 id="interactive-component-explorer">Interactive Component Explorer <span class="badge-new">160+ Widgets</span></h1>
-<p>Filter across all 20 native C99 widget domains, inspect Pythonic signatures, or jump to the full <a href="components-reference.html">Markdown Signature Reference →</a></p>
+    return f"""<h1 id="interactive-component-explorer">Interactive Component Explorer <span class="badge-new">190+ Widgets</span></h1>
+<p>Filter across all 22 native C99 widget domains, inspect Pythonic signatures, or jump to the full <a href="components-reference.html">Markdown Signature Reference →</a></p>
 <div class="catalog-controls">
   <div class="catalog-search-row">
     <input id="catalog-filter-input" type="search" placeholder="Search dockspace, tree_table, diff_view, flame_graph, kanban, charts…" autocomplete="off" />
@@ -671,7 +710,18 @@ def build_changelog_html() -> str:
     return """<h1 id="changelog">Changelog</h1>
 <p>Release history for <code>nexa</code> (<code>nexa-ui</code> on PyPI) and its vendored C99 <a href="https://github.com/yappologistic/CUI" target="_blank" rel="noopener">CUI</a> core.</p>
 <div class="changelog-entry">
-  <h2 id="v1-1-0">v1.1.0 <span class="badge-new">Latest · CUI 1.1 Sync</span></h2>
+  <h2 id="v1-4-0">v1.4.0 <span class="badge-new">Latest · CUI 1.4 Sync</span></h2>
+  <ul>
+    <li><strong>Instrument cluster</strong>: Added <code>ui.knob</code>, <code>ui.fader</code>, <code>ui.level_meter</code>, <code>ui.radial_gauge</code>, <code>ui.readout</code>, <code>ui.dot_display</code>, <code>ui.dot_chart</code>, and <code>ui.event_track</code> — every one returns the value the user dialed in.</li>
+    <li><strong>Text, media &amp; files</strong>: Right-to-left layout and text (<code>direction=ui.TextDirection.RTL</code>), embedded <strong>emoji</strong> with <code>ui.emoji_picker</code> and color-emoji font loading, a scrollback-backed <code>ui.terminal</code> via <code>ui.TerminalBuffer</code>, <code>ui.file_browser</code> / <code>ui.file_picker</code> for real directories (with an in-tree <code>ui.fs_list</code>), <code>ui.image_viewer</code>, and <code>ui.cropper</code>.</li>
+    <li><strong>Charts &amp; calendars</strong>: <code>ui.candlestick</code> for OHLC data plus <code>annotations=</code> on every chart (<code>ui.ChartAnnotation</code>), <code>ui.month_calendar</code> with events, and <code>ui.tour</code> guided app walks.</li>
+    <li><strong>Developer tools (CUI 1.3)</strong>: <code>ui.problems</code>, <code>ui.pipeline</code>, <code>ui.trace_view</code>, <code>ui.waterfall</code>, <code>ui.graph_view</code>, <code>ui.commit_graph</code>, <code>ui.keymap</code>, <code>ui.test_explorer</code>, <code>ui.stack_trace</code>, <code>ui.blame</code>, <code>ui.coverage</code>, <code>ui.regex_tester</code>, <code>ui.request_bar</code>, <code>ui.api_explorer</code>, <code>ui.feature_flags</code>, <code>ui.uptime_bars</code>, <code>ui.time_histogram</code>, <code>ui.kv_editor</code>, <code>ui.query_builder</code>, and <code>ui.schedule_picker</code> — data in as plain dicts, results out as named tuples.</li>
+    <li><strong>Context-free utilities</strong>: <code>ui.regex_search</code> (CUI's RE2-style engine with named groups), <code>ui.cron_next</code> / <code>ui.cron_describe</code>, <code>ui.url_params</code> / <code>ui.url_set_params</code>, <code>ui.http_reason</code> / <code>ui.http_method_name</code>, plus <code>ui.UI.request_wakeup</code>, <code>set_strings</code>/<code>get_strings</code>, <code>response_status</code>, and <code>is_software</code>.</li>
+    <li><strong>Engine re-sync &amp; ABI hardening</strong>: <code>csrc/</code> moved to CUI <strong>v1.4.0</strong> (434 → 501 public functions, 208 → 304 structs); <code>tools/gen_abi.py</code> regenerates the ctypes mirrors from <code>cui.h</code> and an audit proves every mirrored struct matches the compiler's <code>sizeof</code>/offsets; <code>tools/gen_devtools_bridge.py</code> generates the struct-returning bridges so ctypes never passes a struct by value.</li>
+  </ul>
+</div>
+<div class="changelog-entry">
+  <h2 id="v1-1-0">v1.1.0 <span class="badge">CUI 1.1 Sync</span></h2>
   <ul>
     <li><strong>Multi-split Docking Workspaces</strong>: Added <code>ui.dockspace</code>, <code>ui.dock_panel</code>, <code>ui.dock_save</code>, and <code>ui.dock_load</code> with interactive tab dragging, split previews, and layout serialization.</li>
     <li><strong>Tree Table &amp; Editable Path Bar</strong>: Added virtualized multi-column <code>ui.tree_table</code> + <code>ui.tree_sort</code> and breadcrumb/editable <code>ui.path_bar</code> + <code>ui.path_bar_menu</code>.</li>
@@ -939,7 +989,7 @@ def build_bundle() -> None:
             active_nav="changelog",
             sidebar_html=render_sidebar_html("changelog", parsed_chapters),
             article_html=build_changelog_html(),
-            toc_html='<a class="toc-link" href="#v1-1-0" data-anchor="v1-1-0">v1.1.0</a><a class="toc-link" href="#v1-0-0" data-anchor="v1-0-0">v1.0.0</a>',
+            toc_html='<a class="toc-link" href="#v1-4-0" data-anchor="v1-4-0">v1.4.0</a><a class="toc-link" href="#v1-1-0" data-anchor="v1-1-0">v1.1.0</a><a class="toc-link" href="#v1-0-0" data-anchor="v1-0-0">v1.0.0</a>',
         ),
         encoding="utf-8",
     )
@@ -1053,7 +1103,7 @@ pip install nexa-ui
 | **04** | **[Theming, Accents & Icons](Theming-Accents-and-Icons)** | Light/Dark modes, all 8 perceptual OKLCH accents, 9 semantic tones, 34 live tokens, `.ttf` fonts & 168 Lucide icons. |
 | **05** | **[Concurrency & Asyncio](Concurrency-and-Asyncio)** | GIL-free `BackgroundRunner` threads & token streams, `Channel[T]`, `LogBuffer`, cooperative `asyncio` & `AsyncBridge`. |
 | **06** | **[Canvas, GPU & Packaging](Canvas-GPU-and-Packaging)** | SDF vector `canvas`, headless `pytest` PNG verification, `CustomRenderer` GPU integration, `--rtl` shaping & PyInstaller/Nuitka. |
-| **API** | **[160+ Components Reference](Components-Reference)** | Complete Python signatures, enum values, result dataclasses, and scope rules across all 20 widget domains. |
+| **API** | **[190+ Components Reference](Components-Reference)** | Complete Python signatures, enum values, result dataclasses, and scope rules across all 20 widget domains. |
 
 ---
 
@@ -1084,14 +1134,14 @@ pip install nexa-ui
 - **[Canvas, GPU & Packaging](Canvas-GPU-and-Packaging)**
 
 #### API Reference
-- **[160+ Components Reference](Components-Reference)**
+- **[190+ Components Reference](Components-Reference)**
 """
     sidebar_path = out_dir / "_Sidebar.md"
     sidebar_path.write_text(sidebar_md, encoding="utf-8")
     written.append(sidebar_path)
 
     footer_md = (
-        "`nexa v1.1.0` · `pip install nexa-ui` · "
+        "`nexa v1.4.0` · `pip install nexa-ui` · "
         "[Web Docs & Wiki](http://parsa.x017.ir/nexa/wiki.html) · "
         "[PyPI](https://pypi.org/project/nexa-ui/) · "
         "[GitHub](https://github.com/x017/nexa)\n"

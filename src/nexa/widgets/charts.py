@@ -8,6 +8,8 @@ from typing import Optional, Sequence
 
 from .._cdefs import (
     CuiBarListOpts,
+    CuiCandle,
+    CuiCandlestickOpts,
     CuiCalendarHeatmapOpts,
     CuiChartOpts,
     CuiFunnelOpts,
@@ -31,7 +33,7 @@ from .._cdefs import (
     to_c_size,
     to_packed_color,
 )
-from ..types import Color, ColorLike, Date, SankeyLink, ScatterSeries, Series, SizeLike, VizItem
+from ..types import Candle, Color, ColorLike, Date, SankeyLink, ScatterSeries, Series, SizeLike, VizItem
 
 
 def _build_chart_opts(
@@ -48,6 +50,7 @@ def _build_chart_opts(
     format: Optional[str] = None,
     min_y: float = 0.0,
     max_y: float = 0.0,
+    annotations: Sequence[object] = (),
 ) -> CuiChartOpts:
     opts = CuiChartOpts()
     opts.width = to_c_size(width)
@@ -64,6 +67,13 @@ def _build_chart_opts(
     opts.format = encode_opt(format, keep)
     opts.min = float(min_y)
     opts.max = float(max_y)
+    if annotations:
+        from .._cdefs import chart_annotations
+
+        ann_arr, ann_n, ann_keep = chart_annotations(annotations)
+        opts.annotations = ann_arr
+        opts.annotation_count = ann_n
+        keep.append(ann_keep)
     keep.append(opts)
     return opts
 
@@ -140,6 +150,52 @@ class ChartsMixin:
         self._lib.nexa_sparkline(
             self._ctx, c_vals, n, int(sz.kind), float(sz.value), float(height), to_packed_color(color)
         )
+
+    def candlestick(
+        self,
+        id: str,
+        candles: Sequence[Candle],
+        *,
+        width: SizeLike = None,
+        height: float = 240.0,
+        labels: Optional[Sequence[str]] = None,
+        format: Optional[str] = None,
+        overlays: Sequence[Series] = (),
+        no_volume: bool = False,
+        ohlc: bool = False,
+        up: ColorLike = None,
+        down: ColorLike = None,
+    ) -> int:
+        """Open/high/low/close chart with volume; returns the candle under the crosshair or -1."""
+        keep = self._frame_keepalive
+        n = len(candles)
+        arr = (CuiCandle * n)()
+        for i, candle in enumerate(candles):
+            arr[i].open = float(candle.open)
+            arr[i].high = float(candle.high)
+            arr[i].low = float(candle.low)
+            arr[i].close = float(candle.close)
+            arr[i].volume = float(candle.volume)
+        opts = CuiCandlestickOpts()
+        opts.width = to_c_size(width)
+        opts.height = float(height)
+        if labels:
+            l_arr, l_n = encode_str_array(labels, keep)
+            opts.labels = l_arr
+            opts.label_count = l_n
+        opts.format = encode_opt(format, keep)
+        if overlays:
+            o_arr, o_n = _pack_series(overlays, keep)
+            opts.overlays = o_arr
+            opts.overlay_count = o_n
+        opts.no_volume = bool(no_volume)
+        opts.ohlc = bool(ohlc)
+        opts.up = to_c_color(up)
+        opts.down = to_c_color(down)
+        keep.extend((arr, opts))
+        idx = int(self._lib.cui_candlestick_ex(self._ctx, encode_str(id, keep), arr, n, ctypes.byref(opts)))
+        self._record_change(idx >= 0)
+        return idx
 
     def gauge(self, label: str, value: float, *, size: float = 120.0) -> None:
         self._lib.cui_gauge(self._ctx, encode_str(label, self._frame_keepalive), float(value), float(size))

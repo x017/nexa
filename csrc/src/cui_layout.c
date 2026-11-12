@@ -60,6 +60,7 @@ static cui_id cui__auto_id(cui_ctx *ui) {
 void cui__apply_box(cui_ctx *ui, cui_node *n, const cui_box *b) {
     if (!b) return;
     n->dir = (uint8_t)b->dir;
+    n->direction = (uint8_t)b->direction;
     n->w = b->width;
     n->h = b->height;
     if (b->min_width > 0) n->min_w = b->min_width;
@@ -120,12 +121,13 @@ int cui__text_node(cui_ctx *ui, const char *text, int len, cui_font font, float 
 }
 
 int cui__float_begin(cui_ctx *ui, cui_id id, int z, cui_id anchor, int placement, float offset) {
-    /* floating roots are detached from the parent stack position */
+    /* Keep the opening parent for direction inheritance, without linking its layout. */
     int saved_depth = ui->parent_depth;
     ui->parent_depth = 0;
     int i = cui__node_new(ui, id);
     ui->parent_depth = saved_depth;
     cui_node *n = &ui->nodes[i];
+    n->parent = cui__current(ui);
     n->flags |= CUI_NF_FLOATING;
     n->z = z;
     n->anchor = anchor;
@@ -272,14 +274,20 @@ static void cui__measure_w(cui_ctx *ui, int i) {
     n = &ui->nodes[i];
     float pref = 0, minc = 0;
     if (n->flags & CUI_NF_TEXT) {
+#ifdef CUI_TEXT_SHAPING
+        ui->text_direction = n->rtl ? CUI_DIRECTION_RTL : CUI_DIRECTION_LTR;
+#endif
         pref = cui__text_width(ui, n->font, n->font_size, n->text, n->text_len, (n->flags & CUI_NF_TABULAR) != 0);
         if (n->flags & CUI_NF_WRAP) minc = cui__text_min_width(ui, n->font, n->font_size, n->text, n->text_len);
         else minc = CUI_MIN(pref, n->font_size * 2.5f);   /* single lines can shrink and show an ellipsis */
+#ifdef CUI_TEXT_SHAPING
+        ui->text_direction = 0;
+#endif
         pref = ceilf(pref * 4) / 4;
         minc = ceilf(minc * 4) / 4;
     } else {
         int count = 0;
-        float sum = 0, sum_min = 0, mx = 0, mx_min = 0;
+        float sum = 0, sum_min = 0, mx = 0, mx_min = 0, mx_cmin = 0;
         for (int c = n->first; c >= 0; c = ui->nodes[c].next) {
             cui_node *ch = &ui->nodes[c];
             if (ch->flags & CUI_NF_ABSOLUTE) continue;
@@ -288,18 +296,22 @@ static void cui__measure_w(cui_ctx *ui, int i) {
             else if (ch->w.kind == CUI_SIZE_PERCENT) { cp = 0; cm = ch->minc_w; }
             else if (ch->w.kind == CUI_SIZE_GROW) { cp = ch->pref_w; cm = ch->minc_w; }
             else { cp = ch->pref_w; cm = ch->minc_w; }
+            float cc = ch->w.kind == CUI_SIZE_FIXED ? cm : CUI_MIN(ch->cmin_w, ch->max_w);
             cp = cui__clamp_size(cp, ch->min_w, ch->max_w);
             cm = cui__clamp_size(cm, ch->min_w, ch->max_w);
             sum += cp; sum_min += cm;
             if (cp > mx) mx = cp;
             if (cm > mx_min) mx_min = cm;
+            if (cc > mx_cmin) mx_cmin = cc;
             count++;
         }
         float gaps = count > 1 ? n->gap * (float)(count - 1) : 0;
         if (n->dir == CUI_ROW) {
             pref = sum + gaps;
-            /* a wrapping row can go down to its widest child, one per line */
-            minc = (n->flags & CUI_NF_ROW_WRAP) ? mx_min : sum_min + gaps;
+            /* a wrapping row can go down to its widest child, one per line. A child's min_width
+               decides where lines break; alone on a line it may shrink to its content, so cards
+               that wrap on a tablet still fit a phone */
+            minc = (n->flags & CUI_NF_ROW_WRAP) ? mx_cmin : sum_min + gaps;
         } else if (n->dir == CUI_GRID) {
             int cols = n->columns > 0 ? n->columns : 1;
             if (n->col_min > 0) {
@@ -318,7 +330,10 @@ static void cui__measure_w(cui_ctx *ui, int i) {
     }
     if (n->pref_hint > 0 && n->w.kind == CUI_SIZE_FIT) { pref = n->pref_hint; minc = CUI_MIN(minc, pref); }
     if (n->flags & CUI_NF_KEEP_W) minc = pref;
+    if (n->flags & CUI_NF_ADAPTIVE) minc = CUI_MIN(minc, n->min_w);
     if (n->w.kind == CUI_SIZE_FIXED) { pref = minc = n->w.value; }
+    n->cmin_w = CUI_MIN(minc, CUI_MIN(pref, n->max_w));
+    if (n->flags & CUI_NF_ADAPTIVE) n->cmin_w = CUI_MAX(n->cmin_w, CUI_MIN(n->min_w, n->max_w));
     n->pref_w = cui__clamp_size(pref, n->min_w, n->max_w);
     n->minc_w = cui__clamp_size(CUI_MIN(minc, n->pref_w), n->min_w, n->max_w);
 }
@@ -433,6 +448,11 @@ static void cui__resolve_w(cui_ctx *ui, int i) {
             }
             ui->nodes[start].flags |= CUI_NF_LINE_START;
             cui__distribute(ui, n, start, count, inner, true, true);
+            /* alone on its line, a child narrower than its min_width allows still fits the line */
+            if (count == 1) {
+                cui_node *ch = &ui->nodes[start];
+                if (ch->w.kind != CUI_SIZE_FIXED && ch->rect.w > inner + 0.01f) ch->rect.w = CUI_MAX(inner, ch->cmin_w);
+            }
         }
     } else if (n->dir == CUI_ROW) {
         cui__distribute(ui, n, n->first, n->child_count, inner, true, !(n->flags & CUI_NF_SCROLL_X));
@@ -487,6 +507,9 @@ static void cui__measure_h(cui_ctx *ui, int i) {
     float pref = 0, minc = 0;
     if (n->flags & CUI_NF_TEXT) {
         int lines;
+#ifdef CUI_TEXT_SHAPING
+        ui->text_direction = n->rtl ? CUI_DIRECTION_RTL : CUI_DIRECTION_LTR;
+#endif
         if (n->flags & CUI_NF_WRAP) {
             lines = cui__text_wrap(ui, n->font, n->font_size, n->text, n->text_len, n->rect.w + 0.5f, NULL, 0);
             if (lines < 1) lines = 1;
@@ -496,6 +519,9 @@ static void cui__measure_h(cui_ctx *ui, int i) {
             lines = 1;
             for (int k = 0; k < n->text_len; k++) if (n->text[k] == '\n') lines++;
         }
+#ifdef CUI_TEXT_SHAPING
+        ui->text_direction = 0;
+#endif
         n->text_lines = lines;
         pref = minc = cui__text_line_px(n) * (float)lines;
     } else {
@@ -632,6 +658,50 @@ static void cui__record_rect(cui_ctx *ui, cui_node *n) {
     e->has_rect = true;
 }
 
+
+#ifdef CUI_TEXT_SHAPING
+#include "cui_bidi.h"
+static int cui__strong_class(uint32_t cp) {
+    int t = cui__bidi_strong_direction(cp);
+    return t < 0 ? 0 : (t ? CUI_DIRECTION_RTL : CUI_DIRECTION_LTR);
+}
+
+static int cui__first_strong(cui_ctx *ui, int i) {
+    cui_node *n = &ui->nodes[i];
+    if ((n->flags & CUI_NF_TEXT) && n->font != CUI_FONT_ICONS) {
+        for (int p = 0; p < n->text_len;) {
+            uint32_t cp;
+            p += cui__utf8_decode(n->text + p, n->text_len - p, &cp);
+            int d = cui__strong_class(cp);
+            if (d) return d;
+        }
+    }
+    for (int c = n->first; c >= 0; c = ui->nodes[c].next) {
+        if (ui->nodes[c].direction) continue;
+        int d = cui__first_strong(ui, c);
+        if (d) return d;
+    }
+    return 0;
+}
+#endif
+
+static void cui__resolve_direction(cui_ctx *ui, int i, bool inherited) {
+    cui_node *n = &ui->nodes[i];
+    int d = n->direction;
+#ifdef CUI_TEXT_SHAPING
+    if (d == CUI_DIRECTION_AUTO) d = cui__first_strong(ui, i);
+#endif
+    n->rtl = d == CUI_DIRECTION_RTL || (!d && inherited);
+    /* Cell content alignment needs the resolved direction, including AUTO. */
+    if (!(n->flags & CUI_NF_TEXT) && n->text_align != CUI_TEXT_START) {
+        if (n->text_align == CUI_TEXT_CENTER) n->justify = CUI_JUSTIFY_CENTER;
+        else if (n->text_align == CUI_TEXT_END) n->justify = CUI_JUSTIFY_END;
+        else n->justify = (n->text_align == CUI_TEXT_RIGHT) != n->rtl ? CUI_JUSTIFY_END : CUI_JUSTIFY_START;
+    }
+    for (int c = n->first; c >= 0; c = ui->nodes[c].next) cui__resolve_direction(ui, c, n->rtl);
+    for (int c = n->abs_first; c >= 0; c = ui->nodes[c].next) cui__resolve_direction(ui, c, n->rtl);
+}
+
 /* Pass 5: positions, top down. */
 static void cui__place(cui_ctx *ui, int i) {
     cui_node *n = &ui->nodes[i];
@@ -735,6 +805,7 @@ static void cui__place(cui_ctx *ui, int i) {
             float r = ch->rect.x + ch->rect.w - ox, b = ch->rect.y + ch->rect.h - oy;
             if (r > max_r) max_r = r;
             if (b > max_b) max_b = b;
+            if (n->rtl) ch->rect.x = n->rect.x + n->rect.w - (ch->rect.x - n->rect.x) - ch->rect.w;
         }
     }
     n->content_w = max_r + n->pad[1] + n->pad[3];
@@ -831,6 +902,11 @@ static void cui__layout_float(cui_ctx *ui, int i) {
 void cui__layout(cui_ctx *ui) {
     if (ui->node_count == 0) return;
     cui_node *root = &ui->nodes[0];
+    cui__resolve_direction(ui, 0, false);
+    for (int k = 0; k < ui->float_count; k++) {
+        int i = ui->float_roots[k], parent = ui->nodes[i].parent;
+        cui__resolve_direction(ui, i, parent >= 0 ? ui->nodes[parent].rtl : root->rtl);
+    }
     cui__measure_w(ui, 0);
     root = &ui->nodes[0];
     root->rect.x = 0; root->rect.y = 0;
@@ -870,12 +946,13 @@ static void cui__paint_text(cui_ctx *ui, cui_node *n) {
     ui->text_fx = n->text_fx;
     ui->text_fx_data = n->text_fx_data;
 #ifdef CUI_TEXT_SHAPING
+    ui->text_direction = n->rtl ? CUI_DIRECTION_RTL : CUI_DIRECTION_LTR;
     ui->text_paragraph_len = n->text_len;
     ui->text_paragraph = cui__text_needs_shaping(ui, n->text, n->text_len) ? n->text : NULL;
 #endif
     cui__paint_text_lines(ui, n);
 #ifdef CUI_TEXT_SHAPING
-    ui->text_paragraph = NULL;
+    ui->text_direction = 0; ui->text_paragraph = NULL;
 #endif
     ui->text_fx = NULL;
     ui->text_fx_base = 0;
@@ -886,14 +963,17 @@ static void cui__paint_text_lines(cui_ctx *ui, cui_node *n) {
     float fh = cui__font_line_height(ui, n->font, n->font_size);
     float top_pad = (lh - fh) * 0.5f;
     bool tab = (n->flags & CUI_NF_TABULAR) != 0;
+    int align = n->text_align;
+    if (align == CUI_TEXT_START) align = n->rtl ? CUI_TEXT_RIGHT : CUI_TEXT_LEFT;
+    else if (align == CUI_TEXT_END) align = n->rtl ? CUI_TEXT_LEFT : CUI_TEXT_RIGHT;
     if (n->flags & CUI_NF_WRAP && n->lines) {
         for (int k = 0; k < n->text_lines; k++) {
             cui_text_layout_line *L = &n->lines[k];
             float x = n->rect.x;
             /* line widths come from wrapping, which measures proportional figures */
-            float lw = tab && n->text_align != CUI_TEXT_LEFT ? cui__text_width(ui, n->font, n->font_size, n->text + L->start, L->end - L->start, true) : L->width;
-            if (n->text_align == CUI_TEXT_CENTER) x += (n->rect.w - lw) * 0.5f;
-            else if (n->text_align == CUI_TEXT_RIGHT) x += n->rect.w - lw;
+            float lw = n->rtl || (tab && align != CUI_TEXT_LEFT) ? cui__text_width(ui, n->font, n->font_size, n->text + L->start, L->end - L->start, tab) : L->width;
+            if (align == CUI_TEXT_CENTER) x += (n->rect.w - lw) * 0.5f;
+            else if (align == CUI_TEXT_RIGHT) x += n->rect.w - lw;
             ui->text_fx_base = L->start;
             ui->text_fx_line_y = n->rect.y + lh * (float)k;
             cui__draw_text_line(ui, n->font, n->font_size, x, n->rect.y + top_pad + lh * (float)k, n->text_color,
@@ -909,8 +989,8 @@ static void cui__paint_text_lines(cui_ctx *ui, cui_node *n) {
             float w = cui__text_width(ui, n->font, n->font_size, n->text + start, len, tab);
             float x = n->rect.x;
             if (w < n->rect.w) {
-                if (n->text_align == CUI_TEXT_CENTER) x += (n->rect.w - w) * 0.5f;
-                else if (n->text_align == CUI_TEXT_RIGHT) x += n->rect.w - w;
+                if (align == CUI_TEXT_CENTER) x += (n->rect.w - w) * 0.5f;
+                else if (align == CUI_TEXT_RIGHT) x += n->rect.w - w;
             }
             ui->text_fx_base = start;
             ui->text_fx_line_y = n->rect.y + lh * (float)k;
@@ -944,7 +1024,22 @@ static void cui__paint_node(cui_ctx *ui, int i, cui_rect clip) {
     else if (n->bg.a || (n->border > 0 && n->border_color.a)) cui_draw_rect_border(ui, r, n->radius, n->bg, n->border_color, n->border);
     if (n->elevation && n->bg.a > 200 && ui->mode == CUI_THEME_DARK) cui__draw_top_light(ui, r, n->radius, n->elevation == CUI_ELEVATION_RESTING ? 0.045f : 0.085f);
     if (n->paint && !(n->flags & CUI_NF_PAINT_AFTER)) n->paint(ui, n, n->paint_data);
-    if (n->flags & CUI_NF_TEXT) cui__paint_text(ui, n);
+    if (n->flags & CUI_NF_TEXT) {
+        const char *text = n->text;
+        if (n->rtl && n->font == CUI_FONT_ICONS) {
+            static const char *pairs[][2] = {
+                {CUI_ICON_CHEVRON_LEFT, CUI_ICON_CHEVRON_RIGHT},
+                {CUI_ICON_CHEVRONS_LEFT, CUI_ICON_CHEVRONS_RIGHT},
+                {CUI_ICON_ARROW_LEFT, CUI_ICON_ARROW_RIGHT}
+            };
+            for (int k = 0; k < CUI_COUNTOF(pairs); k++) {
+                if (!strcmp(text, pairs[k][0])) n->text = pairs[k][1];
+                else if (!strcmp(text, pairs[k][1])) n->text = pairs[k][0];
+            }
+        }
+        cui__paint_text(ui, n);
+        n->text = text;
+    }
     bool clips = (n->flags & (CUI_NF_CLIP | CUI_NF_SCROLL_X | CUI_NF_SCROLL_Y)) != 0;
     cui_rect child_clip = clip;
     if (clips) {
@@ -969,6 +1064,17 @@ static void cui__paint_node(cui_ctx *ui, int i, cui_rect clip) {
 }
 
 void cui__paint_add_hit(cui_ctx *ui, cui_id id, cui_rect r, uint32_t flags) { cui__add_hit(ui, id, r, flags); }
+
+void cui__paint_wheel_hit(cui_ctx *ui, cui_id id, cui_rect r) {
+    cui_rect clip = ui->dl.clip_stack[ui->dl.clip_depth - 1];
+    float s = ui->scale;
+    cui_rect cp = { clip.x / s, clip.y / s, clip.w / s, clip.h / s };
+    /* it can always scroll, so the wheel stops here instead of going on to the page */
+    cui_scroll_state *ss = cui_state(ui, id, sizeof *ss);
+    ss->view_w = r.w; ss->view_h = r.h;
+    ss->content_w = r.w + 1e6f; ss->content_h = r.h + 1e6f;
+    cui__add_hit(ui, id, cui__rect_intersect(r, cp), CUI_NF_SCROLL_X | CUI_NF_SCROLL_Y);
+}
 
 void cui__paint(cui_ctx *ui) {
     if (ui->node_count == 0) return;

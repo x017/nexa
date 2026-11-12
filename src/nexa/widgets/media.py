@@ -11,8 +11,12 @@ from typing import Optional, Sequence, Tuple, Union
 
 from .._cdefs import (
     CuiCardStackOpts,
+    CuiCropperOpts,
+    CuiImageView,
+    CuiImageViewerOpts,
     CuiCarouselOpts,
     CuiCompareOpts,
+    CuiRect,
     CuiCounterOpts,
     CuiImageOpts,
     CuiNowPlaying,
@@ -29,8 +33,10 @@ from ..scopes import CardStackScope, CarouselScope
 from ..types import (
     ColorLike,
     FontRole,
+    ImageView,
     NowPlaying,
     PlayerFlags,
+    Rect,
     SizeLike,
     TickerItem,
 )
@@ -104,6 +110,74 @@ class MediaMixin:
         opts.tint = to_c_color(tint)
         keep.append(opts)
         self._lib.cui_image_ex(self._ctx, int(texture), ctypes.byref(opts))
+
+    def image_viewer(
+        self,
+        id: str,
+        texture: int,
+        image_width: int,
+        image_height: int,
+        view: ImageView,
+        *,
+        width: SizeLike = None,
+        height: SizeLike = None,
+        max_zoom: float = 8.0,
+        no_toolbar: bool = False,
+        checkerboard: bool = True,
+    ) -> ImageView:
+        """Zoomable, pannable picture with a toolbar; returns the updated :class:`ImageView`."""
+        keep = self._frame_keepalive
+        opts = CuiImageViewerOpts()
+        opts.width = to_c_size(width)
+        opts.height = to_c_size(height)
+        opts.max_zoom = float(max_zoom)
+        opts.no_toolbar = bool(no_toolbar)
+        opts.checkerboard = bool(checkerboard)
+        c_view = CuiImageView()
+        c_view.zoom = float(view.zoom)
+        c_view.cx = float(view.cx)
+        c_view.cy = float(view.cy)
+        keep.extend((opts, c_view))
+        changed = bool(self._lib.cui_image_viewer_ex(
+            self._ctx, encode_str(id, keep), int(texture), int(image_width), int(image_height),
+            ctypes.byref(c_view), ctypes.byref(opts),
+        ))
+        self._record_change(changed)
+        return ImageView(float(c_view.zoom), float(c_view.cx), float(c_view.cy))
+
+    def cropper(
+        self,
+        id: str,
+        texture: int,
+        image_width: int,
+        image_height: int,
+        crop: Rect,
+        *,
+        width: SizeLike = None,
+        height: SizeLike = None,
+        aspect: float = 0.0,
+        round_: bool = False,
+        min_size: float = 16.0,
+    ) -> Tuple[Rect, bool]:
+        """Crop rectangle over a picture in image pixels; returns ``(rect, changed)``."""
+        keep = self._frame_keepalive
+        opts = CuiCropperOpts()
+        opts.width = to_c_size(width)
+        opts.height = to_c_size(height)
+        opts.aspect = float(aspect)
+        opts.round = bool(round_)
+        opts.min_size = float(min_size)
+        c_rect = CuiRect(float(crop.x), float(crop.y), float(crop.w), float(crop.h))
+        keep.extend((opts, c_rect))
+        changed = bool(self._lib.cui_cropper_ex(
+            self._ctx, encode_str(id, keep), int(texture), int(image_width), int(image_height),
+            ctypes.byref(c_rect), ctypes.byref(opts),
+        ))
+        self._record_change(changed)
+        return (
+            Rect(float(c_rect.x), float(c_rect.y), float(c_rect.w), float(c_rect.h)),
+            changed,
+        )
 
     # ---- Carousel, Compare & Card Stack ----
 

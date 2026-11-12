@@ -35,7 +35,7 @@ extern "C" {
 typedef struct cui_app cui_app;
 
 typedef enum cui_renderer_kind {
-    CUI_RENDERER_AUTO = 0,     /* OpenGL, falling back to software */
+    CUI_RENDERER_AUTO = 0,     /* OpenGL, or software when there is no GPU (CPU-drawn OpenGL, X11 and Win32) */
     CUI_RENDERER_OPENGL,
     CUI_RENDERER_SOFTWARE
 } cui_renderer_kind;
@@ -46,12 +46,20 @@ typedef struct cui_app_desc {
     int min_width, min_height;  /* default 360 x 280 */
     bool fixed_size;            /* not resizable */
     bool continuous;            /* render every frame even when idle (games, video) */
-    bool no_vsync;
+    bool no_vsync;              /* OpenGL: do not wait for the display; frames are capped at 120 Hz or the refresh rate */
     bool hidden;                /* create the window hidden (tests) */
     cui_renderer_kind renderer;
     cui_theme_mode theme;
     cui_accent accent;
     bool follow_system_theme;   /* use the OS light/dark setting where available */
+    /* Linux: the app's ID, which is the name of its .desktop file without
+     * ".desktop", e.g. "org.example.Notes". The desktop uses it to show the
+     * app's name and icon for the window (taskbar, dock, Alt+Tab) and to group
+     * its windows. Sets WM_CLASS on X11 and the app_id on Wayland (SDL2, and
+     * GLFW 3.4). Read when the window is created; ignored on Windows and
+     * macOS. Default: none (the X11 backend then sets WM_CLASS to the title
+     * and "CUI"). */
+    const char *app_id;
 } cui_app_desc;
 
 CUI_API cui_app *cui_app_create(const cui_app_desc *desc);
@@ -66,12 +74,17 @@ CUI_API cui_ctx *cui_app_ui(cui_app *app);
 /* Creates the app, calls frame() until the window closes, destroys it. */
 CUI_API int cui_app_run(const cui_app_desc *desc, void (*frame)(cui_ctx *ui, void *user), void *user);
 
+/* The functions below take NULL for "the app that is running", which is how a
+ * cui_app_run callback reaches its window: cui_app_quit(NULL). */
+/* Ends the loop after the current frame: cui_app_frame returns false, cui_app_run returns. */
 CUI_API void cui_app_quit(cui_app *app);
 /* Thread-safe: wakes a sleeping cui_app_frame wait from any background thread. */
 CUI_API void cui_app_wake(cui_app *app);
 CUI_API void cui_app_set_title(cui_app *app, const char *title);
+/* The window's size in logical points (the same units as cui_app_desc.width). */
 CUI_API void cui_app_set_size(cui_app *app, int width, int height);
 CUI_API cui_vec2 cui_app_size(cui_app *app);
+/* True when the software renderer is drawing (no usable OpenGL, or it was asked for). */
 CUI_API bool cui_app_is_software(cui_app *app);
 /* HWND, NSWindow*, X11 Window (cast to uintptr_t), SDL_Window* or GLFWwindow*. */
 CUI_API void *cui_app_native_window(cui_app *app);

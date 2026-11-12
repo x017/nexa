@@ -25,7 +25,7 @@ pip install nexa-ui
 | **04** | **[Theming, Accents & Icons](Theming-Accents-and-Icons)** | Light/Dark modes, all 8 perceptual OKLCH accents, 9 semantic tones, 34 live tokens, `.ttf` fonts & 168 Lucide icons. |
 | **05** | **[Concurrency & Asyncio](Concurrency-and-Asyncio)** | GIL-free `BackgroundRunner` threads & token streams, `Channel[T]`, `LogBuffer`, cooperative `asyncio` & `AsyncBridge`. |
 | **06** | **[Canvas, GPU & Packaging](Canvas-GPU-and-Packaging)** | SDF vector `canvas`, headless `pytest` PNG verification, `CustomRenderer` GPU integration, `--rtl` shaping & PyInstaller/Nuitka. |
-| **API** | **[160+ Components Reference](Components-Reference)** | Complete Python signatures, enum values, result dataclasses, and scope rules across all 20 widget domains. |
+| **API** | **[190+ Components Reference](Components-Reference)** | Complete Python signatures, enum values, result dataclasses, and scope rules across all 20 widget domains. |
 
 ---
 

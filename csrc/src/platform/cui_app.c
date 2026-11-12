@@ -14,6 +14,7 @@ static bool cui__env_is(const char *name, const char *value) {
 static void cui__app_make_software(cui_app *app) {
 #ifndef CUI_NO_SW
     if (!app->sw) app->sw = cui_sw_create();
+    cui_sw_set_incremental(app->sw, true);   /* only what changed is drawn again */
     app->software = true;
     cui_renderer_iface iface = cui_sw_iface(app->sw);
     cui_set_renderer(app->ui, &iface);
@@ -30,6 +31,7 @@ cui_app *cui_app_create(const cui_app_desc *desc) {
     if (!d->title) d->title = "CUI";
     snprintf(app->title, sizeof app->title, "%s", d->title);
     d->title = app->title;
+    if (d->app_id && !d->app_id[0]) d->app_id = NULL;
     if (d->width <= 0) d->width = 1080;
     if (d->height <= 0) d->height = 720;
     if (d->min_width <= 0) d->min_width = 360;
@@ -63,13 +65,20 @@ cui_app *cui_app_create(const cui_app_desc *desc) {
 #ifndef CUI_NO_GL
     if (want_gl && cui__plat_gl_create(app, !d->no_vsync)) {
         app->gl = cui_gl_create(cui__plat_gl_proc);
+        /* OpenGL drawn on the CPU (a virtual machine, a remote session) costs several times
+         * what the software renderer does, as that one redraws only what changed. Where the
+         * window can take a software picture as well, Auto goes software. */
+        bool can_switch = !strcmp(cui__plat_name(), "x11") || !strcmp(cui__plat_name(), "win32");
+        if (app->gl && cui_gl_is_software(app->gl) && d->renderer == CUI_RENDERER_AUTO && can_switch && !cui__env_is("CUI_RENDERER", "opengl")) {
+            cui_gl_destroy(app->gl);
+            app->gl = NULL;
+            cui__plat_gl_release(app);
+        }
     }
     if (app->gl) {
         cui_renderer_iface iface = cui_gl_iface(app->gl);
         cui_set_renderer(app->ui, &iface);
     } else
-#else
-    (void)want_gl;
 #endif
     {
         if (d->renderer == CUI_RENDERER_OPENGL) fprintf(stderr, "cui: OpenGL unavailable, using the software renderer\n");
@@ -118,23 +127,32 @@ void cui_app_destroy(cui_app *app) {
     free(app);
 }
 
-cui_ctx *cui_app_ui(cui_app *app) { return app->ui; }
-void cui_app_quit(cui_app *app) { if (app) { app->running = false; cui__plat_wake(app); } }
-void cui_app_wake(cui_app *app) { if (app) cui__plat_wake(app); }
-bool cui_app_is_software(cui_app *app) { return app->software; }
-void *cui_app_native_window(cui_app *app) { return cui__plat_native(app); }
+/* NULL means the app that is running: a cui_app_run callback has no other way to name it */
+static cui_app *cui__app_or_current(cui_app *app) { return app ? app : cui__current_app; }
+
+cui_ctx *cui_app_ui(cui_app *app) { app = cui__app_or_current(app); return app ? app->ui : NULL; }
+void cui_app_quit(cui_app *app) { app = cui__app_or_current(app); if (app) { app->running = false; cui__plat_wake(app); } }
+bool cui_app_is_software(cui_app *app) { app = cui__app_or_current(app); return app && app->software; }
+void *cui_app_native_window(cui_app *app) { app = cui__app_or_current(app); return app ? cui__plat_native(app) : NULL; }
 const char *cui_app_backend(cui_app *app) { (void)app; return cui__plat_name(); }
 
+/* Thread-safe: wakes a sleeping cui_app_frame wait from any background thread. */
+void cui_app_wake(cui_app *app) { app = cui__app_or_current(app); if (app) cui__plat_wake(app); }
+
 void cui_app_set_title(cui_app *app, const char *title) {
+    app = cui__app_or_current(app);
+    if (!app) return;
     snprintf(app->title, sizeof app->title, "%s", title ? title : "");
     cui__plat_set_title(app, app->title);
 }
 
-void cui_app_set_size(cui_app *app, int w, int h) { cui__plat_set_size(app, w, h); }
+void cui_app_set_size(cui_app *app, int w, int h) { app = cui__app_or_current(app); if (app) cui__plat_set_size(app, w, h); }
 
 cui_vec2 cui_app_size(cui_app *app) {
     float w, h, s;
     int fw, fh;
+    app = cui__app_or_current(app);
+    if (!app) { cui_vec2 none = { 0, 0 }; return none; }
     cui__plat_metrics(app, &w, &h, &s, &fw, &fh);
     cui_vec2 v = { w, h };
     return v;
@@ -174,7 +192,14 @@ void cui__app_render(cui_app *app) {
         }
         if (!app->sw_pixels) return;
         cui_sw_render(app->sw, dd, app->sw_pixels, w, h, w * 4, CUI_SW_BGRA);
-        cui__plat_present(app, app->sw_pixels, w, h, w * 4);
+        int dx, dy, dw, dh;
+        bool changed = cui_sw_last_damage(app->sw, &dx, &dy, &dw, &dh);
+        if (app->force_present || !app->presented_once || (changed && !cui__plat_present_part(app, app->sw_pixels, w, h, w * 4, dx, dy, dw, dh)))
+            cui__plat_present(app, app->sw_pixels, w, h, w * 4);
+        app->force_present = false;
+#else
+        (void)w; (void)h;
+        app->force_present = false;
 #endif
     }
     app->presented_once = true;
@@ -217,14 +242,37 @@ bool cui_app_frame(cui_app *app) {
     cui_ctx *ui = app->ui;
     double timeout;
     if (app->desc.continuous || cui_needs_redraw(ui) || !app->presented_once) {
+        /* Animation frames come at the display's rate. With vsync the swap waits for it; the
+         * software renderer, and drivers that ignore the swap interval (software GL, settings
+         * that force vsync off), are paced by the clock instead of drawing frames nobody sees. */
         timeout = 0;
-        /* without vsync, pace animation frames to about 120 Hz */
-        if (!app->gl || app->desc.no_vsync) {
-            double since = cui__plat_now() - app->last_present;
-            double target = 1.0 / 120.0;
-            if (since < target) timeout = target - since;
+        double now = cui__plat_now();
+        if (app->hz <= 0 || now - app->hz_checked > 2.0) {   /* some clocks start at 0 */
+            double hz = cui__plat_refresh_hz(app);
+            app->hz = hz >= 24 && hz <= 1000 ? hz : 60;
+            app->hz_checked = now;
+        }
+        if (app->gl && !app->desc.no_vsync && !app->vsync_off) {
+            /* two runs of 20 frames in a row faster than the display: the swap does not wait
+             * (one is not enough: after a pause a driver may queue a few frames without waiting) */
+            if (app->pace_frames++ == 0) app->pace_start = app->last_present;
+            else if (app->pace_frames == 21) {
+                double span = app->last_present - app->pace_start;
+                app->pace_fast = span > 0 && 20.0 / span > app->hz * 1.3 ? app->pace_fast + 1 : 0;
+                if (app->pace_fast >= 2) app->vsync_off = true;
+                app->pace_frames = 0;
+            }
+        }
+        if (!app->gl || app->desc.no_vsync || app->vsync_off) {
+            /* one frame per period, counted from when the last one began; events that come
+             * in the meantime are taken in but do not start the frame early */
+            double until = app->last_time + 1.0 / (app->desc.no_vsync && app->hz < 120 ? 120 : app->hz);
+            for (double left = until - now; left > 0.0005 && app->running; left = until - cui__plat_now())
+                cui__plat_wait(app, left);
         }
     } else {
+        app->pace_frames = 0;
+        app->pace_fast = 0;
         float wake = cui_next_wakeup(ui);
         timeout = wake >= 0 ? wake : -1;
     }

@@ -1,4 +1,4 @@
-# Complete Component Reference (160+ Widgets Across 20 Domains)
+# Complete Component Reference (190+ Widgets Across 22 Domains)
 
 Every widget method below is available **both** on `ctx: ui.UI` (`ctx.button(...)`) **and** as a top-level function when inside an active frame (`import nexa as ui; ui.button(...)`).
 
@@ -225,3 +225,54 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
   - **`gradient_editor(id, stops, *, capacity=32, width=None, height=0.0, selected=None) -> GradientResult`** + **`gradient_eval(stops, t) -> Color`**
   - **`timeline_editor(id, tracks, time=0.0, *, start=0.0, end=10.0, fps=30.0, ruler=TimelineRuler.SECONDS, view=None, in_point=None, out_point=None, current_track=None, current_key=None, width=None, height=260.0, row_height=0.0, track_width=0.0, toggles=True, free_drag=False, key_headroom=16) -> TimelineEditorResult`**
 - **Node Editor & Vector Canvas (`nexa.widgets.nodes_canvas`)**: `node_editor` (`ed.node`, `ed.input`, `ed.output`, `ed.content`, `ed.link`, `ed.created_links`, `ed.removed_links`, `ed.deleted_nodes`), `canvas(id, width, height, paint)`, `draw_rect`, `draw_rect_border`, `draw_rect_gradient`, `draw_shadow`, `draw_line`, `draw_polyline`, `draw_polygon`, `draw_circle`, `draw_arc`, `draw_bezier`, `draw_text`, `draw_icon`, `draw_image`, `push_clip`, `pop_clip`, `clip_scope`, `state_buffer`.
+
+---
+
+## 20. Instruments (`nexa.widgets.instruments`) *(New in 1.4)*
+
+- **`knob(id, value, min=0.0, max=1.0, *, label=None, unit=None, format=None, size=0.0, step=0.0, reset=0.0, bipolar=False, log_scale=False, hide_value=False, disabled=False, color=None) -> float`**
+- **`fader(id, value, min=0.0, max=1.0, *, label=None, unit=None, format=None, length=160.0, horizontal=False, step=0.0, reset=0.0, ticks=(), meter=None, meter_channels=1, hide_value=False, disabled=False) -> float`**
+- **`level_meter(id, levels, min_db=-48.0, max_db=6.0, *, length=160.0, thickness=10.0, horizontal=False, scale=True, segmented=True, hold=1.6, decay=24.0) -> bool`**
+- **`radial_gauge(id, value, min=0.0, max=100.0, *, label=None, unit=None, format=None, size=200.0, sweep=240.0, ticks=5, target=None, bands=(), no_needle=False)`**
+- **`readout(label, value, unit=None, detail=None, *, size=ControlSize.MD, tone=Tone.NEUTRAL, accent=False, align=Align.START, width=None)`**
+- **`dot_display(text, *, pitch=0.0, color=None, accent=False, no_dim=False, marquee=False, align=Align.START, width=None)`**
+- **`dot_chart(id, series: Sequence[DotSeries], count=None, *, width=None, height=220.0, x_min=0.0, x_max=None, x_units="number", x_format=None, x_step=0.0, min=None, max=None, format=None, unit=None, pitch=0.0, no_grid=False, no_axis=False, no_readout=False, annotations=()) -> DotChartResult`**
+- **`event_track(id, times: list[float], *, capacity=256, min=0.0, max=24.0, width=None, step=0.0, units="number", format=None, label_step=0.0, selected=-1, no_add=False, no_remove=False, no_axis=False) -> EventTrackResult`**
+
+## 21. Developer Tools (`nexa.widgets.devtools`) *(New in 1.3/1.4)*
+
+Every dev tool takes its rows as plain dicts (or any object with matching
+attributes) named after the C struct fields, and returns a named tuple:
+
+- **`problems(id, diagnostics, *, width=None, height=240.0, no_toolbar=False) -> ProblemsResult`** — rows: `{"message", "severity", "file", "line", "column", "source", "code"}`.
+- **`pipeline(id, stages, jobs=(), *, width=None, selected=-1) -> PipelineResult`** — jobs: `{"name", "stage", "status", "duration", "allow_failure"}`.
+- **`schedule_picker(id, cron="0 9 * * *", *, width=None, now=0, utc=False, next_count=3) -> ScheduleResult`** (`changed`, `valid`, `next`)
+- **`keymap(id, bindings, *, width=None, categories=(), mods=(), no_function_row=False) -> KeymapResult`** — bindings: `{"combo": {"key": "S", "mods": "ctrl"}, "action": "Save", "category": 0}`.
+- **`commit_graph(id, commits, *, width=None, height=280.0, selected=-1) -> CommitGraphResult`** — commits: `{"hash", "message", "author", "date", "refs", "parent": [a, b]}`.
+- **`graph_view(id, nodes, edges=(), *, width=None, height=280.0, top_down=True, selected=-1) -> GraphResult`** — edges: `{"from", "to"}`.
+- **`waterfall(id, requests, *, width=None, height=260.0, selected=-1, dom_loaded=-1.0, loaded=-1.0) -> WaterfallResult`** — requests: `{"name", "method", "status", "type", "size", "start", "timing": [6 floats]}`.
+- **`trace_view(id, tracks, spans, view=None, selected=-1, *, width=None, height=260.0, row_height=20.0, markers=()) -> TraceResult`** (`view`, `selected`, `selection_changed`, `view_changed`, `hovered`)
+- **`regex_tester(id, pattern="", text="", *, width=None, height=240.0, flags=0) -> RegexTesterResult`** (`pattern`, `text`, `valid`, `matches`, `error`)
+- **`test_explorer(id, items, *, width=None, height=280.0) -> TestExplorerResult`** — items: `{"name", "depth", "status", "duration", "message"}`.
+- **`stack_trace(id, frames, *, width=None, title="", message="", lang="") -> StackTraceResult`** — frames: `{"function", "file", "line", "column", "external", "source": [lines]}`.
+- **`request_bar(id, method=0, url="", *, width=None, loading=False, placeholder="Enter a URL") -> RequestBarResult`**
+- **`api_explorer(id, endpoints, *, width=None, height=300.0, selected=-1) -> ApiExplorerResult`** — endpoints: `{"method", "path", "summary", "tag", "deprecated", "params": [{"name", "in", "type", "required", "description"}]}`.
+- **`feature_flags(id, flags, envs=(), *, width=None, height=260.0) -> FeatureFlagsResult`** — flags: `{"key", "description", "on": [8 bools], "rollout": [8 ints]}`.
+- **`uptime_bars(id, services, *, width=None, last_day=None) -> UptimeResult`** — services: `{"name", "days": [floats]}`.
+- **`time_histogram(id, start, bucket_seconds, series, selected=None, *, width=None, height=160.0, utc=False) -> TimeHistogramResult`** — series: `{"name", "counts": [floats], "tone"}`.
+- **`coverage(id, files, *, width=None, height=260.0, low=0.5, high=0.8) -> CoverageResult`** — files: `{"path", "lines", "lines_hit", "branches", "branches_hit", "functions", "functions_hit"}`.
+- **`blame(id, lines, line_commit, commits, *, width=None, height=300.0, lang="", now=0, first_line=1) -> BlameResult`**
+- **`kv_editor(id, pairs=(), *, capacity=32, key_placeholder="Key", value_placeholder="Value", no_toggles=False, no_secrets=False, read_only=False, width=None) -> KvEditorResult`**
+- **`query_builder(id, fields, nodes=(), *, capacity=32, width=None, max_depth=6, read_only=False) -> QueryBuilderResult`** — plus headless `devtools.query_text(fields, nodes)`, `devtools.query_match(fields, nodes, values)`, `devtools.query_op_name(type, op)`.
+
+## 22. Text, Media, Files & Overlays *(New in 1.2–1.4)*
+
+- **`terminal(id, buffer: TerminalBuffer, *, width=None, height=320.0, size=13.0, prompt=None, no_input=False) -> TerminalResult`** — `TerminalBuffer(text_capacity=…, line_capacity=…)` with `write`, `printf`, `clear`, `line_count`.
+- **`emoji(text, size=16.0)`**, **`emoji_picker(id, *, width=None, height=280.0, size=26.0, recent="", tone=0, placeholder=None, empty_text=None, hint=None, group_names=(), no_search=False, no_preview=False, no_tone=False) -> Optional[str]`**, `load_emoji_font` / `emoji_supported`.
+- **`image_viewer(id, texture, image_width, image_height, view: ImageView, width=None, height=None, max_zoom=8.0, no_toolbar=False, checkerboard=True) -> ImageView`** and **`cropper(id, texture, image_width, image_height, crop: Rect, width=None, height=None, aspect=0.0, round_=False, min_size=16.0) -> tuple[Rect, bool]`**.
+- **`file_browser(id, path, *, width=None, height=380.0, filter=None, folders_only=False, hidden=False, places=(), no_places=False, max_entries=20000) -> FileBrowserResult`** (updated folder on `result.path`), **`file_picker(id, path, title=None, *, save=False, folders=False, start=None, name=None, filter=None, filter_label=None) -> FilePickerResult`**, and headless **`fs_list(path=".", hidden=False, max_entries=4096) -> list[FileEntry]`**.
+- **`month_calendar(id, month: Date, events=(), selected=None, *, first_weekday=0, cell_height=104.0, month_names=(), day_names=(), hour12=False) -> MonthResult`** (`MonthEvent(title, start, end=None, time=0.0, all_day=False, tone=…)`).
+- **`tour(id, steps: Sequence[TourStep], step, *, width=300.0, padding=6.0, block_target=False, next_label=None, back_label=None, done_label=None, count_format=None) -> tuple[int, str]`** — actions are `none`, `next`, `back`, `done`, `skipped`.
+- **`candlestick(id, candles: Sequence[Candle], *, width=None, height=240.0, labels=None, format=None, overlays=(), no_volume=False, ohlc=False, up=None, down=None) -> int`** and `annotations=` on every chart (`ChartAnnotation`).
+- **Right-to-left**: `direction=` on `text`, `row`, `column`, `box`, `grid`, `stack` (`ui.TextDirection.LTR/RTL/AUTO`).
+- **Context helpers**: `UI.request_wakeup(seconds)`, `UI.set_strings(...)` / `UI.get_strings()`, `UI.response_status(status, seconds=, size=)`, `UI.is_software()`, and the context-free `ui.regex_search`, `ui.cron_next`, `ui.cron_describe`, `ui.url_params`, `ui.url_set_params`, `ui.http_reason`, `ui.http_method_name`.

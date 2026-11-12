@@ -1,10 +1,8 @@
 /* Conversation: chat bubbles, typing indicator, comments and presence. */
 #include "cui_internal.h"
 
-#define cui__fs cui__fsz
 
 static cui_color cui__accent_bg(cui_ctx *ui) { return ui->accent == CUI_ACCENT_NEUTRAL ? CUI_C(ui, CONTROL_ON) : CUI_C(ui, ACCENT); }
-static cui_color cui__accent_or_fg_any(cui_ctx *ui) { return cui__edge_on(ui); }
 static cui_color cui__accent_text(cui_ctx *ui) { return ui->accent == CUI_ACCENT_NEUTRAL ? CUI_C(ui, CONTROL_GLYPH) : CUI_C(ui, ACCENT_FOREGROUND); }
 
 /* ------------------------------------------------------------------------ */
@@ -62,9 +60,9 @@ void cui_chat_message_ex(cui_ctx *ui, const char *text, const cui_chat_opts *o) 
     int bubble = cui__node_new(ui, 0);
     cui_node *bn = &ui->nodes[bubble];
     bn->pad[0] = bn->pad[2] = 8; bn->pad[1] = bn->pad[3] = 13;
-    float big = 18, small = 6;
-    if (o->mine) bn->radius = (cui_corners){ big, o->grouped ? small : big, o->last_in_group ? big : small, big };
-    else bn->radius = (cui_corners){ o->grouped ? small : big, big, big, o->last_in_group ? big : small };
+    float corner = 18, tight = 6;   /* not "small": the Windows SDK defines it as a macro */
+    if (o->mine) bn->radius = (cui_corners){ corner, o->grouped ? tight : corner, o->last_in_group ? corner : tight, corner };
+    else bn->radius = (cui_corners){ o->grouped ? tight : corner, corner, corner, o->last_in_group ? corner : tight };
     if (o->mine) bn->bg = cui__accent_bg(ui);
     else bn->bg = ui->mode == CUI_THEME_DARK ? cui_mix(CUI_C(ui, SURFACE), CUI_C(ui, FOREGROUND), 0.08f) : CUI_C(ui, SURFACE_MUTED);
     cui__open(ui, bubble);
@@ -87,7 +85,7 @@ void cui_chat_message_ex(cui_ctx *ui, const char *text, const cui_chat_opts *o) 
         int st = cui__node_new(ui, 0);
         ui->nodes[st].dir = CUI_ROW; ui->nodes[st].gap = 4; ui->nodes[st].align = CUI_ALIGN_CENTER; ui->nodes[st].pad[1] = 4;
         cui__open(ui, st);
-        cui__icon_node(ui, CUI_ICON_CHECK_CHECK, 12, cui__accent_or_fg_any(ui));
+        cui__icon_node(ui, CUI_ICON_CHECK_CHECK, 12, cui__edge_on(ui));
         int s = cui__text_node(ui, o->time ? cui__frame_printf(ui, "%s %s", o->status, o->time) : o->status, -1, CUI_FONT_BODY,
                                cui__fs(ui, ui->theme.text_xs), CUI_C(ui, TEXT_MUTED), false);
         ui->nodes[s].line_height = 1.3f;

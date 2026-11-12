@@ -122,6 +122,13 @@ bool cui__plat_init(cui_app *app) {
     glfwWindowHint(GLFW_RESIZABLE, app->desc.fixed_size ? GLFW_FALSE : GLFW_TRUE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
+    if (app->desc.app_id) {   /* WM_CLASS on X11, app_id on Wayland; other systems ignore these */
+        glfwWindowHintString(GLFW_X11_CLASS_NAME, app->desc.app_id);
+        glfwWindowHintString(GLFW_X11_INSTANCE_NAME, app->desc.app_id);
+#ifdef GLFW_WAYLAND_APP_ID   /* GLFW 3.4 */
+        glfwWindowHintString(GLFW_WAYLAND_APP_ID, app->desc.app_id);
+#endif
+    }
     g->win = glfwCreateWindow(app->desc.width, app->desc.height, app->title, NULL, NULL);
     if (!g->win) { free(g); app->plat = NULL; glfwTerminate(); return false; }
     glfwSetWindowUserPointer(g->win, app);
@@ -198,6 +205,20 @@ void cui__plat_wait(cui_app *app, double timeout) {
     else if (timeout > 0) glfwWaitEventsTimeout(timeout);
     else glfwPollEvents();
 }
+
+bool cui__plat_present_part(cui_app *app, const void *bgra, int w, int h, int stride, int x, int y, int pw, int ph) {
+    (void)app; (void)bgra; (void)w; (void)h; (void)stride; (void)x; (void)y; (void)pw; (void)ph;
+    return false;   /* the whole buffer is shown each time */
+}
+
+double cui__plat_refresh_hz(cui_app *app) {
+    GLFWmonitor *m = glfwGetWindowMonitor(cui__g(app)->win);
+    if (!m) m = glfwGetPrimaryMonitor();
+    const GLFWvidmode *v = m ? glfwGetVideoMode(m) : NULL;
+    return v ? v->refreshRate : 0;
+}
+
+void cui__plat_gl_release(cui_app *app) { (void)app; }   /* not used: these keep OpenGL */
 
 void cui__plat_wake(cui_app *app) {
     (void)app;

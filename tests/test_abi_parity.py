@@ -97,7 +97,7 @@ def test_minimal_stripped_builds_and_size(tmp_path: pathlib.Path) -> None:
     min_so = build_native(output_path=tmp_path / f"min_{fname}", minimal=True)
     assert min_so.is_file()
     size_kb = min_so.stat().st_size / 1024.0
-    assert size_kb < 800.0, f"Expected minimal shared library < 800 KB, got {size_kb:.1f} KB"
+    assert size_kb < 1000.0, f"Expected minimal shared library < 1000 KB, got {size_kb:.1f} KB"
 
     lib = ctypes.CDLL(str(min_so))
     _cdefs.bind_prototypes(lib)

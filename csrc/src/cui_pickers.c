@@ -2,11 +2,6 @@
  * ruler and histogram sliders, signature pad, dropzone and avatar upload. */
 #include "cui_internal.h"
 
-#define cui__fs cui__fsz
-
-static cui_color cui__accent_or_fg(cui_ctx *ui) {
-    return ui->accent == CUI_ACCENT_NEUTRAL ? CUI_C(ui, FOREGROUND) : CUI_C(ui, ACCENT);
-}
 
 static int cui__label_wrap_begin(cui_ctx *ui, const char *label, cui_size width) {
     if (!label) return -1;
@@ -94,8 +89,8 @@ static bool cui__contains_nocase(const char *hay, const char *needle) {
         size_t k = 0;
         while (k < nl && h[k]) {
             char a = h[k], b = needle[k];
-            if (a >= 'A' && a <= 'Z') a += 32;
-            if (b >= 'A' && b <= 'Z') b += 32;
+            a = (char)cui__ascii_lower(a);
+            b = (char)cui__ascii_lower(b);
             if (a != b) break;
             k++;
         }
@@ -267,7 +262,6 @@ static int cui__month_days(int y, int m) {
     if (m == 2 && ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0)) return 29;
     return dm[(m - 1 + 12) % 12];
 }
-static const char *cui__mon[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
 typedef struct { int view_y, view_m; bool init, picking; int hover; } cui__rcal_state;
 
@@ -311,7 +305,7 @@ static void cui__range_month(cui_ctx *ui, cui_id cal_id, cui__rcal_state *st, in
         bo.tooltip = "Previous month";
         if (cui_icon_button_ex(ui, CUI_ICON_CHEVRON_LEFT, &bo)) { if (--st->view_m < 1) { st->view_m = 12; st->view_y--; } }
     } else cui_gap(ui, 30);
-    int ht = cui__text_node(ui, cui__frame_printf(ui, "%s %d", cui__mon[m - 1], y), -1, CUI_FONT_MEDIUM, cui__fs(ui, ui->theme.text_body),
+    int ht = cui__text_node(ui, cui__frame_printf(ui, "%s %d", cui__month_name(ui, m - 1), y), -1, CUI_FONT_MEDIUM, cui__fs(ui, ui->theme.text_body),
                             CUI_C(ui, FOREGROUND), false);
     ui->nodes[ht].w = CUI_FILL;
     ui->nodes[ht].text_align = CUI_TEXT_CENTER;
@@ -328,9 +322,8 @@ static void cui__range_month(cui_ctx *ui, cui_id cal_id, cui__rcal_state *st, in
     cui__apply_box(ui, &ui->nodes[grid], &gb);
     ui->nodes[grid].w = CUI_FILL;
     cui__open(ui, grid);
-    static const char *wd[7] = { "Mo", "Tu", "We", "Th", "Fr", "Sa", "Su" };
     for (int k = 0; k < 7; k++) {
-        int t = cui__text_node(ui, wd[k], -1, CUI_FONT_BODY, cui__fs(ui, ui->theme.text_sm), CUI_C(ui, TEXT_MUTED), false);
+        int t = cui__text_node(ui, cui__weekday_min(ui, k), -1, CUI_FONT_BODY, cui__fs(ui, ui->theme.text_sm), CUI_C(ui, TEXT_MUTED), false);
         ui->nodes[t].text_align = CUI_TEXT_CENTER;
         ui->nodes[t].line_height = 2.2f;
     }
@@ -356,8 +349,7 @@ static void cui__range_month(cui_ctx *ui, cui_id cal_id, cui__rcal_state *st, in
         cui_id did = cui__hash(&days, sizeof days, cal_id);
         cui_interact r = cui__interact(ui, did, CUI_IF_FOCUSABLE);
         if (r.hovered) *new_hover = days;
-        float *hv = cui_state(ui, did, sizeof(float));
-        cui__tween(ui, hv, r.hovered ? 1.0f : 0.0f, CUI__T_HOVER);
+        float hv_v = cui__hover_fade(ui, did, r.hovered, CUI__T_HOVER), *hv = &hv_v;
         bool in = have_s && days >= lo && days <= hi && (have_e && hi > lo);
         bool is_end = have_s && (days == s || (have_e && days == e));
         int wdk = cui__dow(days);
@@ -442,14 +434,15 @@ bool cui_range_calendar(cui_ctx *ui, const char *id_str, cui_date_range *range, 
 
 typedef struct { float hover; int preset; } cui__drp_state;
 
-static void cui__fmt_range(char *out, size_t cap, cui_date_range r) {
+static void cui__fmt_range(cui_ctx *ui, char *out, size_t cap, cui_date_range r) {
     if (!r.start.year) { out[0] = 0; return; }
-    if (!r.end.year) { snprintf(out, cap, "%.3s %d, %d", cui__mon[r.start.month - 1], r.start.day, r.start.year); return; }
+    const char *m0 = cui__month_short(ui, r.start.month - 1);
+    if (!r.end.year) { snprintf(out, cap, "%s %d, %d", m0, r.start.day, r.start.year); return; }
+    const char *m1 = cui__month_short(ui, r.end.month - 1);
     if (r.start.year == r.end.year)
-        snprintf(out, cap, "%.3s %d \xe2\x80\x93 %.3s %d, %d", cui__mon[r.start.month - 1], r.start.day, cui__mon[r.end.month - 1], r.end.day, r.end.year);
+        snprintf(out, cap, "%s %d \xe2\x80\x93 %s %d, %d", m0, r.start.day, m1, r.end.day, r.end.year);
     else
-        snprintf(out, cap, "%.3s %d, %d \xe2\x80\x93 %.3s %d, %d", cui__mon[r.start.month - 1], r.start.day, r.start.year,
-                 cui__mon[r.end.month - 1], r.end.day, r.end.year);
+        snprintf(out, cap, "%s %d, %d \xe2\x80\x93 %s %d, %d", m0, r.start.day, r.start.year, m1, r.end.day, r.end.year);
 }
 
 /* The preset ranges, as menu items in the current container. */
@@ -504,7 +497,7 @@ bool cui_date_range_picker_ex(cui_ctx *ui, const char *id_str, cui_date_range *r
     cui__open(ui, field);
     cui__icon_node(ui, CUI_ICON_CALENDAR, 16, CUI_C(ui, TEXT_MUTED));
     char txt[96];
-    cui__fmt_range(txt, sizeof txt, *range);
+    cui__fmt_range(ui, txt, sizeof txt, *range);
     bool has = txt[0] != 0;
     int t = cui__text_node(ui, has ? cui__frame_strdup(ui, txt, -1) : (o->placeholder ? o->placeholder : "Pick a date range"), -1, CUI_FONT_BODY,
                            cui__fs(ui, ui->theme.text_body), has ? CUI_C(ui, FOREGROUND) : CUI_C(ui, TEXT_MUTED), false);
@@ -589,8 +582,7 @@ static bool cui__time_column(cui_ctx *ui, const char *sid, int count, int value,
         if (sel) sel_index = idx;
         cui_id iid = cui__hash(&k, sizeof k, scid);
         cui_interact r = cui__interact(ui, iid, 0);
-        float *hv = cui_state(ui, iid, sizeof(float));
-        cui__tween(ui, hv, r.hovered ? 1.0f : 0.0f, CUI__T_HIGHLIGHT);
+        float hv_v = cui__hover_fade(ui, iid, r.hovered, CUI__T_HIGHLIGHT), *hv = &hv_v;
         int it = cui__node_new(ui, iid);
         cui_node *n = &ui->nodes[it];
         n->h = CUI_PX(32); n->w = CUI_FILL;
@@ -744,8 +736,8 @@ static void cui__paint_wheel(cui_ctx *ui, cui_node *n, void *data) {
         if (fabsf(ang) > 1.45f) continue;
         float y = cy + sinf(ang) * radius;
         float a = cosf(ang);
-        float near = 1.0f - cui__clampf(fabsf(off), 0, 1);
-        cui_color c = cui_mix(p->dim, p->fg, near);
+        float closeness = 1.0f - cui__clampf(fabsf(off), 0, 1);
+        cui_color c = cui_mix(p->dim, p->fg, closeness);
         /* fade out before the rows reach the edges, so nothing looks cut */
         float edge = cui__clampf((p->rows * 0.5f - fabsf(off)) / 0.9f, 0, 1);
         c = cui_alpha(c, cui__clampf(a * a * 1.1f, 0, 1) * edge);
@@ -795,9 +787,9 @@ bool cui_wheel_picker_ex(cui_ctx *ui, const char *id_str, const char *const *ite
             st->pos.x = p; st->pos.v = 0;
             ui->active = id;
             ui->animating = true;
-            int near = (int)floorf(p + 0.5f);
-            if (o->loop) { near %= count; if (near < 0) near += count; }
-            *index = CUI_CLAMP(near, 0, count - 1);
+            int nearest = (int)floorf(p + 0.5f);
+            if (o->loop) { nearest %= count; if (nearest < 0) nearest += count; }
+            *index = CUI_CLAMP(nearest, 0, count - 1);
             target = st->pos.x;
         } else {
             st->dragging = false;
@@ -905,7 +897,17 @@ static void cui__paint_time_dial(cui_ctx *ui, cui_node *n, void *data) {
     if (p->mode == 1 && p->minute % 5 != 0) cui_draw_circle(ui, tip, 3, p->glyph);   /* a minute between labels */
 }
 
+static bool cui__time_dial_body(cui_ctx *ui, const char *id_str, int *hour, int *minute, float size);
+
+/* left to right in any interface: see cui__keep_ltr */
 bool cui_time_dial(cui_ctx *ui, const char *id_str, int *hour, int *minute, float size) {
+    int first = ui->node_count;
+    bool r = cui__time_dial_body(ui, id_str, hour, minute, size);
+    cui__keep_ltr(ui, first);
+    return r;
+}
+
+static bool cui__time_dial_body(cui_ctx *ui, const char *id_str, int *hour, int *minute, float size) {
     if (size <= 0) size = 248;
     cui_id id = cui_make_id(ui, id_str);
     cui_id face_id = id ^ 0xFACEu;
@@ -930,7 +932,7 @@ bool cui_time_dial(cui_ctx *ui, const char *id_str, int *hour, int *minute, floa
         cui_node *bn = &ui->nodes[b];
         bn->pad[1] = bn->pad[3] = 10; bn->pad[0] = bn->pad[2] = 2;
         bn->radius = CUI_CORNERS(10);
-        bn->bg = sel ? cui_mix(CUI_C(ui, SURFACE), cui__accent_or_fg(ui), ui->mode == CUI_THEME_DARK ? 0.2f : 0.12f) : (pr.hovered ? CUI_C(ui, HOVER) : cui__rgba(0, 0, 0, 0));
+        bn->bg = sel ? cui_mix(CUI_C(ui, SURFACE), cui__emphasis(ui), ui->mode == CUI_THEME_DARK ? 0.2f : 0.12f) : (pr.hovered ? CUI_C(ui, HOVER) : cui__rgba(0, 0, 0, 0));
         cui__mark_interactive(ui, b, CUI_IF_FOCUSABLE);
         if (pr.hovered) cui__set_cursor(ui, CUI_CURSOR_HAND);
         cui__open(ui, b);
@@ -1123,7 +1125,7 @@ bool cui_ruler_slider_ex(cui_ctx *ui, const char *label, float *value, float min
     p->tick = cui__control_edge(ui, st->hover);
     p->major_c = CUI_C(ui, TEXT_SECONDARY);
     p->label = CUI_C(ui, TEXT_MUTED);
-    p->marker = cui__accent_or_fg(ui);
+    p->marker = cui__emphasis(ui);
     ui->nodes[tape].paint = cui__paint_ruler;
     ui->nodes[tape].paint_data = p;
     cui__focus_ring(ui, tape, r.focus_visible ? 1.0f : 0.0f);
@@ -1192,7 +1194,7 @@ bool cui_histogram_slider_ex(cui_ctx *ui, const char *label, const float *bins, 
     p->bins = cui__frame_alloc(ui, sizeof(float) * (size_t)CUI_MAX(1, bin_count));
     memcpy((float *)p->bins, bins, sizeof(float) * (size_t)bin_count);
     p->n = bin_count; p->lo_t = anim[0]; p->hi_t = anim[1]; p->tmax = tmax;
-    p->on = cui__accent_or_fg(ui);
+    p->on = cui__emphasis(ui);
     p->off = CUI_C(ui, CONTROL_TRACK);
     ui->nodes[bars].paint = cui__paint_hist;
     ui->nodes[bars].paint_data = p;
@@ -1213,6 +1215,7 @@ typedef struct {
     int *ends; int nends, ecap;
     bool drawing;
     double last_t;
+    float ref_w;   /* pad width the strokes were recorded at: a narrower pad scales them down */
 } cui__sig_state;
 
 static void cui__sig_dtor(cui_ctx *ui, void *data) {
@@ -1221,7 +1224,7 @@ static void cui__sig_dtor(cui_ctx *ui, void *data) {
     s->pts = NULL; s->widths = NULL; s->ends = NULL;
 }
 
-typedef struct { cui_vec2 *pts; float *widths; int *ends; int nends, npts; cui_color ink, line, hint; const char *placeholder; bool empty; } cui__sig_paint;
+typedef struct { cui_vec2 *pts; float *widths; int *ends; int nends, npts; cui_color ink, line, hint; const char *placeholder; bool empty; float ref_w; } cui__sig_paint;
 
 static void cui__paint_signature(cui_ctx *ui, cui_node *n, void *data) {
     cui__sig_paint *p = data;
@@ -1235,19 +1238,23 @@ static void cui__paint_signature(cui_ctx *ui, cui_node *n, void *data) {
         cui__draw_text_line(ui, CUI_FONT_BODY, fs, r.x + (r.w - w) * 0.5f, base_y - 36, p->hint, p->placeholder, -1, false);
     }
     cui_push_clip(ui, r);
+    /* recorded on a wider pad (a rotated tablet): scale toward the baseline so it all shows */
+    float sc = p->ref_w > 0 && r.w < p->ref_w ? r.w / p->ref_w : 1, by = r.h * 0.72f, wk = CUI_MAX(sc, 0.5f);
+#define CUI__SIG_PT(q) ((cui_vec2){ r.x + (q).x * sc, r.y + by + ((q).y - by) * sc })
     int start = 0;
     for (int s = 0; s <= p->nends; s++) {
         int end = s < p->nends ? p->ends[s] : p->npts;
         if (end <= start) { start = end; continue; }
-        if (end - start == 1) cui_draw_circle(ui, (cui_vec2){ r.x + p->pts[start].x, r.y + p->pts[start].y }, p->widths[start] * 0.5f, p->ink);
+        if (end - start == 1) cui_draw_circle(ui, CUI__SIG_PT(p->pts[start]), p->widths[start] * 0.5f * wk, p->ink);
         for (int k = start + 1; k < end; k++) {
-            cui_vec2 a = { r.x + p->pts[k - 1].x, r.y + p->pts[k - 1].y }, b = { r.x + p->pts[k].x, r.y + p->pts[k].y };
-            float w = (p->widths[k - 1] + p->widths[k]) * 0.5f;
+            cui_vec2 a = CUI__SIG_PT(p->pts[k - 1]), b = CUI__SIG_PT(p->pts[k]);
+            float w = (p->widths[k - 1] + p->widths[k]) * 0.5f * wk;
             cui_draw_line(ui, a, b, w, p->ink);
             cui_draw_circle(ui, b, w * 0.5f, p->ink);
         }
         start = end;
     }
+#undef CUI__SIG_PT
     cui_pop_clip(ui);
 }
 
@@ -1274,17 +1281,21 @@ bool cui_signature_pad_ex(cui_ctx *ui, const char *id_str, const cui_signature_o
     bool changed = false;
     cui_interact r = cui__interact(ui, cid, CUI_IF_DRAG);
     cui_rect pr = cui__prev_rect(ui, cid);
+    if (st->npts == 0) st->ref_w = pr.w;
+    /* the pointer, in the space the strokes were recorded in */
+    float sc = st->ref_w > 0 && pr.w > 0 && pr.w < st->ref_w ? pr.w / st->ref_w : 1, by = pr.h * 0.72f;
+    cui_vec2 mp = { (ui->mx - pr.x) / sc, by + (ui->my - pr.y - by) / sc };
     if (r.hovered && ui->mpressed[0] && pr.w > 0) {
         st->drawing = true;
         if (st->npts > 0) {
             if (st->nends >= st->ecap) { st->ecap = st->ecap ? st->ecap * 2 : 32; st->ends = cui__realloc(ui, st->ends, sizeof(int) * (size_t)st->ecap); }
             st->ends[st->nends++] = st->npts;
         }
-        cui__sig_push(ui, st, (cui_vec2){ ui->mx - pr.x, ui->my - pr.y }, 2.6f);
+        cui__sig_push(ui, st, mp, 2.6f);
         st->last_t = ui->time;
         changed = true;
     } else if (st->drawing && ui->mdown[0]) {
-        cui_vec2 p = { ui->mx - pr.x, ui->my - pr.y };
+        cui_vec2 p = mp;
         cui_vec2 q = st->pts[st->npts - 1];
         float dx = p.x - q.x, dy = p.y - q.y, dist = sqrtf(dx * dx + dy * dy);
         if (dist > 1.5f) {
@@ -1321,7 +1332,7 @@ bool cui_signature_pad_ex(cui_ctx *ui, const char *id_str, const cui_signature_o
     p->line = CUI_C(ui, BORDER_STRONG);
     p->hint = CUI_C(ui, TEXT_MUTED);
     p->placeholder = o->placeholder ? o->placeholder : "Sign here";
-    p->empty = empty;
+    p->empty = empty; p->ref_w = st->ref_w;
     ui->nodes[canvas].paint = cui__paint_signature;
     ui->nodes[canvas].paint_data = p;
     if (!empty) {
@@ -1381,8 +1392,8 @@ bool cui_path_has_extension(const char *path, const char *accept) {
             size_t k = 0;
             for (; k < el; k++) {
                 char a = dot[k], b = p[k];
-                if (a >= 'A' && a <= 'Z') a += 32;
-                if (b >= 'A' && b <= 'Z') b += 32;
+                a = (char)cui__ascii_lower(a);
+                b = (char)cui__ascii_lower(b);
                 if (a != b) break;
             }
             if (k == el) return true;
@@ -1483,7 +1494,7 @@ int cui_dropzone_ex(cui_ctx *ui, const char *id_str, const cui_dropzone_opts *o)
     cui__spring(ui, &st->lift, over ? 1.0f : 0.0f, CUI_SPRING_SNAPPY);
     bool recent = st->done_at > 0 && ui->time - st->done_at < 2.2;
     if (recent) cui__wakeup_after(ui, (float)(2.2 - (ui->time - st->done_at)) + 0.01f);
-    cui_color accent = cui__accent_or_fg(ui);
+    cui_color accent = cui__emphasis(ui);
     int box = cui__node_new(ui, id);
     cui_node *bn = &ui->nodes[box];
     bn->dir = o->compact ? CUI_ROW : CUI_COLUMN;
@@ -1589,7 +1600,7 @@ int cui_avatar_upload(cui_ctx *ui, const char *id_str, const char *name, cui_tex
     cui__mark_interactive(ui, wrap, CUI_IF_FOCUSABLE);
     if (r.hovered) cui__set_cursor(ui, CUI_CURSOR_HAND);
     cui__avup_paint *ap = cui__frame_alloc(ui, sizeof *ap);
-    ap->hover = st->hover; ap->scrim = cui__rgba(0, 0, 0, 255); ap->ring = cui__accent_or_fg(ui); ap->ring_t = st->drag;
+    ap->hover = st->hover; ap->scrim = cui__rgba(0, 0, 0, 255); ap->ring = cui__emphasis(ui); ap->ring_t = st->drag;
     wn->paint = cui__paint_avatar_overlay;
     wn->paint_data = ap;
     wn->flags |= CUI_NF_PAINT_AFTER;

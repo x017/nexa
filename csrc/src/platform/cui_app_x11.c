@@ -29,6 +29,7 @@ typedef void (*PFN_glXDestroyContext)(Display *, GLXContext_);
 typedef GLXContext_ (*PFN_glXCreateContextAttribsARB)(Display *, GLXFBConfig_, GLXContext_, int, const int *);
 typedef void (*PFN_glXSwapIntervalEXT)(Display *, GLXDrawable_, int);
 typedef int (*PFN_glXSwapIntervalMESA)(unsigned int);
+typedef Bool (*PFN_glXGetMscRateOML)(Display *, GLXDrawable_, int32_t *, int32_t *);
 typedef const char *(*PFN_glXQueryExtensionsString)(Display *, int);
 
 #define GLX_X_RENDERABLE_ 0x8012
@@ -74,6 +75,7 @@ typedef struct {
     PFN_glXMakeCurrent MakeCurrent;
     PFN_glXSwapBuffers SwapBuffers;
     PFN_glXDestroyContext DestroyContext;
+    PFN_glXGetMscRateOML GetMscRate;   /* refresh rate, when GLX_OML_sync_control is there */
     /* clipboard */
     char *clip_owned;
     char *clip_read;
@@ -243,10 +245,12 @@ bool cui__plat_init(cui_app *app) {
         XSetWMNormalHints(x->dpy, x->win, hints);
         XFree(hints);
     }
+    /* Desktops find the window's .desktop file (name, icon, dock entry) by
+     * matching WM_CLASS against its file name, so both parts carry the app ID */
     XClassHint *ch = XAllocClassHint();
     if (ch) {
-        ch->res_name = (char *)app->title;
-        ch->res_class = (char *)"CUI";
+        ch->res_name = (char *)(app->desc.app_id ? app->desc.app_id : app->title);
+        ch->res_class = (char *)(app->desc.app_id ? app->desc.app_id : "CUI");
         XSetClassHint(x->dpy, x->win, ch);
         XFree(ch);
     }
@@ -317,6 +321,10 @@ bool cui__plat_gl_create(cui_app *app, bool vsync) {
     PFN_glXSwapIntervalMESA sim = (PFN_glXSwapIntervalMESA)x->GetProcAddress((const unsigned char *)"glXSwapIntervalMESA");
     if (sie) sie(x->dpy, x->win, vsync ? 1 : 0);
     else if (sim) sim(vsync ? 1 : 0);
+    PFN_glXQueryExtensionsString qes = (PFN_glXQueryExtensionsString)dlsym(x->libgl, "glXQueryExtensionsString");
+    const char *ext = qes ? qes(x->dpy, DefaultScreen(x->dpy)) : NULL;
+    if (ext && strstr(ext, "GLX_OML_sync_control"))
+        x->GetMscRate = (PFN_glXGetMscRateOML)x->GetProcAddress((const unsigned char *)"glXGetMscRateOML");
     return true;
 }
 
@@ -325,6 +333,19 @@ void *cui__plat_gl_proc(const char *name) {
     if (cui__x11_getproc) p = cui__x11_getproc((const unsigned char *)name);
     if (!p && cui__x11_libgl) p = dlsym(cui__x11_libgl, name);
     return p;
+}
+
+double cui__plat_refresh_hz(cui_app *app) {
+    cui__x11 *x = cui__x(app);
+    int32_t num = 0, den = 0;
+    if (x->ctx && x->GetMscRate && x->GetMscRate(x->dpy, x->win, &num, &den) && den > 0) return (double)num / den;
+    return 0;
+}
+
+void cui__plat_gl_release(cui_app *app) {
+    cui__x11 *x = cui__x(app);
+    x->GetMscRate = NULL;
+    if (x->ctx) { x->MakeCurrent(x->dpy, None, NULL); x->DestroyContext(x->dpy, x->ctx); x->ctx = NULL; }
 }
 
 void cui__plat_gl_swap(cui_app *app) {
@@ -342,6 +363,16 @@ void cui__plat_present(cui_app *app, const void *bgra, int w, int h, int stride)
     x->image->data = (char *)bgra;
     XPutImage(x->dpy, x->win, x->gc, x->image, 0, 0, 0, 0, (unsigned)w, (unsigned)h);
     XFlush(x->dpy);
+}
+
+bool cui__plat_present_part(cui_app *app, const void *bgra, int w, int h, int stride, int px, int py, int pw, int ph) {
+    cui__x11 *x = cui__x(app);
+    if (!x->image || x->image->width != w || x->image->height != h) return false;
+    x->image->data = (char *)bgra;
+    (void)stride;
+    XPutImage(x->dpy, x->win, x->gc, x->image, px, py, px, py, (unsigned)pw, (unsigned)ph);
+    XFlush(x->dpy);
+    return true;
 }
 
 void cui__plat_metrics(cui_app *app, float *w, float *h, float *scale, int *fb_w, int *fb_h) {
@@ -615,6 +646,7 @@ static void cui__x11_event(cui_app *app, XEvent *ev) {
         }
         break;
     case Expose:
+        app->force_present = true;
         cui_request_redraw(ui);
         break;
     case MotionNotify:

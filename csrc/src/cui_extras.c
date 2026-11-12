@@ -3,7 +3,6 @@
  * progress ring. */
 #include "cui_internal.h"
 
-static float cui__fs(cui_ctx *ui, float size) { return size * ui->theme.font_scale; }
 int cui__text_field(cui_ctx *ui, cui_id id, char *buf, size_t cap, const cui_input_opts *o, bool multiline, int style, const char *search_icon);
 void cui__paint_focus_ring_node(cui_ctx *ui, cui_node *n, void *data);
 
@@ -20,11 +19,12 @@ static void cui__focus_after(cui_ctx *ui, int node, bool show) {
 /* Radio cards                                                              */
 /* ------------------------------------------------------------------------ */
 
-typedef struct { float t, hover; bool init; } cui__rc_state;
-typedef struct { float t, hover; } cui__dot_paint;
+typedef struct { float t, hover; bool init; bool rtl; } cui__rc_state;   /* rtl: laid out right to left last frame */
+typedef struct { float t, hover; bool *rtl_out; } cui__dot_paint;
 
 static void cui__paint_radio_dot(cui_ctx *ui, cui_node *n, void *data) {
     cui__dot_paint *p = data;
+    if (p->rtl_out) *p->rtl_out = n->rtl;
     cui_rect r = n->rect;
     float rr = r.w * 0.5f;
     cui_color on = CUI_C(ui, CONTROL_ON);
@@ -47,24 +47,27 @@ bool cui_radio_cards_ex(cui_ctx *ui, const char *id_str, const cui_choice *choic
     cui_box gb;
     memset(&gb, 0, sizeof gb);
     gb.dir = CUI_GRID; gb.columns = cols; gb.gap = 12;
-    gb.min_column_width = 180;   /* fewer columns, down to one, in a narrow container */
+    gb.min_column_width = 220;   /* fewer columns, down to one, in a narrow container: room for a title and its badge */
     int grid = cui__node_new(ui, gid);
     cui__apply_box(ui, &ui->nodes[grid], &gb);
     cui__open(ui, grid);
+    bool moved = false;   /* one step per key press: the card that takes focus must not act on the same press */
     for (int k = 0; k < count; k++) {
         cui_id cid = cui__hash(&k, sizeof k, gid);
         cui_interact r = cui__interact(ui, cid, CUI_IF_FOCUSABLE);
         if (r.clicked) *index = k;
-        if (r.focus_visible) {
-            if ((cui_key_pressed(ui, CUI_KEY_RIGHT) || cui_key_pressed(ui, CUI_KEY_DOWN)) && k < count - 1) {
-                *index = k + 1; ui->focus = cui__hash(&(int){ k + 1 }, sizeof(int), gid);
+        cui__rc_state *st = cui_state(ui, cid, sizeof *st);
+        if (r.focus_visible && !moved) {
+            /* right to left, the next card is to the left */
+            cui_key next = st->rtl ? CUI_KEY_LEFT : CUI_KEY_RIGHT, prev = st->rtl ? CUI_KEY_RIGHT : CUI_KEY_LEFT;
+            if ((cui_key_pressed(ui, next) || cui_key_pressed(ui, CUI_KEY_DOWN)) && k < count - 1) {
+                *index = k + 1; ui->focus = cui__hash(&(int){ k + 1 }, sizeof(int), gid); moved = true;
             }
-            if ((cui_key_pressed(ui, CUI_KEY_LEFT) || cui_key_pressed(ui, CUI_KEY_UP)) && k > 0) {
-                *index = k - 1; ui->focus = cui__hash(&(int){ k - 1 }, sizeof(int), gid);
+            else if ((cui_key_pressed(ui, prev) || cui_key_pressed(ui, CUI_KEY_UP)) && k > 0) {
+                *index = k - 1; ui->focus = cui__hash(&(int){ k - 1 }, sizeof(int), gid); moved = true;
             }
         }
         bool sel = *index == k;
-        cui__rc_state *st = cui_state(ui, cid, sizeof *st);
         if (!st->init) { st->t = sel ? 1.0f : 0.0f; st->init = true; }
         cui__tween(ui, &st->t, sel ? 1.0f : 0.0f, CUI__T_STATE);
         cui__tween(ui, &st->hover, r.hovered ? 1.0f : 0.0f, CUI__T_HOVER);
@@ -73,7 +76,7 @@ bool cui_radio_cards_ex(cui_ctx *ui, const char *id_str, const cui_choice *choic
         n->dir = CUI_ROW; n->gap = 12; n->align = CUI_ALIGN_START;
         n->pad[0] = n->pad[1] = n->pad[2] = n->pad[3] = 16;
         n->radius = CUI_CORNERS(ui->theme.radius_control);
-        cui_color sel_border = ui->accent == CUI_ACCENT_NEUTRAL ? CUI_C(ui, FOREGROUND) : CUI_C(ui, ACCENT);
+        cui_color sel_border = cui__emphasis(ui);
         n->bg = cui_mix(CUI_C(ui, SURFACE), cui_mix(CUI_C(ui, SURFACE), CUI_C(ui, ACCENT_SUBTLE), 1.0f), st->t * 0.6f);
         n->border = 1 + 0.5f * st->t;
         n->border_color = cui_mix(cui_mix(CUI_C(ui, BORDER), CUI_C(ui, BORDER_STRONG), st->hover), sel_border, st->t);
@@ -111,7 +114,7 @@ bool cui_radio_cards_ex(cui_ctx *ui, const char *id_str, const cui_choice *choic
         cui__close(ui);
         int dot = cui__leaf(ui, 0, CUI_PX(18), CUI_PX(18));
         cui__dot_paint *dp = cui__frame_alloc(ui, sizeof *dp);
-        dp->t = st->t; dp->hover = st->hover;
+        dp->t = st->t; dp->hover = st->hover; dp->rtl_out = &st->rtl;
         ui->nodes[dot].paint = cui__paint_radio_dot;
         ui->nodes[dot].paint_data = dp;
         cui__close(ui);
@@ -196,6 +199,7 @@ bool cui_tag_input_ex(cui_ctx *ui, const char *id_str, char *buf, size_t cap, co
     int box = cui__node_new(ui, id);
     cui_node *bn = &ui->nodes[box];
     bn->dir = CUI_ROW; bn->align = CUI_ALIGN_CENTER; bn->gap = 6;
+    bn->flags |= CUI_NF_ROW_WRAP;   /* on a narrow screen tags take more lines instead of overflowing */
     bn->min_h = h;
     bn->w = outer >= 0 ? CUI_FILL : (o->width.kind ? o->width : CUI_FILL);
     bn->pad[3] = 6; bn->pad[1] = CUI__FIELD_PAD;
@@ -270,7 +274,17 @@ bool cui_tag_input_ex(cui_ctx *ui, const char *id_str, char *buf, size_t cap, co
 
 typedef struct { float focus; bool was_complete; } cui__otp_state;
 
+static bool cui__otp_input_body(cui_ctx *ui, const char *id_str, char *code, int length);
+
+/* left to right in any interface: see cui__keep_ltr */
 bool cui_otp_input(cui_ctx *ui, const char *id_str, char *code, int length) {
+    int first = ui->node_count;
+    bool r = cui__otp_input_body(ui, id_str, code, length);
+    cui__keep_ltr(ui, first);
+    return r;
+}
+
+static bool cui__otp_input_body(cui_ctx *ui, const char *id_str, char *code, int length) {
     if (length <= 0) return false;
     if (length > 12) length = 12;
     cui_id id = cui_make_id(ui, id_str);
@@ -297,18 +311,21 @@ bool cui_otp_input(cui_ctx *ui, const char *id_str, char *code, int length) {
         cui__wakeup_after(ui, 0.53f);
     }
     cui__tween(ui, &st->focus, focused ? 1.0f : 0.0f, CUI__T_FOCUS);
+    /* boxes are 44 points wide when there is room and give way down to 30 on a phone */
     int row = cui__node_new(ui, id);
-    ui->nodes[row].dir = CUI_ROW; ui->nodes[row].gap = 8; ui->nodes[row].self_align = CUI__ALIGN_NOSTRETCH;
+    float natural = length * 44.0f + (length - 1) * 8.0f + (length >= 6 ? 18.0f : 0.0f);
+    ui->nodes[row].dir = CUI_ROW; ui->nodes[row].gap = 8;
+    ui->nodes[row].w = CUI_FILL; ui->nodes[row].max_w = natural; ui->nodes[row].self_align = CUI_ALIGN_START;
     cui__mark_interactive(ui, row, CUI_IF_FOCUSABLE);
     if (r.hovered) cui__set_cursor(ui, CUI_CURSOR_TEXT);
     cui__open(ui, row);
-    cui_color accent = ui->accent == CUI_ACCENT_NEUTRAL ? CUI_C(ui, FOREGROUND) : CUI_C(ui, ACCENT);
+    cui_color accent = cui__emphasis(ui);
     double phase = ui->time - ui->caret_time;
     for (int k = 0; k < length; k++) {
         bool current = focused && k == CUI_MIN(len, length - 1) && (len < length || k == length - 1);
         int b = cui__node_new(ui, 0);
         cui_node *bn = &ui->nodes[b];
-        bn->w = CUI_PX(44); bn->h = CUI_PX(52);
+        bn->w = CUI_GROW(1); bn->min_w = 30; bn->max_w = 44; bn->h = CUI_PX(52);
         bn->radius = CUI_CORNERS(ui->theme.radius_control);
         bn->bg = CUI_C(ui, SURFACE);
         bn->border = current ? 1.5f : 1;
@@ -373,6 +390,36 @@ void cui_button_group_end(cui_ctx *ui) {
     if (g < 0) return;
     cui_node *gn = &ui->nodes[g];
     float r = gn->radius.tl;
+    /* squeezed (a phone): the buttons drop to 8px side padding before their labels truncate.
+       The group keeps asking for its natural width, so the padding comes back with the room */
+    if (gn->first >= 0 && ui->nodes[gn->first].id && !gn->id) {
+        gn->id = ui->nodes[gn->first].id ^ 0xB6A0u;
+        float natural = 0;
+        int nb = 0;
+        for (int c = gn->first; c >= 0; c = ui->nodes[c].next, nb++) {
+            cui_node *ch = &ui->nodes[c];
+            if (ch->w.kind == CUI_SIZE_FIXED) { natural += ch->w.value; continue; }
+            if (ch->w.kind != CUI_SIZE_FIT) { natural = -1; break; }
+            float w = ch->pad[1] + ch->pad[3];
+            int kids = 0;
+            for (int t = ch->first; t >= 0; t = ui->nodes[t].next, kids++) {
+                cui_node *tn = &ui->nodes[t];
+                if (tn->w.kind == CUI_SIZE_FIXED) w += tn->w.value;
+                else if ((tn->flags & CUI_NF_TEXT) && tn->w.kind == CUI_SIZE_FIT) w += ceilf(cui__text_width(ui, tn->font, tn->font_size, tn->text, tn->text_len, (tn->flags & CUI_NF_TABULAR) != 0) * 4) / 4;
+                else { natural = -1; break; }
+            }
+            if (natural < 0) break;
+            natural += w + (kids > 1 ? ch->gap * (float)(kids - 1) : 0);
+        }
+        if (natural > 0) {
+            cui_rect pr = cui__prev_rect(ui, gn->id);
+            gn->w = CUI_FIT; gn->pref_hint = natural + gn->pad[1] + gn->pad[3];
+            if (pr.w > 0 && pr.w < gn->pref_hint - 0.5f)
+                for (int c = gn->first; c >= 0; c = ui->nodes[c].next)
+                    if (ui->nodes[c].w.kind == CUI_SIZE_FIT && ui->nodes[c].pad[1] > 8) ui->nodes[c].pad[1] = ui->nodes[c].pad[3] = 8;
+        }
+        gn = &ui->nodes[g];
+    }
     for (int c = gn->first; c >= 0; c = ui->nodes[c].next) {
         cui_node *ch = &ui->nodes[c];
         bool first = c == gn->first, last = ch->next < 0;
@@ -390,6 +437,8 @@ void cui_button_group_end(cui_ctx *ui) {
 
 typedef struct { double copied_at; } cui__copy_state;
 
+/** Keep the button ID stable across the Copy and Copied presentations so
+ * keyboard focus survives both transitions. Copying again restarts the timer. */
 bool cui_copy_button(cui_ctx *ui, const char *id_str, const char *text) {
     cui_id sid = cui_make_id(ui, id_str) ^ 0xC0B7u;
     cui__copy_state *st = cui_state(ui, sid, sizeof *st);
@@ -398,7 +447,7 @@ bool cui_copy_button(cui_ctx *ui, const char *id_str, const char *text) {
     memset(&bo, 0, sizeof bo);
     bo.tooltip = recent ? "Copied" : "Copy";
     cui_push_id(ui, id_str);
-    bool clicked = cui_icon_button_ex(ui, recent ? CUI_ICON_CHECK : CUI_ICON_COPY, &bo);
+    bool clicked = cui__icon_button_id(ui, cui_make_id(ui, "#copy-button"), recent ? CUI_ICON_CHECK : CUI_ICON_COPY, &bo);
     cui_pop_id(ui);
     if (recent) {
         /* the check is green while it confirms */
@@ -657,8 +706,8 @@ void cui_reorder_begin(cui_ctx *ui, const char *id_str, int *order, int count) {
     b->order = order;
     b->count = count < CUI__REORDER_MAX ? count : CUI__REORDER_MAX;
     b->st = cui_state(ui, b->id, sizeof(cui__reorder_state));
-    b->prev = ui->reorder;
-    ui->reorder = b;
+    b->prev = ui->building.reorder;
+    ui->building.reorder = b;
     cui__reorder_state *st = b->st;
     if (!st->init) { st->from = -1; st->init = true; }   /* state memory starts zeroed */
     if (st->from >= b->count) st->from = -1;
@@ -720,7 +769,7 @@ void cui_reorder_begin(cui_ctx *ui, const char *id_str, int *order, int count) {
 }
 
 void cui_reorder_item_begin(cui_ctx *ui, int pos) {
-    struct cui_reorder_build *b = ui->reorder;
+    struct cui_reorder_build *b = ui->building.reorder;
     if (!b || pos < 0 || pos >= b->count) {
         /* outside a list or past its capacity: a plain row, kept balanced with item_end */
         int n = cui__node_new(ui, 0);
@@ -773,9 +822,9 @@ void cui_reorder_item_end(cui_ctx *ui) {
 }
 
 bool cui_reorder_end(cui_ctx *ui) {
-    struct cui_reorder_build *b = ui->reorder;
+    struct cui_reorder_build *b = ui->building.reorder;
     if (!b) return false;
     cui__close(ui);
-    ui->reorder = b->prev;
+    ui->building.reorder = b->prev;
     return b->changed;
 }

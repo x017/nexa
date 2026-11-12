@@ -67,6 +67,20 @@ CORE_C_FILES: Sequence[str] = (
     "src/cui_flame.c",
     "src/cui_curves.c",
     "src/cui_timeline.c",
+    "src/cui_dials.c",
+    "src/cui_month.c",
+    "src/cui_strings.c",
+    "src/cui_devtools.c",
+    "src/cui_graph.c",
+    "src/cui_devpanels.c",
+    "src/cui_regex.c",
+    "src/cui_devviews.c",
+    "src/cui_instrument.c",
+    "src/cui_tour.c",
+    "src/cui_photo.c",
+    "src/cui_files.c",
+    "src/cui_terminal.c",
+    "src/cui_emoji.c",
 )
 
 
@@ -177,6 +191,7 @@ def build_native(
 
     sources: List[str] = [str(csrc / rel) for rel in CORE_C_FILES]
     sources.append(str(csrc / "nexa_bridge.c"))
+    sources.append(str(csrc / "nexa_bridge_extra.c"))  # generated: 1.3 dev tools
 
     defines: List[str] = ["CUI_SHARED", "CUI_BUILDING"]
     if use_shape:
@@ -186,8 +201,10 @@ def build_native(
 
     if use_fonts:
         sources.append(str(csrc / "src" / "cui_font_data.c"))
-        sources.append(str(csrc / "src" / "cui_inflate.c"))
-    else:
+    # cui_emoji.c inflates its embedded table and the fonts do too, so the
+    # decompressor is always needed
+    sources.append(str(csrc / "src" / "cui_inflate.c"))
+    if not use_fonts:
         defines.append("CUI_NO_DEFAULT_FONTS")
 
     if not use_stb:

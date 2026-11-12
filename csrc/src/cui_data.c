@@ -1,7 +1,6 @@
 /* Data display: accordion, tree view, list items, virtual lists and tables. */
 #include "cui_internal.h"
 
-static float cui__fs(cui_ctx *ui, float size) { return size * ui->theme.font_scale; }
 void cui__paint_focus_ring_node(cui_ctx *ui, cui_node *n, void *data);
 
 /* ------------------------------------------------------------------------ */
@@ -194,8 +193,7 @@ bool cui_list_item_ex(cui_ctx *ui, const char *title, const cui_list_item_opts *
     if (!o) o = &d;
     cui_id id = cui_make_id(ui, title) ^ 0x115E0008u;
     cui_interact r = cui__interact(ui, id, CUI_IF_FOCUSABLE);
-    float *hv = cui_state(ui, id, sizeof(float));
-    cui__tween(ui, hv, r.hovered ? 1.0f : 0.0f, CUI__T_HOVER);
+    float hv_v = cui__hover_fade(ui, id, r.hovered, CUI__T_HOVER), *hv = &hv_v;
     int row = cui__node_new(ui, id);
     cui_node *n = &ui->nodes[row];
     n->dir = CUI_ROW; n->align = CUI_ALIGN_CENTER; n->gap = 12;
@@ -327,8 +325,8 @@ bool cui_table_begin_ex(cui_ctx *ui, const char *id_str, const cui_table_column 
     struct cui_table_build *t = cui__frame_alloc(ui, sizeof *t);
     t->id = id; t->cols = cols; t->ncols = ncols;
     t->compact = o->compact; t->striped = o->striped; t->selectable = o->selectable;
-    t->prev = ui->table;
-    ui->table = t;
+    t->prev = ui->building.table;
+    ui->building.table = t;
     cui_push_id(ui, id_str);
     int wrap = cui__node_new(ui, id);
     cui_node *wn = &ui->nodes[wrap];
@@ -349,6 +347,8 @@ bool cui_table_begin_ex(cui_ctx *ui, const char *id_str, const cui_table_column 
     if (o->height.kind) xb.height = CUI_FILL;
     int xs = cui__scroll_begin_ex(ui, id ^ 0x7AB1E5u, &xb, true);
     ui->nodes[xs].flags &= ~(uint32_t)CUI_NF_SCROLL_Y;
+    /* the edge with more columns past it fades, so a phone shows the table goes on */
+    ((cui_scroll_state *)cui_state(ui, id ^ 0x7AB1E5u, sizeof(cui_scroll_state)))->fade = ui->nodes[wrap].bg;
     int content = cui__node_new(ui, 0);
     cui_node *ct = &ui->nodes[content];
     ct->pref_hint = min_w;
@@ -383,7 +383,7 @@ bool cui_table_begin_ex(cui_ctx *ui, const char *id_str, const cui_table_column 
         cn->w = c->width.kind ? c->width : CUI_FILL;
         cn->h = CUI_FILL;
         cn->pad[1] = cn->pad[3] = 8;
-        cn->justify = c->align == CUI_TEXT_RIGHT ? CUI_JUSTIFY_END : c->align == CUI_TEXT_CENTER ? CUI_JUSTIFY_CENTER : CUI_JUSTIFY_START;
+        cn->text_align = (uint8_t)c->align;
         if (c->sortable && o->sort) {
             cui__mark_interactive(ui, cell, CUI_IF_FOCUSABLE);
             if (r.hovered) cui__set_cursor(ui, CUI_CURSOR_HAND);
@@ -413,7 +413,7 @@ bool cui_table_begin_ex(cui_ctx *ui, const char *id_str, const cui_table_column 
 }
 
 bool cui_table_row(cui_ctx *ui, bool selected) {
-    struct cui_table_build *t = ui->table;
+    struct cui_table_build *t = ui->building.table;
     if (!t) return false;
     cui__table_close_row(ui, t);
     if (t->row_index > 0) {
@@ -423,8 +423,7 @@ bool cui_table_row(cui_ctx *ui, bool selected) {
     int ri = t->row_index++;
     cui_id rid = cui__hash(&ri, sizeof ri, t->id ^ 0x20Bu);
     cui_interact r = cui__interact(ui, rid, t->selectable ? CUI_IF_FOCUSABLE : 0);
-    float *hv = cui_state(ui, rid, sizeof(float));
-    cui__tween(ui, hv, r.hovered ? 1.0f : 0.0f, CUI__T_HIGHLIGHT);
+    float hv_v = cui__hover_fade(ui, rid, r.hovered, CUI__T_HIGHLIGHT), *hv = &hv_v;
     int row = cui__node_new(ui, rid);
     cui_node *n = &ui->nodes[row];
     n->dir = CUI_ROW; n->align = CUI_ALIGN_CENTER;
@@ -447,7 +446,7 @@ bool cui_table_row(cui_ctx *ui, bool selected) {
 }
 
 void cui_table_cell(cui_ctx *ui) {
-    struct cui_table_build *t = ui->table;
+    struct cui_table_build *t = ui->building.table;
     if (!t || !t->in_row) return;
     if (t->col > 0) cui__close(ui);
     if (t->col >= t->ncols) { t->col++; int c = cui__node_new(ui, 0); cui__open(ui, c); return; }
@@ -457,14 +456,14 @@ void cui_table_cell(cui_ctx *ui) {
     cn->dir = CUI_ROW; cn->align = CUI_ALIGN_CENTER; cn->gap = 8;
     cn->w = c->width.kind ? c->width : CUI_FILL;
     cn->pad[0] = cn->pad[2] = 6; cn->pad[1] = cn->pad[3] = 8;
-    cn->justify = c->align == CUI_TEXT_RIGHT ? CUI_JUSTIFY_END : c->align == CUI_TEXT_CENTER ? CUI_JUSTIFY_CENTER : CUI_JUSTIFY_START;
+    cn->text_align = (uint8_t)c->align;
     cn->flags |= CUI_NF_CLIP;
     cui__open(ui, cell);
 }
 
 void cui_table_cell_text(cui_ctx *ui, const char *text) {
     cui_table_cell(ui);
-    struct cui_table_build *t = ui->table;
+    struct cui_table_build *t = ui->building.table;
     bool right = t && t->col - 1 < t->ncols && t->cols[t->col - 1].align == CUI_TEXT_RIGHT;
     int tx = cui__text_node(ui, text, -1, CUI_FONT_BODY, cui__fs(ui, ui->theme.text_body), CUI_C(ui, FOREGROUND), false);
     ui->nodes[tx].line_height = 1.3f;
@@ -480,7 +479,7 @@ void cui_table_cell_textf(cui_ctx *ui, const char *fmt, ...) {
 }
 
 void cui_table_end(cui_ctx *ui) {
-    struct cui_table_build *t = ui->table;
+    struct cui_table_build *t = ui->building.table;
     if (!t) return;
     cui__table_close_row(ui, t);
     if (t->scroll) cui__scroll_end_ex(ui);
@@ -488,5 +487,5 @@ void cui_table_end(cui_ctx *ui) {
     cui__scroll_end_ex(ui);
     cui__close(ui);   /* wrap */
     cui_pop_id(ui);
-    ui->table = t->prev;
+    ui->building.table = t->prev;
 }

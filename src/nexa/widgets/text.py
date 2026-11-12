@@ -5,10 +5,29 @@ from __future__ import annotations
 import ctypes
 from ctypes import c_float
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
-from .._cdefs import CuiTextOpts, encode_str, to_c_color, to_c_size, to_packed_color
-from ..types import Color, ColorLike, FontRole, SizeLike, TextAlign, TextMetrics
+from .._cdefs import (
+    CuiTerminalOpts,
+    CuiTerminalResult,
+    CuiTextOpts,
+    encode_opt,
+    encode_str,
+    to_c_color,
+    to_c_size,
+    to_packed_color,
+)
+from ..types import (
+    Color,
+    ColorLike,
+    FontRole,
+    SizeLike,
+    TerminalBuffer,
+    TerminalResult,
+    TextAlign,
+    TextDirection,
+    TextMetrics,
+)
 
 
 class TextMixin:
@@ -27,6 +46,7 @@ class TextMixin:
         selectable: bool = False,
         width: SizeLike = None,
         line_height: float = 0.0,
+        direction: TextDirection = TextDirection.INHERIT,
     ) -> None:
         keep = self._frame_keepalive
         opts = CuiTextOpts()
@@ -39,6 +59,7 @@ class TextMixin:
         opts.selectable = bool(selectable)
         opts.width = to_c_size(width)
         opts.line_height = float(line_height)
+        opts.direction = int(direction)
         keep.append(opts)
         self._lib.cui_text_ex(self._ctx, encode_str(content, keep), ctypes.byref(opts))
 
@@ -97,3 +118,39 @@ class TextMixin:
 
     def font_add_fallback(self, font_id: int, fallback_font_id: int) -> None:
         self._lib.cui_font_add_fallback(self._ctx, int(font_id), int(fallback_font_id))
+
+    # ---- Terminal (CUI 1.3) ----
+
+    def terminal(
+        self,
+        id: str,
+        buffer: TerminalBuffer,
+        *,
+        width: SizeLike = None,
+        height: float = 320.0,
+        size: float = 13.0,
+        prompt: Optional[str] = None,
+        no_input: bool = False,
+    ) -> TerminalResult:
+        """Output over an input line, with ANSI colors, history and Ctrl+C/Ctrl+L.
+
+        Write to the ``TerminalBuffer`` you own; this draws it and returns the
+        submitted command (``result.command[0]``) or an interrupt.
+        """
+        keep = self._frame_keepalive
+        opts = CuiTerminalOpts()
+        opts.width = to_c_size(width)
+        opts.height = float(height)
+        opts.size = float(size)
+        opts.prompt = encode_opt(prompt, keep)
+        opts.no_input = bool(no_input)
+        out = CuiTerminalResult()
+        keep.extend((opts, out))
+        self._lib.nexa_terminal_ex(self._ctx, encode_str(id, keep), ctypes.byref(buffer._buf),
+                                   ctypes.byref(opts), ctypes.byref(out))
+        res = TerminalResult(
+            command=out.command.decode("utf-8", errors="replace") if out.command else None,
+            interrupt=bool(out.interrupt),
+        )
+        self._record_change(bool(res))
+        return res

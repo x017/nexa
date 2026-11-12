@@ -3,7 +3,6 @@
  * breadcrumb, pagination and stepper. */
 #include "cui_internal.h"
 
-static float cui__fs(cui_ctx *ui, float size) { return size * ui->theme.font_scale; }
 
 typedef struct {
     float hover, focus;
@@ -58,6 +57,7 @@ static void cui__paint_toggle(cui_ctx *ui, cui_node *n, void *data) {
         float tw = (d + stretch) * sx, tht = d * sy;
         float grow = tw - (d + stretch);   /* anchored at the end it leaves from, so it never pokes out of the track */
         x = cui__clampf(x - grow * t, r.x + pad, r.x + w - pad - tw);
+        if (n->rtl) x = r.x + r.w - (x - r.x) - tw;
         cui_rect th = { x, r.y + pad + (d - tht) * 0.5f, tw, tht };
         cui_vec2 o1 = { 0, 1 }, o2 = { 0, 2 };
         cui_draw_shadow(ui, th, CUI_CORNERS(d * 0.5f), 2, 0, o1, cui__rgba(0, 0, 0, ui->mode == CUI_THEME_DARK ? 90 : 36));
@@ -189,9 +189,10 @@ typedef struct {
     float hover, focus, active;
     bool dragging;
     bool init;
+    bool rtl;   /* the direction the track was laid out in last frame (set when painted) */
 } cui__slider_state;
 
-typedef struct { float t, over, hover, active, focus; bool disabled; float lo_t; bool range; } cui__slider_paint;
+typedef struct { float t, over, hover, active, focus; bool disabled; float lo_t; bool range; bool *rtl_out; } cui__slider_paint;
 
 static float cui__rubber(float d) {
     /* stretch that grows fast at first then saturates, like rubber */
@@ -203,6 +204,9 @@ static float cui__rubber(float d) {
 static void cui__paint_slider(cui_ctx *ui, cui_node *n, void *data) {
     cui__slider_paint *p = data;
     cui_rect r = n->rect;
+    if (p->rtl_out) *p->rtl_out = n->rtl;   /* the next frame reads the pointer the same way */
+    /* laid out left to right below; right to left mirrors each rectangle in the track */
+#define CUI__MIRROR(rc) do { if (n->rtl) (rc).x = 2.0f * r.x + r.w - ((rc).x + (rc).w); } while (0)
     float thumb = 18;
     float pad = thumb * 0.5f;
     float x0 = r.x + pad, x1 = r.x + r.w - pad;
@@ -214,6 +218,7 @@ static void cui__paint_slider(cui_ctx *ui, cui_node *n, void *data) {
     float tx1 = x1 + pad + (over > 0 ? over : 0);
     float cy = r.y + r.h * 0.5f;
     cui_rect track = { tx0, cy - th * 0.5f, tx1 - tx0, th };
+    CUI__MIRROR(track);
     cui_draw_rect(ui, track, CUI_CORNERS(th * 0.5f), cui_mix(CUI_C(ui, CONTROL_TRACK), CUI_C(ui, CONTROL_TRACK_HOVER), p->hover));
     float tpos = x0 + (x1 - x0) * cui__clampf(p->t, 0, 1);
     if (p->t >= 1.0f && over > 0) tpos += over;
@@ -224,18 +229,21 @@ static void cui__paint_slider(cui_ctx *ui, cui_node *n, void *data) {
         if (p->lo_t <= 0.0f && over < 0) fstart += over;
     }
     cui_rect fill = { fstart, track.y, CUI_MAX(0, tpos - fstart), th };
+    CUI__MIRROR(fill);
     cui_draw_rect(ui, fill, CUI_CORNERS(th * 0.5f), CUI_C(ui, CONTROL_ON));
     float positions[2] = { tpos, fstart };
     int thumbs = p->range ? 2 : 1;
     for (int k = 0; k < thumbs; k++) {
         float ts = thumb * (1.0f + 0.08f * p->hover - 0.06f * p->active);
         cui_rect tr = { positions[k] - ts * 0.5f, cy - ts * 0.5f, ts, ts };
+        CUI__MIRROR(tr);
         cui_vec2 o1 = { 0, 1 }, o2 = { 0, 2 };
         cui_draw_shadow(ui, tr, CUI_CORNERS(ts * 0.5f), 2, 0, o1, cui__rgba(0, 0, 0, ui->mode == CUI_THEME_DARK ? 90 : 38));
         cui_draw_shadow(ui, tr, CUI_CORNERS(ts * 0.5f), 6, 0, o2, cui__rgba(0, 0, 0, ui->mode == CUI_THEME_DARK ? 50 : 16));
         cui_draw_rect_border(ui, tr, CUI_CORNERS(ts * 0.5f), CUI_C(ui, CONTROL_THUMB), cui__rgba(0, 0, 0, 22), 0.5f);
         if (k == 0) cui__draw_focus_ring(ui, tr, CUI_CORNERS(ts * 0.5f), p->focus);
     }
+#undef CUI__MIRROR
 }
 
 static void cui__slider_header(cui_ctx *ui, const char *label, const char *value_text) {
@@ -272,14 +280,16 @@ bool cui_slider_ex(cui_ctx *ui, const char *label, float *value, float min, floa
     float x0 = pr.x + pad, x1 = pr.x + pr.w - pad;
     bool jumped = false;
     if (r.active && ui->mdown[0] && pr.w > 0) {
-        float mt = (ui->mx - x0) / (x1 - x0);
+        /* right to left, the minimum is at the right end */
+        float mx = st->rtl ? x0 + x1 - ui->mx : ui->mx;
+        float mt = (mx - x0) / (x1 - x0);
         if (ui->mpressed[0]) {
             st->dragging = true;
             jumped = fabsf(mt - t) > 0.02f;
         }
         float over = 0;
-        if (ui->mx < x0) over = cui__rubber(ui->mx - x0);
-        else if (ui->mx > x1) over = cui__rubber(ui->mx - x1);
+        if (mx < x0) over = cui__rubber(mx - x0);
+        else if (mx > x1) over = cui__rubber(mx - x1);
         st->over.x = over; st->over.v = 0;
         t = cui__clampf(mt, 0, 1);
     } else {
@@ -288,8 +298,9 @@ bool cui_slider_ex(cui_ctx *ui, const char *label, float *value, float min, floa
     /* keyboard */
     if (r.focused) {
         float step = o->step > 0 ? o->step / (max - min) : 0.01f;
-        if (cui_key_pressed(ui, CUI_KEY_LEFT) || cui_key_pressed(ui, CUI_KEY_DOWN)) t -= step * ((ui->mods & CUI_MOD_SHIFT) ? 10 : 1);
-        if (cui_key_pressed(ui, CUI_KEY_RIGHT) || cui_key_pressed(ui, CUI_KEY_UP)) t += step * ((ui->mods & CUI_MOD_SHIFT) ? 10 : 1);
+        cui_key less = st->rtl ? CUI_KEY_RIGHT : CUI_KEY_LEFT, more = st->rtl ? CUI_KEY_LEFT : CUI_KEY_RIGHT;
+        if (cui_key_pressed(ui, less) || cui_key_pressed(ui, CUI_KEY_DOWN)) t -= step * ((ui->mods & CUI_MOD_SHIFT) ? 10 : 1);
+        if (cui_key_pressed(ui, more) || cui_key_pressed(ui, CUI_KEY_UP)) t += step * ((ui->mods & CUI_MOD_SHIFT) ? 10 : 1);
         if (cui_key_pressed(ui, CUI_KEY_HOME)) t = 0;
         if (cui_key_pressed(ui, CUI_KEY_END)) t = 1;
         t = cui__clampf(t, 0, 1);
@@ -321,6 +332,7 @@ bool cui_slider_ex(cui_ctx *ui, const char *label, float *value, float min, floa
     cui__mark_interactive(ui, tr, CUI_IF_FOCUSABLE);
     cui__slider_paint *p = cui__frame_alloc(ui, sizeof *p);
     p->t = st->thumb.x; p->over = st->over.x; p->hover = st->hover; p->active = st->active; p->focus = st->focus;
+    p->rtl_out = &st->rtl;
     ui->nodes[tr].paint = cui__paint_slider;
     ui->nodes[tr].paint_data = p;
     cui__close(ui);
@@ -328,7 +340,7 @@ bool cui_slider_ex(cui_ctx *ui, const char *label, float *value, float min, floa
     return *value != old;
 }
 
-typedef struct { int grabbed; cui_spring a, b; float hover; bool init; } cui__range_state;
+typedef struct { int grabbed; cui_spring a, b; float hover; bool init; bool rtl; } cui__range_state;
 
 bool cui_range_slider(cui_ctx *ui, const char *label, float *lo, float *hi, float min, float max) {
     if (max <= min) max = min + 1;
@@ -342,7 +354,8 @@ bool cui_range_slider(cui_ctx *ui, const char *label, float *lo, float *hi, floa
     cui_rect pr = cui__prev_rect(ui, track_id);
     float x0 = pr.x + 9, x1 = pr.x + pr.w - 9;
     if (r.active && ui->mdown[0] && pr.w > 0) {
-        float mt = cui__clampf((ui->mx - x0) / (x1 - x0), 0, 1);
+        float mx = st->rtl ? x0 + x1 - ui->mx : ui->mx;
+        float mt = cui__clampf((mx - x0) / (x1 - x0), 0, 1);
         if (ui->mpressed[0]) st->grabbed = fabsf(mt - ta) < fabsf(mt - tb) ? 0 : 1;
         if (st->grabbed == 0) ta = CUI_MIN(mt, tb); else tb = CUI_MAX(mt, ta);
     }
@@ -362,6 +375,7 @@ bool cui_range_slider(cui_ctx *ui, const char *label, float *lo, float *hi, floa
     cui__mark_interactive(ui, tr, CUI_IF_FOCUSABLE);
     cui__slider_paint *p = cui__frame_alloc(ui, sizeof *p);
     p->t = st->b.x; p->lo_t = st->a.x; p->range = true; p->hover = st->hover;
+    p->rtl_out = &st->rtl;
     ui->nodes[tr].paint = cui__paint_slider;
     ui->nodes[tr].paint_data = p;
     cui__close(ui);
@@ -553,11 +567,25 @@ static bool cui__segments(cui_ctx *ui, const char *id_str, const char *const *it
         st->x.x = st->l.x; st->w.x = st->r.x - st->l.x;
     }
     float h = cui__control_height(ui, size);
+    /* squeezed (a phone): segments drop to 8px side padding before their labels truncate. The row
+       keeps asking for its natural width, so it gets the roomy padding back once there is room */
+    float seg_pad = kind == 0 ? 14 : 10, natural = 0, lfs = cui__fs(ui, size == CUI_SIZE_SM ? ui->theme.text_sm : ui->theme.text_body);
+    bool tight = false;
+    if (!full_width && kind != 1) {
+        for (int k = 0; k < count; k++) {
+            bool lab = items[k] && cui__display_len(items[k]) > 0, ic = icons && icons[k];
+            float iw = ic ? ceilf(cui__text_width(ui, CUI_FONT_ICONS, 16, icons[k], -1, false) * 4) / 4 + 6 : 0;
+            natural += lab ? 2 * seg_pad + iw + ceilf(cui__text_width(ui, CUI_FONT_MEDIUM, lfs, items[k], cui__display_len(items[k]), false) * 4) / 4 : (kind == 1 ? h : h - (kind == 0 ? 6 : 4));
+        }
+        natural += kind == 0 ? 6 : 4 * (float)(count - 1);
+        tight = cr.w > 0 && cr.w < natural - 0.5f;
+    }
     int row = cui__node_new(ui, id);
     cui_node *rn = &ui->nodes[row];
     rn->dir = CUI_ROW;
     rn->align = CUI_ALIGN_CENTER;
     if (full_width) { rn->w = CUI_FILL; rn->self_align = CUI_ALIGN_STRETCH; }
+    else if (kind != 1) cui__soft_width(rn, CUI_FIT, natural);
     else rn->self_align = CUI__ALIGN_NOSTRETCH;
     float inner_h = h;
     if (kind == 0) {
@@ -599,7 +627,7 @@ static bool cui__segments(cui_ctx *ui, const char *id_str, const char *const *it
         cui_node *in = &ui->nodes[it];
         in->dir = CUI_ROW; in->align = CUI_ALIGN_CENTER; in->justify = CUI_JUSTIFY_CENTER; in->gap = 6;
         in->h = CUI_PX(kind == 1 ? h : inner_h);
-        in->pad[1] = in->pad[3] = kind == 0 ? 14 : 10;
+        in->pad[1] = in->pad[3] = tight ? 8 : seg_pad;
         bool icon_only = icons && icons[k] && (!items[k] || cui__display_len(items[k]) == 0);
         if (icon_only) { in->pad[1] = in->pad[3] = 0; in->w = CUI_PX(kind == 1 ? h : inner_h); }   /* square segment */
         if (full_width) in->w = CUI_FILL;
@@ -819,8 +847,7 @@ int cui_breadcrumb(cui_ctx *ui, const char *const *items, int count) {
         } else {
             cui_id id = cui_make_id(ui, items[k]);
             cui_interact r = cui__interact(ui, id, CUI_IF_FOCUSABLE);
-            float *hv = cui_state(ui, id, sizeof(float));
-            cui__tween(ui, hv, r.hovered ? 1.0f : 0.0f, CUI__T_HOVER);
+            float hv_v = cui__hover_fade(ui, id, r.hovered, CUI__T_HOVER), *hv = &hv_v;
             int t = cui__text_node(ui, items[k], cui__display_len(items[k]), CUI_FONT_BODY, cui__fs(ui, ui->theme.text_body),
                                    cui_mix(CUI_C(ui, TEXT_SECONDARY), CUI_C(ui, FOREGROUND), *hv), false);
             ui->nodes[t].id = id;
@@ -837,8 +864,7 @@ int cui_breadcrumb(cui_ctx *ui, const char *const *items, int count) {
 
 static bool cui__page_button(cui_ctx *ui, cui_id id, const char *text, bool selected) {
     cui_interact r = cui__interact(ui, id, CUI_IF_FOCUSABLE);
-    float *hv = cui_state(ui, id, sizeof(float));
-    cui__tween(ui, hv, r.hovered ? 1.0f : 0.0f, CUI__T_HOVER);
+    float hv_v = cui__hover_fade(ui, id, r.hovered, CUI__T_HOVER), *hv = &hv_v;
     int i = cui__node_new(ui, id);
     cui_node *n = &ui->nodes[i];
     n->w = CUI_PX(32); n->h = CUI_PX(32);
@@ -869,8 +895,19 @@ bool cui_pagination(cui_ctx *ui, const char *id_str, int *page, int page_count) 
     bo.size = CUI_SIZE_MD; bo.tooltip = "Previous page"; bo.disabled = *page <= 0;
     if (cui_icon_button_ex(ui, CUI_ICON_CHEVRON_LEFT, &bo)) (*page)--;
     int pages[9], n = 0;
+    /* in a narrow parent (a phone) the pager keeps first, current and last: five slots, not seven */
+    cui_node *par = row > 0 ? &ui->nodes[ui->nodes[row].parent] : NULL;
+    cui_rect ppr = par && par->id ? cui__prev_rect(ui, par->id) : (cui_rect){ 0, 0, 0, 0 };
+    float pavail = ppr.w > 0 ? ppr.w - (par ? par->pad[1] + par->pad[3] : 0) : cui_viewport_size(ui).x - 32;
+    bool compact = page_count > 7 && pavail < 2 * 36 + 7 * 32 + 8 * 2;
     if (page_count <= 7) { for (int k = 0; k < page_count; k++) pages[n++] = k; }
-    else {
+    else if (compact) {
+        pages[n++] = 0;
+        if (*page > 1) pages[n++] = -1;
+        if (*page > 0 && *page < page_count - 1) pages[n++] = *page;
+        if (*page < page_count - 2) pages[n++] = -2;
+        pages[n++] = page_count - 1;
+    } else {
         pages[n++] = 0;
         int a = CUI_MAX(1, *page - 1), b = CUI_MIN(page_count - 2, *page + 1);
         if (*page <= 2) { a = 1; b = 3; }
@@ -921,8 +958,16 @@ static void cui__paint_step(cui_ctx *ui, cui_node *n, void *data) {
 }
 
 void cui_stepper(cui_ctx *ui, const char *const *steps, int count, int current) {
-    int row = cui__node_new(ui, 0);
-    ui->nodes[row].dir = CUI_ROW; ui->nodes[row].gap = 10; ui->nodes[row].w = CUI_FILL; ui->nodes[row].self_align = CUI_ALIGN_STRETCH;
+    /* narrower than every label needs (a phone), only the current step keeps its label;
+       the others show their circle, so nothing is cut to "Ac..." */
+    cui_id sid = count > 0 && steps[0] ? cui_make_id(ui, steps[0]) ^ 0x57E9u : 0;
+    cui_rect pr = sid ? cui__prev_rect(ui, sid) : (cui_rect){ 0, 0, 0, 0 };
+    float need = 0, fs = cui__fs(ui, ui->theme.text_body);
+    for (int k = 0; k < count; k++)
+        need += 32 + cui__text_width(ui, k == current ? CUI_FONT_MEDIUM : CUI_FONT_BODY, fs, steps[k] ? steps[k] : "", -1, false) + (k < count - 1 ? 36 : 0);
+    bool compact = pr.w > 0 && pr.w + 0.5f < need;
+    int row = cui__node_new(ui, sid);
+    ui->nodes[row].dir = CUI_ROW; ui->nodes[row].gap = compact ? 6 : 10; ui->nodes[row].w = CUI_FILL; ui->nodes[row].self_align = CUI_ALIGN_STRETCH;
     cui__open(ui, row);
     for (int k = 0; k < count; k++) {
         int item = cui__node_new(ui, 0);
@@ -944,14 +989,16 @@ void cui_stepper(cui_ctx *ui, const char *const *steps, int count, int current) 
             ui->nodes[t].line_height = 1.0f;
         }
         cui__close(ui);
-        int t = cui__text_node(ui, steps[k], -1, k == current ? CUI_FONT_MEDIUM : CUI_FONT_BODY, cui__fs(ui, ui->theme.text_body),
-                               k <= current ? CUI_C(ui, FOREGROUND) : CUI_C(ui, TEXT_SECONDARY), false);
-        ui->nodes[t].line_height = 1.3f;
+        if (!compact || k == current) {
+            int t = cui__text_node(ui, steps[k], -1, k == current ? CUI_FONT_MEDIUM : CUI_FONT_BODY, fs,
+                                   k <= current ? CUI_C(ui, FOREGROUND) : CUI_C(ui, TEXT_SECONDARY), false);
+            ui->nodes[t].line_height = 1.3f;
+        }
         cui__close(ui);
         if (k < count - 1) {
             int line = cui__leaf(ui, 0, CUI_FILL, CUI_PX(1));
             ui->nodes[line].bg = k < current ? CUI_C(ui, CONTROL_ON) : CUI_C(ui, BORDER);
-            ui->nodes[line].min_w = 16;
+            ui->nodes[line].min_w = compact ? 12 : 16;
         }
     }
     cui__close(ui);

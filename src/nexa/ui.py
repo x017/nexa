@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
 from ._cdefs import (
+    CuiStrings,
     CanvasTrampFn,
     PlatGetClipFn,
     PlatSetClipFn,
@@ -37,6 +38,9 @@ from .widgets.charts import ChartsMixin
 from .widgets.chrome import ChromeMixin
 from .widgets.data import DataMixin
 from .widgets.feedback import FeedbackMixin
+from .widgets.files import FilesMixin
+from .widgets.devtools import DevtoolsMixin
+from .widgets.instruments import InstrumentsMixin
 from .widgets.inputs import InputsMixin
 from .widgets.layout import LayoutMixin
 from .widgets.media import MediaMixin
@@ -93,6 +97,9 @@ class UI(
     ChromeMixin,
     ToolsMixin,
     NodesCanvasMixin,
+    InstrumentsMixin,
+    DevtoolsMixin,
+    FilesMixin,
 ):
     """Immediate-mode UI context wrapping ``cui_ctx``.
 
@@ -201,6 +208,88 @@ class UI(
     @property
     def raw_handle(self) -> int:
         return int(self._ctx or 0)
+
+    # ---- CUI 1.2+ context helpers ----
+
+    def request_wakeup(self, seconds: float = 0.0) -> None:
+        """Ask for a frame within ``seconds`` even with no input (clocks, polling, timers).
+
+        An app that redraws on a timer can sleep in between instead.
+        """
+        self._lib.cui_request_wakeup(self._ctx, float(seconds))
+
+    def set_strings(
+        self,
+        *,
+        months: Optional[Sequence[str]] = None,
+        months_short: Optional[Sequence[str]] = None,
+        weekdays: Optional[Sequence[str]] = None,
+        weekdays_short: Optional[Sequence[str]] = None,
+        weekdays_min: Optional[Sequence[str]] = None,
+        today: Optional[str] = None,
+    ) -> None:
+        """Localize the names calendars, dates and pickers draw (12 months, 7 weekdays)."""
+        keep = self._frame_keepalive
+        strings = CuiStrings()
+        groups = (
+            ("month", months, 12),
+            ("month_short", months_short, 12),
+            ("weekday", weekdays, 7),
+            ("weekday_short", weekdays_short, 7),
+            ("weekday_min", weekdays_min, 7),
+        )
+        packed = []
+        for field, values, size in groups:
+            if not values:
+                continue
+            arr = (ctypes.c_char_p * size)()
+            for i, value in enumerate(list(values)[:size]):
+                raw = str(value).encode("utf-8")
+                packed.append(raw)
+                arr[i] = raw
+            setattr(strings, field, arr)
+        if today is not None:
+            raw = today.encode("utf-8")
+            packed.append(raw)
+            strings.today = raw
+        keep.extend((strings, packed))
+        self._lib.cui_set_strings(self._ctx, ctypes.byref(strings))
+
+    def get_strings(self) -> Optional[dict]:
+        """The localized names last set with :meth:`set_strings`, or None."""
+        ptr = self._lib.cui_get_strings(self._ctx)
+        if not ptr:
+            return None
+        strings = ptr.contents
+        return {
+            "months": [strings.month[i].decode("utf-8", "replace") if strings.month[i] else "" for i in range(12)],
+            "months_short": [
+                strings.month_short[i].decode("utf-8", "replace") if strings.month_short[i] else ""
+                for i in range(12)
+            ],
+            "weekdays": [strings.weekday[i].decode("utf-8", "replace") if strings.weekday[i] else "" for i in range(7)],
+            "weekdays_short": [
+                strings.weekday_short[i].decode("utf-8", "replace") if strings.weekday_short[i] else ""
+                for i in range(7)
+            ],
+            "weekdays_min": [
+                strings.weekday_min[i].decode("utf-8", "replace") if strings.weekday_min[i] else ""
+                for i in range(7)
+            ],
+            "today": strings.today.decode("utf-8", "replace") if strings.today else "",
+        }
+
+    def response_status(self, status: int, *, seconds: float = 0.0, size: float = 0.0) -> None:
+        """A status code with its reason, time and size — the readout of an HTTP response."""
+        self._lib.cui_response_status(self._ctx, int(status), float(seconds), float(size))
+
+    def is_software(self) -> bool:
+        """Whether the OpenGL renderer is really a CPU implementation (a VM, a remote session)."""
+        renderer = getattr(self, "_renderer", None)
+        handle = getattr(renderer, "handle", 0)
+        if not handle:
+            return True
+        return bool(self._lib.cui_gl_is_software(handle))
 
     def close(self) -> None:
         if self._ctx and self._owns_ctx:

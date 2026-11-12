@@ -1,7 +1,6 @@
 /* Data grid, tree cells and the filter bar. */
 #include "cui_internal.h"
 
-#define cui__fs cui__fsz
 #define CUI__GRID_COLS 32
 #define CUI__GRID_HEAD 40.0f
 #define CUI__GRID_CHECK 44.0f
@@ -37,7 +36,6 @@ struct cui_grid_build {
 };
 
 
-static cui_color cui__accent_or_fg_c(cui_ctx *ui) { return ui->accent == CUI_ACCENT_NEUTRAL ? CUI_C(ui, FOREGROUND) : CUI_C(ui, ACCENT); }
 
 typedef struct { float t, mixed; } cui__gcheck_paint;
 static void cui__paint_grid_check(cui_ctx *ui, cui_node *n, void *data) {
@@ -226,8 +224,7 @@ bool cui_data_grid_begin_ex(cui_ctx *ui, const char *id_str, const cui_grid_colu
         const cui_grid_column *c = &cols[k];
         cui_id hid = cui__hash(&k, sizeof k, b->id ^ 0x4E1u);
         cui_interact hr = cui__interact(ui, hid, c->sortable ? CUI_IF_FOCUSABLE : 0);
-        float *hv = cui_state(ui, hid, sizeof(float));
-        cui__tween(ui, hv, (hr.hovered && c->sortable) ? 1.0f : 0.0f, CUI__T_HOVER);
+        float hv_v = cui__hover_fade(ui, hid, (hr.hovered && c->sortable), CUI__T_HOVER), *hv = &hv_v;
         if (hr.clicked && c->sortable && o->sort) {
             if (o->sort->column == k) o->sort->descending = !o->sort->descending;
             else { o->sort->column = k; o->sort->descending = false; }
@@ -237,7 +234,7 @@ bool cui_data_grid_begin_ex(cui_ctx *ui, const char *id_str, const cui_grid_colu
         cn->dir = CUI_ROW; cn->align = CUI_ALIGN_CENTER; cn->gap = 4;
         cn->w = CUI_PX(st->widths[k] + (k == b->last_col ? b->extra : 0)); cn->h = CUI_FILL;
         cn->pad[1] = cn->pad[3] = 12;
-        cn->justify = c->align == CUI_TEXT_RIGHT ? CUI_JUSTIFY_END : c->align == CUI_TEXT_CENTER ? CUI_JUSTIFY_CENTER : CUI_JUSTIFY_START;
+        cn->text_align = (uint8_t)c->align;
         cn->bg = cui_alpha(CUI_C(ui, HOVER), *hv);
         cn->flags |= CUI_NF_CLIP;
         if (c->sortable) { cui__mark_interactive(ui, cell, CUI_IF_FOCUSABLE); if (hr.hovered) cui__set_cursor(ui, CUI_CURSOR_HAND); }
@@ -267,7 +264,7 @@ bool cui_data_grid_begin_ex(cui_ctx *ui, const char *id_str, const cui_grid_colu
             if (rr.hovered || active) {
                 cui__set_cursor(ui, CUI_CURSOR_RESIZE_EW);
                 int bar = cui__absolute(ui, 0, 5, 9, 2, CUI__GRID_HEAD - 18);
-                ui->nodes[bar].bg = active ? cui__accent_or_fg_c(ui) : CUI_C(ui, BORDER_STRONG);
+                ui->nodes[bar].bg = active ? cui__emphasis(ui) : CUI_C(ui, BORDER_STRONG);
                 ui->nodes[bar].radius = CUI_CORNERS(1);
                 (void)bar;
             }
@@ -282,7 +279,7 @@ bool cui_data_grid_begin_ex(cui_ctx *ui, const char *id_str, const cui_grid_colu
     cui__leaf(ui, 0, CUI_PX(total), CUI_PX(CUI__GRID_HEAD));   /* the header's place */
     if (f > 0) cui__leaf(ui, 0, CUI_PX(total), CUI_PX(f * b->row_h));
     if (b->focused) cui__focus_ring(ui, outer, ui->focus_visible ? 1.0f : 0.0f);
-    ui->grid = b;
+    ui->building.grid = b;
     return true;
 }
 
@@ -297,7 +294,7 @@ static void cui__grid_close_row(cui_ctx *ui, struct cui_grid_build *b) {
 }
 
 bool cui_data_grid_row(cui_ctx *ui, int row) {
-    struct cui_grid_build *b = ui->grid;
+    struct cui_grid_build *b = ui->building.grid;
     if (!b) return false;
     cui__grid_close_row(ui, b);
     cui__grid_state *st = b->st;
@@ -327,8 +324,7 @@ bool cui_data_grid_row(cui_ctx *ui, int row) {
         if (b->o.cursor) *b->o.cursor = row;
         if (b->o.anchor) *b->o.anchor = st->anchor;
     }
-    float *hv = cui_state(ui, rid, sizeof(float));
-    cui__tween(ui, hv, r.hovered ? 1.0f : 0.0f, CUI__T_HIGHLIGHT);
+    float hv_v = cui__hover_fade(ui, rid, r.hovered, CUI__T_HIGHLIGHT), *hv = &hv_v;
     int n = cui__node_new(ui, rid);
     cui_node *rn = &ui->nodes[n];
     rn->dir = CUI_ROW; rn->align = CUI_ALIGN_CENTER;
@@ -348,7 +344,7 @@ bool cui_data_grid_row(cui_ctx *ui, int row) {
     if (b->focused && st->cursor == row && ui->focus_visible) {
         /* keyboard cursor: an accent bar on the left edge */
         int bar = cui__absolute(ui, 0, 0, 0, 2, b->row_h);
-        ui->nodes[bar].bg = cui__accent_or_fg_c(ui);
+        ui->nodes[bar].bg = cui__emphasis(ui);
     }
     cui_push_id_int(ui, row);
     b->row = row; b->col = 0; b->in_row = true;
@@ -368,7 +364,7 @@ bool cui_data_grid_row(cui_ctx *ui, int row) {
 }
 
 void cui_data_grid_cell(cui_ctx *ui) {
-    struct cui_grid_build *b = ui->grid;
+    struct cui_grid_build *b = ui->building.grid;
     if (!b || !b->in_row) return;
     if (b->col > 0) cui__close(ui);
     if (b->col >= b->ncols) { b->col++; int c = cui__node_new(ui, 0); cui__open(ui, c); return; }
@@ -387,7 +383,7 @@ void cui_data_grid_cell(cui_ctx *ui) {
     cn->dir = CUI_ROW; cn->align = CUI_ALIGN_CENTER; cn->gap = 8;
     cn->w = CUI_PX(b->st->widths[b->col] + (b->col == b->last_col ? b->extra : 0)); cn->h = CUI_FILL;
     cn->pad[1] = cn->pad[3] = 12;
-    cn->justify = c->align == CUI_TEXT_RIGHT ? CUI_JUSTIFY_END : c->align == CUI_TEXT_CENTER ? CUI_JUSTIFY_CENTER : CUI_JUSTIFY_START;
+    cn->text_align = (uint8_t)c->align;
     cn->flags |= CUI_NF_CLIP;
     b->col++;
     cui__open(ui, cell);
@@ -395,7 +391,7 @@ void cui_data_grid_cell(cui_ctx *ui) {
 
 void cui_data_grid_cell_text(cui_ctx *ui, const char *text) {
     cui_data_grid_cell(ui);
-    struct cui_grid_build *b = ui->grid;
+    struct cui_grid_build *b = ui->building.grid;
     bool right = b && b->col - 1 < b->ncols && b->cols[b->col - 1].align == CUI_TEXT_RIGHT;
     /* single line text: cut short, it shows the whole value on hover */
     cui_text_opts to;
@@ -405,14 +401,14 @@ void cui_data_grid_cell_text(cui_ctx *ui, const char *text) {
 }
 
 bool cui_data_grid_cell_edit(cui_ctx *ui, char *buf, size_t cap) {
-    struct cui_grid_build *b = ui->grid;
+    struct cui_grid_build *b = ui->building.grid;
     if (!b || !b->in_row) return false;
     cui_data_grid_cell(ui);
     return cui_data_grid_edit(ui, buf, cap);
 }
 
 bool cui_data_grid_edit(cui_ctx *ui, char *buf, size_t cap) {
-    struct cui_grid_build *b = ui->grid;
+    struct cui_grid_build *b = ui->building.grid;
     if (!b || !b->in_row || b->col <= 0) return false;
     cui__grid_state *st = b->st;
     int col = b->col - 1;
@@ -467,7 +463,7 @@ bool cui_data_grid_edit(cui_ctx *ui, char *buf, size_t cap) {
 }
 
 void cui_data_grid_end(cui_ctx *ui) {
-    struct cui_grid_build *b = ui->grid;
+    struct cui_grid_build *b = ui->building.grid;
     if (!b) return;
     cui__grid_close_row(ui, b);
     if (b->last < b->nrows) cui__leaf(ui, 0, CUI_PX(b->total_w), CUI_PX((b->nrows - b->last) * b->row_h));
@@ -483,7 +479,7 @@ void cui_data_grid_end(cui_ctx *ui) {
     cui__scroll_end_ex(ui);
     cui__close(ui);          /* frame */
     ui->last_id = b->id;
-    ui->grid = NULL;
+    ui->building.grid = NULL;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -535,13 +531,13 @@ bool cui_tree_cell(cui_ctx *ui, const char *label, int depth, bool has_children,
 
 static int cui__popcount(uint32_t v) { int n = 0; while (v) { n += v & 1; v >>= 1; } return n; }
 
-typedef struct { uint32_t active; } cui__fb_state;   /* fields shown as chips even with nothing picked */
+typedef struct { uint32_t active; } cui__filter_bar_state;   /* fields shown as chips even with nothing picked */
 
 bool cui_filter_bar(cui_ctx *ui, const char *id_str, const cui_filter_field *fields, int count, uint32_t *selected,
                     char *search, size_t search_cap) {
     if (count > 32) count = 32;
     cui_id id = cui_make_id(ui, id_str);
-    cui__fb_state *st = cui_state(ui, id, sizeof *st);
+    cui__filter_bar_state *st = cui_state(ui, id, sizeof *st);
     bool changed = false;
     cui_push_id(ui, id_str);
     int row = cui__node_new(ui, id);
@@ -567,8 +563,7 @@ bool cui_filter_bar(cui_ctx *ui, const char *id_str, const cui_filter_field *fie
         cui_popup *p = cui__popup_get(ui, pid, true);
         cui_interact r = cui__interact(ui, cid, CUI_IF_FOCUSABLE);
         if (r.clicked && p) { cui__popup_set(ui, pid, !p->open); p->at_mouse = false; }
-        float *hv = cui_state(ui, cid, sizeof(float));
-        cui__tween(ui, hv, (r.hovered || (p && p->open)) ? 1.0f : 0.0f, CUI__T_HOVER);
+        float hv_v = cui__hover_fade(ui, cid, (r.hovered || (p && p->open)), CUI__T_HOVER), *hv = &hv_v;
         int chip = cui__node_new(ui, cid);
         cui_node *cn = &ui->nodes[chip];
         cn->dir = CUI_ROW; cn->align = CUI_ALIGN_CENTER; cn->gap = 6;
@@ -607,8 +602,7 @@ bool cui_filter_bar(cui_ctx *ui, const char *id_str, const cui_filter_field *fie
                 cui_interact orr = cui__interact(ui, oid, 0);
                 bool on = (selected[k] & (1u << o)) != 0;
                 if (orr.clicked) { selected[k] ^= 1u << o; changed = true; on = !on; }
-                float *oh = cui_state(ui, oid, sizeof(float));
-                cui__tween(ui, oh, orr.hovered ? 1.0f : 0.0f, CUI__T_HIGHLIGHT);
+                float oh_v = cui__hover_fade(ui, oid, orr.hovered, CUI__T_HIGHLIGHT), *oh = &oh_v;
                 int it = cui__node_new(ui, oid);
                 cui_node *in = &ui->nodes[it];
                 in->dir = CUI_ROW; in->align = CUI_ALIGN_CENTER; in->gap = 10;

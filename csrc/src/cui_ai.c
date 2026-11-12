@@ -3,10 +3,9 @@
  * composer and a voice orb. */
 #include "cui_internal.h"
 
-#define cui__fs cui__fsz
 
 static cui_color cui__ai_accent(cui_ctx *ui) {
-    return ui->accent == CUI_ACCENT_NEUTRAL ? CUI_C(ui, FOREGROUND) : CUI_C(ui, ACCENT);
+    return cui__emphasis(ui);
 }
 
 /* A row that opens a body below it with a height spring (shared by the
@@ -109,20 +108,20 @@ bool cui_reasoning_begin(cui_ctx *ui, const char *id_str, const cui_reasoning_op
     ct->paint_data = rp;
     ui->nodes[cui__current(ui)].gap = 6;
     struct cui_reasoning_build *b = cui__frame_alloc(ui, sizeof *b);
-    b->id = id; b->open = st->open; b->prev = (struct cui_reasoning_build *)ui->reasoning;
-    ui->reasoning = b;
+    b->id = id; b->open = st->open; b->prev = (struct cui_reasoning_build *)ui->building.reasoning;
+    ui->building.reasoning = b;
     /* thoughts read quieter than the answer */
     cui_push_id(ui, id_str);
     return true;
 }
 
 void cui_reasoning_end(cui_ctx *ui) {
-    struct cui_reasoning_build *b = (struct cui_reasoning_build *)ui->reasoning;
+    struct cui_reasoning_build *b = (struct cui_reasoning_build *)ui->building.reasoning;
     if (!b) return;
     cui_pop_id(ui);
     cui__fold_body_end(ui, b->open);
     cui__close(ui);
-    ui->reasoning = b->prev;
+    ui->building.reasoning = b->prev;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -265,14 +264,14 @@ void cui_tool_call_ex(cui_ctx *ui, const char *id_str, const char *name, const c
 /* Agent plan                                                               */
 /* ------------------------------------------------------------------------ */
 
-typedef struct { float y0, y1; float x; cui_color done, rest; float split; } cui__plan_rail;
+typedef struct { float y0, y1; float x0, x1; cui_color done, rest; float split; } cui__plan_rail;   /* x0, x1: the rail under the icons, left to right and right to left */
 static void cui__paint_plan_rail(cui_ctx *ui, cui_node *n, void *data) {
-    (void)n;
     cui__plan_rail *p = data;
     if (p->y1 <= p->y0) return;
+    float x = n->rtl ? p->x1 : p->x0;
     float split = cui__clampf(p->split, p->y0, p->y1);
-    if (split > p->y0) cui_draw_rect(ui, (cui_rect){ p->x - 0.75f, p->y0, 1.5f, split - p->y0 }, CUI_CORNERS(0.75f), p->done);
-    if (p->y1 > split) cui_draw_rect(ui, (cui_rect){ p->x - 0.75f, split, 1.5f, p->y1 - split }, CUI_CORNERS(0.75f), p->rest);
+    if (split > p->y0) cui_draw_rect(ui, (cui_rect){ x - 0.75f, p->y0, 1.5f, split - p->y0 }, CUI_CORNERS(0.75f), p->done);
+    if (p->y1 > split) cui_draw_rect(ui, (cui_rect){ x - 0.75f, split, 1.5f, p->y1 - split }, CUI_CORNERS(0.75f), p->rest);
 }
 
 int cui_agent_plan_ex(cui_ctx *ui, const char *id_str, const cui_plan_step *steps, int count, const cui_agent_plan_opts *o) {
@@ -320,14 +319,12 @@ int cui_agent_plan_ex(cui_ctx *ui, const char *id_str, const cui_plan_step *step
         cui_id sid = cui__hash(&k, sizeof k, id ^ 0x57E9u);
         cui_interact r = cui__interact(ui, sid, 0);
         if (r.clicked) clicked = k;
-        float *hv = cui_state(ui, sid, sizeof(float));
-        cui__tween(ui, hv, r.hovered ? 1.0f : 0.0f, CUI__T_HOVER);
         cui_rect pr = cui__prev_rect(ui, sid);
         float cy = pr.y + 9 + 10;
         if (k == 0) first_y = cy;
         if (k == count - 1) last_y = cy;
         if (s->status == CUI_TASK_DONE || s->status == CUI_TASK_SKIPPED || s->status == CUI_TASK_RUNNING) split = cy;
-        rail->x = pr.x + 10;
+        rail->x0 = pr.x + 10; rail->x1 = pr.x + pr.w - 10;
         int row = cui__node_new(ui, sid);
         cui_node *rn = &ui->nodes[row];
         rn->dir = CUI_ROW; rn->align = CUI_ALIGN_START; rn->gap = 12; rn->w = CUI_FILL;
@@ -463,8 +460,7 @@ int cui_source_list(cui_ctx *ui, const char *id_str, const cui_source *sources, 
         cui_id cid = cui__hash(&k, sizeof k, id ^ 0x50Cu);
         cui_interact r = cui__interact(ui, cid, CUI_IF_FOCUSABLE);
         if (r.clicked) clicked = k;
-        float *hv = cui_state(ui, cid, sizeof(float));
-        cui__tween(ui, hv, r.hovered ? 1.0f : 0.0f, CUI__T_HOVER);
+        float hv_v = cui__hover_fade(ui, cid, r.hovered, CUI__T_HOVER), *hv = &hv_v;
         int c = cui__node_new(ui, cid);
         cui_node *cn = &ui->nodes[c];
         cn->w = CUI_PX(196); cn->gap = 6;
@@ -510,8 +506,7 @@ bool cui_citation(cui_ctx *ui, int number, const cui_source *s) {
     snprintf(key, sizeof key, "cite%d", number);
     cui_id id = cui_make_id(ui, key);
     cui_interact r = cui__interact(ui, id, CUI_IF_FOCUSABLE);
-    float *hv = cui_state(ui, id, sizeof(float));
-    cui__tween(ui, hv, r.hovered ? 1.0f : 0.0f, CUI__T_HOVER);
+    float hv_v = cui__hover_fade(ui, id, r.hovered, CUI__T_HOVER), *hv = &hv_v;
     int n = cui__node_new(ui, id);
     cui_node *nd = &ui->nodes[n];
     nd->dir = CUI_ROW; nd->align = CUI_ALIGN_CENTER; nd->gap = 4;
@@ -686,6 +681,7 @@ int cui_prompt_suggestions_ex(cui_ctx *ui, const char *id_str, const cui_prompt_
     int clicked = -1;
     int grid = cui__node_new(ui, id);
     ui->nodes[grid].dir = CUI_GRID; ui->nodes[grid].columns = o->columns > 0 ? o->columns : 2; ui->nodes[grid].gap = 10; ui->nodes[grid].w = CUI_FILL;
+    ui->nodes[grid].col_min = 200;   /* one column on a phone, where two would wrap every word */
     cui__open(ui, grid);
     for (int k = 0; k < count; k++) {
         cui_id cid = cui__hash(&k, sizeof k, id ^ 0x9A0u);
@@ -755,8 +751,7 @@ static bool cui__model_item(cui_ctx *ui, const cui_model *m, bool checked) {
     cui_interact r = cui__interact(ui, id, 0);
     if (r.hovered && nav && (ui->mx != ui->pmx || ui->my != ui->pmy || !nav->keyboard)) { nav->highlight = index; nav->keyboard = false; }
     bool hl = nav && nav->highlight == index;
-    float *hv = cui_state(ui, id, sizeof(float));
-    cui__tween(ui, hv, hl ? 1.0f : 0.0f, CUI__T_HIGHLIGHT);
+    float hv_v = cui__hover_fade(ui, id, hl, CUI__T_HIGHLIGHT), *hv = &hv_v;
     int n = cui__node_new(ui, id);
     cui_node *nd = &ui->nodes[n];
     nd->dir = CUI_ROW; nd->align = CUI_ALIGN_CENTER; nd->gap = 10;
@@ -808,8 +803,7 @@ bool cui_model_picker_ex(cui_ctx *ui, const char *id_str, const cui_model *model
     cui_interact r = cui__interact(ui, id, CUI_IF_FOCUSABLE);
     bool key = ui->focus == id && ui->focus_visible && (cui_key_pressed(ui, CUI_KEY_ENTER) || cui_key_pressed(ui, CUI_KEY_SPACE));
     if (r.clicked && !(open && key) && p) { cui__popup_set(ui, pid, !p->open); p->at_mouse = false; }
-    float *hv = cui_state(ui, id, sizeof(float));
-    cui__tween(ui, hv, (r.hovered || open) ? 1.0f : 0.0f, CUI__T_HOVER);
+    float hv_v = cui__hover_fade(ui, id, (r.hovered || open), CUI__T_HOVER), *hv = &hv_v;
     int b = cui__node_new(ui, id);
     cui_node *bn = &ui->nodes[b];
     bn->dir = CUI_ROW; bn->align = CUI_ALIGN_CENTER; bn->gap = 6;
@@ -954,7 +948,7 @@ int cui_chat_composer_ex(cui_ctx *ui, const char *id_str, char *buf, size_t cap,
     cui_node *sn = &ui->nodes[sb];
     sn->w = CUI_PX(32); sn->h = CUI_PX(32); sn->radius = CUI_CORNERS(ui->theme.radius_surface - 10);
     sn->dir = CUI_STACK; sn->align = CUI_ALIGN_CENTER; sn->justify = CUI_JUSTIFY_CENTER;
-    cui_color on_bg = ui->accent == CUI_ACCENT_NEUTRAL ? CUI_C(ui, FOREGROUND) : CUI_C(ui, ACCENT);
+    cui_color on_bg = cui__emphasis(ui);
     cui_color on_fg = ui->accent == CUI_ACCENT_NEUTRAL ? CUI_C(ui, BACKGROUND) : CUI_C(ui, ACCENT_FOREGROUND);
     sn->bg = can ? cui_mix(on_bg, CUI_C(ui, BACKGROUND), sr.hovered ? 0.12f : 0.0f) : CUI_C(ui, CONTROL_TRACK);
     if (can) { sn->paint = cui__paint_sheen; sn->paint_data = NULL; sn->elevation = CUI_ELEVATION_RESTING; sn->elevation_alpha = 1; }

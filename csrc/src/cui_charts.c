@@ -3,7 +3,6 @@
  * and use the theme's series palette. */
 #include "cui_internal.h"
 
-static float cui__fs(cui_ctx *ui, float size) { return size * ui->theme.font_scale; }
 
 typedef struct { cui_spring intro; cui_spring hx; float hover_t; int hover; bool init; float plot_x, plot_w; } cui__chart_state;
 
@@ -263,6 +262,7 @@ static void cui__paint_xy_chart(cui_ctx *ui, cui_node *n, void *data) {
                 if (p->o.stacked) acc += s->values[i] * intro;
             }
         }
+        cui__paint_annotations(ui, p->o.annotations, p->o.annotation_count, plot, -0.5, npts - 0.5, lo, hi, plot.y, false);
         if (p->hover >= 0 && p->hover < npts) {
             float cx = plot.x + slot * (p->hover + 0.5f);
             cui__chart_tooltip(ui, p, plot, cx + slot * 0.25f, plot.y + plot.h * 0.4f, p->hover);
@@ -303,6 +303,7 @@ static void cui__paint_xy_chart(cui_ctx *ui, cui_node *n, void *data) {
         cui_draw_polyline(ui, line, ln, 2.0f, c, false);
     }
     cui_pop_clip(ui);
+    if (npts > 1) cui__paint_annotations(ui, p->o.annotations, p->o.annotation_count, plot, 0, npts - 1, lo, hi, plot.y, false);
     if (p->hover >= 0 && p->hover_t > 0.01f) {
         float hx = p->hx;
         cui_rect cl = { hx - 0.5f, plot.y, 1, plot.h };
@@ -392,6 +393,8 @@ static void cui__xy_chart(cui_ctx *ui, const char *id_str, const cui_series *ser
     p->o = *o;
     p->o.format = o->format ? cui__frame_strdup(ui, o->format, -1) : NULL;
     p->o.labels = NULL;
+    p->o.annotations = cui__copy_annotations(ui, o->annotations, o->annotation_count);
+    p->o.annotation_count = p->o.annotations ? o->annotation_count : 0;
     p->intro = st->intro.x;
     p->hover = st->hover_t > 0.01f ? st->hover : -1;
     p->hover_t = st->hover_t;
@@ -530,6 +533,7 @@ void cui_donut_chart_ex(cui_ctx *ui, const char *id_str, const float *values, co
     /* it always asks for the side by side width, so a container that fits its
      * content offers that room again as soon as it has it */
     cui__soft_width(&ui->nodes[row], o->width, legend ? full + 24 + legend_w : full);
+    if (!o->width.kind) { ui->nodes[row].flags |= CUI_NF_ADAPTIVE; ui->nodes[row].min_w = legend ? CUI_MAX(120.0f, legend_w) : 80; }
     cui__open(ui, row);
     int dn = cui__leaf(ui, did, CUI_PX(size), CUI_PX(size));
     cui__mark_interactive(ui, dn, 0);

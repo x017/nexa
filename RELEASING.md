@@ -37,17 +37,17 @@ Pushing a `v*.*.*` git tag triggers [`.github/workflows/release.yml`](.github/wo
 
 ```bash
 # 1. Update version in BOTH files so they match:
-#    - pyproject.toml        -> version = "1.1.0"
-#    - src/nexa/__init__.py  -> __version__ = "1.1.0"
+#    - pyproject.toml        -> version = "1.4.0"
+#    - src/nexa/__init__.py  -> __version__ = "1.4.0"
 
 # 2. Run the full verification suite locally:
 pytest -v -W error
 
 # 3. Commit, tag, and push:
-git commit -am "Release v1.1.0"
+git commit -am "Release v1.4.0"
 git push origin main
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.4.0
+git push origin v1.4.0
 ```
 
 > **Tip — Dry-Run Before Tagging:** Open **Actions → Release nexa-ui → Run workflow** on GitHub with `publish_to_pypi` unchecked (`false`) to build and download all Linux, macOS, and Windows wheels without publishing to PyPI.
