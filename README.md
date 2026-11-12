@@ -218,7 +218,7 @@ if __name__ == "__main__":
 
 ## Examples & Tests
 
-Run any of the **13 complete example apps** in [`examples/`](https://github.com/x017/nexa/tree/main/examples):
+Run any of the **16 complete example apps** in [`examples/`](https://github.com/x017/nexa/tree/main/examples):
 
 | Example | Highlights |
 |---|---|
@@ -235,6 +235,17 @@ Run any of the **13 complete example apps** in [`examples/`](https://github.com/
 | [`examples/music.py`](https://github.com/x017/nexa/blob/main/examples/music.py) | `carousel`, `now_playing` transport, scrubbable `waveform`, `reorder` queue |
 | [`examples/gallery.py`](https://github.com/x017/nexa/blob/main/examples/gallery.py) | IDE `menu_bar`/`toolbar`/`doc_tabs`, Bezier `node_editor`, `canvas`, `inspector`, `LogBuffer` |
 | [`examples/async_network.py`](https://github.com/x017/nexa/blob/main/examples/async_network.py) | Cooperative `await app.run_async` + loopback HTTP server + `Channel` |
+| [`examples/instruments.py`](https://github.com/x017/nexa/blob/main/examples/instruments.py) | **New in 1.4**: `knob`, `fader`, `level_meter`, `radial_gauge`, `readout`, `dot_display`, `dot_chart` & `event_track` — a live reactor console |
+| [`examples/devtools.py`](https://github.com/x017/nexa/blob/main/examples/devtools.py) | **New in 1.4**: all 20 CUI 1.3 dev tools — `pipeline`, `problems`, `test_explorer`, `coverage`, `trace_view`, `waterfall`, `api_explorer`, `feature_flags`, `schedule_picker`, `blame`, `commit_graph`… |
+| [`examples/rtl.py`](https://github.com/x017/nexa/blob/main/examples/rtl.py) | **New in 1.4**: Persian RTL studio — system font install, shaped text, `month_calendar`, `terminal`, `file_browser`, `candlestick`, `image_viewer`/`cropper`, `emoji_picker`, `tour` |
+
+<p align="center">
+  <img src="docs/assets/screenshots/instruments.png" width="49%" alt="Reactor Console — knobs, faders, meters, dot chart" />
+  <img src="docs/assets/screenshots/devtools.png" width="49%" alt="DevTools Studio — pipeline, problems, coverage, traces" />
+</p>
+<p align="center">
+  <img src="docs/assets/screenshots/rtl.png" width="66%" alt="Studio فارسی — right-to-left Persian UI with a system font" />
+</p>
 
 Render headless screenshots on any machine or CI runner:
 

@@ -108,7 +108,11 @@ class InstrumentsMixin:
         hide_value: bool = False,
         disabled: bool = False,
     ) -> float:
-        """Linear fader with ticks and an optional VU meter beside the track."""
+        """Linear fader with ticks and an optional VU meter beside the track.
+
+        ``meter`` holds one *linear* peak amplitude per channel (see
+        :meth:`level_meter`); dB labels come from the ``ticks`` you pass.
+        """
         keep = self._frame_keepalive
         opts = CuiFaderOpts()
         opts.label = encode_opt(label, keep)
@@ -157,7 +161,12 @@ class InstrumentsMixin:
         hold: float = 1.6,
         decay: float = 24.0,
     ) -> bool:
-        """Bars that jump to each peak and fall back; returns True when a clip light was cleared."""
+        """Bars that jump to each peak and fall back; returns True when a clip light was cleared.
+
+        ``levels`` are *linear* peak amplitudes per channel (0.0–1.0, where 1.0
+        lights the clip indicator) — CUI converts them to dB against
+        ``min_db``/``max_db`` for you, then applies the hold/decay ballistics.
+        """
         keep = self._frame_keepalive
         opts = CuiLevelMeterOpts()
         opts.min_db = float(min_db)

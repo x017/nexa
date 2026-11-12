@@ -180,6 +180,9 @@ EXAMPLES_LIST = [
     ("mail.py", "Desktop Mail Client", "Three-pane resizable split layout, virtualized message list, search filter & rich thread preview."),
     ("music.py", "Audio Deck", "Transport controls, waveform/equalizer visualization, playlists & smooth spring animations."),
     ("notes.py", "Markdown Notes", "Live CommonMark + GFM task list preview alongside multi-line editing and tag filtering."),
+    ("instruments.py", "Reactor Console (1.4 Instruments)", "Knob, fader, level meter, radial gauge, readout, dot display, dot chart & event track — every dial returns its value."),
+    ("devtools.py", "DevTools Studio (1.3 Tools)", "All 20 developer panels on four tabs: pipeline, problems, tests, coverage, trace, waterfall, API explorer, flags, cron, regex, blame, commit graph & more."),
+    ("rtl.py", "Studio فارسی (RTL & Fonts)", "Persian right-to-left studio: whole-UI system font, shaped text, localized calendar, terminal, file browser, candlestick, image viewer/cropper, emoji picker & tour."),
     ("hello.py", "Minimal Starter", "Smallest 15-line interactive native window using ui.run(draw)."),
 ]
 
@@ -830,7 +833,7 @@ def render_page_shell(
           <!-- Subtle Closing Procedural Topographic Band -->
           <section class="home-cta compact" id="docs-cta-band">
             <div class="home-cta-body">
-              <h2>Explore the 13 runnable examples</h2>
+              <h2>Explore the 16 runnable examples</h2>
               <p>Every tutorial &amp; 1.1 studio pattern—including the complete <code>zero_to_hero.py</code> Pulse Studio capstone—is ready to run inside <code>examples/</code>.</p>
               <div class="hero-actions">
                 <a class="btn btn-primary" href="https://github.com/x017/nexa/tree/main/examples" target="_blank" rel="noopener">Browse examples/ →</a>
@@ -891,7 +894,7 @@ def build_bundle() -> None:
         "chapter": "Docs Wiki",
         "heading": "Knowledge Base, Paradigms Matrix & 13 Examples",
         "anchor": "",
-        "text": "Central nexa documentation wiki: installation, quickstart, paradigms matrix, 20 widget domains, and all 13 runnable examples.",
+        "text": "Central nexa documentation wiki: installation, quickstart, paradigms matrix, 22 widget domains, and all 16 runnable examples.",
     })
 
     # 1. Write compact search-index.js
@@ -944,7 +947,7 @@ def build_bundle() -> None:
     (DOCS_DIR / "wiki.html").write_text(
         render_page_shell(
             page_title="Documentation Wiki — nexa",
-            meta_desc="Complete nexa Documentation Wiki: installation, UI paradigms matrix, 11-module 0-to-Hero map, 20 widget domains, and 13 runnable Python examples.",
+            meta_desc="Complete nexa Documentation Wiki: installation, UI paradigms matrix, 11-module 0-to-Hero map, 22 widget domains, and 16 runnable Python examples.",
             active_nav="wiki",
             sidebar_html=render_sidebar_html("wiki", parsed_chapters),
             article_html=wiki_article,

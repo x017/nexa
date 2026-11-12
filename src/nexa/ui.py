@@ -252,7 +252,9 @@ class UI(
             raw = today.encode("utf-8")
             packed.append(raw)
             strings.today = raw
-        keep.extend((strings, packed))
+        # cui_set_strings only stores the pointer, so both the struct and every
+        # name it points at must outlive the call (not just the frame)
+        self.__dict__["_strings_keepalive"] = (strings, packed)
         self._lib.cui_set_strings(self._ctx, ctypes.byref(strings))
 
     def get_strings(self) -> Optional[dict]:

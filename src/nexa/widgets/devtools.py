@@ -158,7 +158,7 @@ def _fill(struct: Any, data: Any, keep: list) -> None:
                 arr = (elem * max(1, len(value)))()
                 for i, item in enumerate(value):
                     _fill(arr[i], item, keep)
-            elif isinstance(elem, ctypes.c_char_p):
+            elif isinstance(elem, type) and issubclass(elem, ctypes.c_char_p):
                 arr = (ctypes.c_char_p * (len(value) + 1))()
                 for i, item in enumerate(value):
                     arr[i] = item.encode("utf-8") if isinstance(item, str) else item
@@ -351,6 +351,30 @@ class QueryBuilderResult(NamedTuple):
 class DevtoolsMixin:
     """Developer-tool views (CUI 1.3): traces, pipelines, coverage, graphs…"""
 
+    def _dt_remember(self, key: str, keep: list) -> None:
+        """Keep a widget's arrays alive past the frame.
+
+        CUI's coverage tree stores the *pointers* you pass (it only rebuilds
+        when the data changes), and a few other panels hold a reference for a
+        frame longer than the caller, so the buffers cannot live in the
+        per-frame keepalive alone.
+        """
+        store = self.__dict__.get("_dt_keep")
+        if store is None:
+            store = self.__dict__["_dt_keep"] = {}
+        store[key] = keep
+
+    def _dt_stable(self, key: str, signature, keep: list) -> list:
+        """Reuse a previous frame's buffers when the data is unchanged."""
+        store = self.__dict__.get("_dt_stable_keep")
+        if store is None:
+            store = self.__dict__["_dt_stable_keep"] = {}
+        entry = store.get(key)
+        if entry is not None and entry[0] == signature:
+            return entry[1]
+        store[key] = (signature, keep)
+        return keep
+
     # -- diagnostics -----------------------------------------------------
     def problems(
         self,
@@ -362,11 +386,12 @@ class DevtoolsMixin:
         no_toolbar: bool = False,
     ) -> ProblemsResult:
         """A filterable problems panel; returns the selected/activated row."""
-        keep = self._frame_keepalive
+        keep: list = []
         array, count = _pack(CuiDiagnostic, diagnostics, keep)
         opts = _opts(CuiProblemsOpts, {}, keep, width=to_c_size(width), height=height, no_toolbar=no_toolbar)
         out = CuiProblemsResult()
         self._lib.nexa_problems_ex(self._ctx, id.encode("utf-8"), array, count, opts, ctypes.byref(out))
+        self._dt_remember(id, keep)
         return ProblemsResult(out.selected, out.activated, out.shown)
 
     # -- CI --------------------------------------------------------------
@@ -380,7 +405,7 @@ class DevtoolsMixin:
         selected: int = -1,
     ) -> PipelineResult:
         """A CI pipeline: columns of stage badges with the jobs inside them."""
-        keep = self._frame_keepalive
+        keep: list = []
         labels = (ctypes.c_char_p * (len(stages) + 1))()
         for i, stage in enumerate(stages):
             labels[i] = stage.encode("utf-8") if isinstance(stage, str) else stage
@@ -392,6 +417,7 @@ class DevtoolsMixin:
         self._lib.nexa_pipeline_ex(
             self._ctx, id.encode("utf-8"), labels, len(stages), job_array, job_count, opts, ctypes.byref(out)
         )
+        self._dt_remember(id, keep)
         return PipelineResult(out.clicked, out.hovered, cell.value)
 
     # -- schedules -------------------------------------------------------
@@ -406,7 +432,7 @@ class DevtoolsMixin:
         next_count: int = 3,
     ) -> ScheduleResult:
         """Cron builder with a plain-language description and the next run times."""
-        keep = self._frame_keepalive
+        keep: list = []
         cap = 256
         buf = ctypes.create_string_buffer(cron.encode("utf-8"), cap)
         keep.append(buf)
@@ -415,6 +441,7 @@ class DevtoolsMixin:
         )
         out = CuiScheduleResult()
         self._lib.nexa_schedule_picker_ex(self._ctx, id.encode("utf-8"), buf, c_size_t(cap), opts, ctypes.byref(out))
+        self._dt_remember(id, keep)
         return ScheduleResult(buf.value.decode("utf-8", "replace"), out.changed, out.valid, out.next)
 
     # -- shortcuts -------------------------------------------------------
@@ -429,7 +456,7 @@ class DevtoolsMixin:
         no_function_row: bool = False,
     ) -> KeymapResult:
         """A searchable shortcuts cheatsheet grouped by category."""
-        keep = self._frame_keepalive
+        keep: list = []
         array, count = _pack(CuiKeymapBinding, bindings, keep)
         cats = (ctypes.c_char_p * (len(categories) + 1))() if categories else None
         if cats is not None:
@@ -452,6 +479,7 @@ class DevtoolsMixin:
         )
         out = CuiKeymapResult()
         self._lib.nexa_keymap_ex(self._ctx, id.encode("utf-8"), array, count, opts, ctypes.byref(out))
+        self._dt_remember(id, keep)
         return KeymapResult(out.clicked, out.conflicts)
 
     # -- git -------------------------------------------------------------
@@ -465,12 +493,13 @@ class DevtoolsMixin:
         selected: int = -1,
     ) -> CommitGraphResult:
         """A git history graph with lanes, refs and merges."""
-        keep = self._frame_keepalive
+        keep: list = []
         array, count = _pack(CuiCommit, commits, keep)
         cell, ptr = _sel(selected, keep)
         opts = _opts(CuiCommitGraphOpts, {}, keep, width=to_c_size(width), height=height, selected=ptr)
         out = CuiCommitGraphResult()
         self._lib.nexa_commit_graph_ex(self._ctx, id.encode("utf-8"), array, count, opts, ctypes.byref(out))
+        self._dt_remember(id, keep)
         return CommitGraphResult(out.clicked, out.activated, out.hovered, cell.value)
 
     def graph_view(
@@ -485,7 +514,7 @@ class DevtoolsMixin:
         selected: int = -1,
     ) -> GraphResult:
         """A dependency/flow graph; edges are ``{"from": 0, "to": 1}``."""
-        keep = self._frame_keepalive
+        keep: list = []
         node_array, node_count = _pack(CuiGraphNode, nodes, keep)
         edge_array, edge_count = _pack(CuiGraphEdge, edges, keep)
         cell, ptr = _sel(selected, keep)
@@ -494,6 +523,7 @@ class DevtoolsMixin:
         self._lib.nexa_graph_view_ex(
             self._ctx, id.encode("utf-8"), node_array, node_count, edge_array, edge_count, opts, ctypes.byref(out)
         )
+        self._dt_remember(id, keep)
         return GraphResult(out.clicked, out.activated, out.hovered, cell.value)
 
     # -- network & tracing -----------------------------------------------
@@ -509,7 +539,7 @@ class DevtoolsMixin:
         loaded: float = -1.0,
     ) -> WaterfallResult:
         """A DevTools-style network waterfall; ``timing`` is the 6-phase breakdown."""
-        keep = self._frame_keepalive
+        keep: list = []
         array, count = _pack(CuiNetRequest, requests, keep)
         cell, ptr = _sel(selected, keep)
         opts = _opts(
@@ -524,6 +554,7 @@ class DevtoolsMixin:
         )
         out = CuiWaterfallResult()
         self._lib.nexa_waterfall_ex(self._ctx, id.encode("utf-8"), array, count, opts, ctypes.byref(out))
+        self._dt_remember(id, keep)
         return WaterfallResult(out.clicked, out.activated, out.hovered, cell.value)
 
     def trace_view(
@@ -540,7 +571,7 @@ class DevtoolsMixin:
         markers: Sequence[float] = (),
     ) -> TraceResult:
         """A flame/timeline trace viewer with zoom, pan and range marks."""
-        keep = self._frame_keepalive
+        keep: list = []
         track_array, track_count = _pack(CuiTraceTrack, tracks, keep)
         span_array, span_count = _pack(CuiTraceSpan, spans, keep)
         c_view = CuiTraceView()
@@ -574,6 +605,7 @@ class DevtoolsMixin:
             opts,
             ctypes.byref(out),
         )
+        self._dt_remember(id, keep)
         return TraceResult(c_view, c_selected.value, out.selection_changed, out.view_changed, out.hovered)
 
     # -- debugging -------------------------------------------------------
@@ -588,7 +620,7 @@ class DevtoolsMixin:
         flags: int = 0,
     ) -> RegexTesterResult:
         """Live regex playground: pattern and text are editable, matches highlighted."""
-        keep = self._frame_keepalive
+        keep: list = []
         pcap, tcap = 512, 4096
         pbuf = ctypes.create_string_buffer(pattern.encode("utf-8"), pcap)
         tbuf = ctypes.create_string_buffer(text.encode("utf-8"), tcap)
@@ -599,6 +631,7 @@ class DevtoolsMixin:
             self._ctx, id.encode("utf-8"), pbuf, c_size_t(pcap), tbuf, c_size_t(tcap), opts, ctypes.byref(out)
         )
         error = out.error.decode("utf-8", "replace") if out.error else ""
+        self._dt_remember(id, keep)
         return RegexTesterResult(
             pbuf.value.decode("utf-8", "replace"), tbuf.value.decode("utf-8", "replace"), out.valid, out.matches, error
         )
@@ -612,11 +645,12 @@ class DevtoolsMixin:
         height: float = 280.0,
     ) -> TestExplorerResult:
         """A test tree with pass/fail badges and per-suite run buttons."""
-        keep = self._frame_keepalive
+        keep: list = []
         array, count = _pack(CuiTestItem, items, keep)
         opts = _opts(CuiTestExplorerOpts, {}, keep, width=to_c_size(width), height=height)
         out = CuiTestExplorerResult()
         self._lib.nexa_test_explorer_ex(self._ctx, id.encode("utf-8"), array, count, opts, ctypes.byref(out))
+        self._dt_remember(id, keep)
         return TestExplorerResult(
             out.selected, out.activated, out.run, bool(out.run_all), out.passed, out.failed, out.skipped, out.total
         )
@@ -632,11 +666,12 @@ class DevtoolsMixin:
         lang: str = "",
     ) -> StackTraceResult:
         """A formatted stack trace; frames carry the source lines they show."""
-        keep = self._frame_keepalive
+        keep: list = []
         array, count = _pack(CuiStackFrame, frames, keep)
         opts = _opts(CuiStackTraceOpts, {}, keep, width=to_c_size(width), title=title, message=message, lang=lang)
         out = CuiStackTraceResult()
         self._lib.nexa_stack_trace_ex(self._ctx, id.encode("utf-8"), array, count, opts, ctypes.byref(out))
+        self._dt_remember(id, keep)
         return StackTraceResult(out.clicked)
 
     # -- HTTP ------------------------------------------------------------
@@ -651,7 +686,7 @@ class DevtoolsMixin:
         placeholder: str = "Enter a URL",
     ) -> RequestBarResult:
         """A method picker + URL field + Send button (the top of an API client)."""
-        keep = self._frame_keepalive
+        keep: list = []
         cap = 2048
         buf = ctypes.create_string_buffer(url.encode("utf-8"), cap)
         keep.append(buf)
@@ -668,6 +703,7 @@ class DevtoolsMixin:
         self._lib.nexa_request_bar_ex(
             self._ctx, id.encode("utf-8"), ctypes.byref(c_method), buf, c_size_t(cap), opts, ctypes.byref(out)
         )
+        self._dt_remember(id, keep)
         return RequestBarResult(c_method.value, buf.value.decode("utf-8", "replace"), out.send, out.cancel, out.changed)
 
     def api_explorer(
@@ -680,12 +716,13 @@ class DevtoolsMixin:
         selected: int = -1,
     ) -> ApiExplorerResult:
         """Browsable API reference; ``params`` is a list of ``{"name": …, "type": …}``."""
-        keep = self._frame_keepalive
+        keep: list = []
         array, count = _pack(CuiApiEndpoint, endpoints, keep)
         cell, ptr = _sel(selected, keep)
         opts = _opts(CuiApiExplorerOpts, {}, keep, width=to_c_size(width), height=height, selected=ptr)
         out = CuiApiExplorerResult()
         self._lib.nexa_api_explorer_ex(self._ctx, id.encode("utf-8"), array, count, opts, ctypes.byref(out))
+        self._dt_remember(id, keep)
         return ApiExplorerResult(out.selected, bool(out.try_it), cell.value)
 
     def feature_flags(
@@ -698,7 +735,7 @@ class DevtoolsMixin:
         height: float = 260.0,
     ) -> FeatureFlagsResult:
         """Flag table with per-environment switches (``on``/``rollout`` are 8-slot lists)."""
-        keep = self._frame_keepalive
+        keep: list = []
         array, count = _pack(CuiFeatureFlag, flags, keep)
         env_array = None
         if envs:
@@ -718,6 +755,7 @@ class DevtoolsMixin:
             opts,
             ctypes.byref(out),
         )
+        self._dt_remember(id, keep)
         return FeatureFlagsResult(out.flag, out.env)
 
     # -- operations ------------------------------------------------------
@@ -730,7 +768,7 @@ class DevtoolsMixin:
         last_day: Optional[Date] = None,
     ) -> UptimeResult:
         """Status-page uptime bars; each service carries its daily uptime list."""
-        keep = self._frame_keepalive
+        keep: list = []
         items = list(services)
         array = (CuiUptimeService * max(1, len(items)))()
         for i, item in enumerate(items):
@@ -750,6 +788,7 @@ class DevtoolsMixin:
             opts.last_day = to_c_date(last_day)
         out = CuiUptimeResult()
         self._lib.nexa_uptime_ex(self._ctx, id.encode("utf-8"), array, len(items), opts, ctypes.byref(out))
+        self._dt_remember(id, keep)
         return UptimeResult(out.service, out.day)
 
     def time_histogram(
@@ -765,7 +804,7 @@ class DevtoolsMixin:
         utc: bool = False,
     ) -> TimeHistogramResult:
         """Stacked bars over time with a draggable selection; ``counts`` per series."""
-        keep = self._frame_keepalive
+        keep: list = []
         items = list(series)
         array = (CuiHistogramSeries * max(1, len(items)))()
         for i, item in enumerate(items):
@@ -796,6 +835,7 @@ class DevtoolsMixin:
             opts,
             ctypes.byref(out),
         )
+        self._dt_remember(id, keep)
         return TimeHistogramResult(sel_start.value, sel_end.value, bool(out.selection_changed), out.hovered)
 
     def coverage(
@@ -805,15 +845,34 @@ class DevtoolsMixin:
         *,
         width: SizeLike = 420.0,
         height: float = 260.0,
-        low: float = 0.5,
-        high: float = 0.8,
+        low: float = 50.0,
+        high: float = 80.0,
     ) -> CoverageResult:
-        """A coverage report with per-file heat bars."""
-        keep = self._frame_keepalive
-        array, count = _pack(CuiCoverageFile, files, keep)
-        opts = _opts(CuiCoverageOpts, {}, keep, width=to_c_size(width), height=height, low=low, high=high)
+        """A coverage report with per-file heat bars; ``low``/``high`` are percentages."""
+        items = list(files)
+        signature = tuple(
+            (
+                item.get("path") if isinstance(item, dict) else getattr(item, "path", None),
+                *(item.get(k) if isinstance(item, dict) else getattr(item, k, None)
+                  for k in ("lines", "lines_hit", "branches", "branches_hit", "functions", "functions_hit")),
+            )
+            for item in items
+        )
+        cached = self.__dict__.get("_dt_stable_keep", {}).get(f"coverage:{id}")
+        if cached is not None and cached[0] == signature:
+            keep = cached[1]
+            array, count = keep[0], keep[1]
+            opts = _opts(CuiCoverageOpts, {}, keep, width=to_c_size(width), height=height, low=low, high=high)
+            keep[2:] = [opts]
+        else:
+            keep = []
+            array, count = _pack(CuiCoverageFile, items, keep)
+            opts = _opts(CuiCoverageOpts, {}, keep, width=to_c_size(width), height=height, low=low, high=high)
+            keep = [array, count, opts]
+            self._dt_stable(f"coverage:{id}", signature, keep)
         out = CuiCoverageResult()
         self._lib.nexa_coverage_ex(self._ctx, id.encode("utf-8"), array, count, opts, ctypes.byref(out))
+        self._dt_remember(id, keep)
         return CoverageResult(out.activated, out.lines)
 
     def blame(
@@ -830,7 +889,7 @@ class DevtoolsMixin:
         first_line: int = 1,
     ) -> BlameResult:
         """``git blame``: each source line tinted by the commit that last touched it."""
-        keep = self._frame_keepalive
+        keep: list = []
         text = (ctypes.c_char_p * (len(lines) + 1))()
         for i, line in enumerate(lines):
             text[i] = line.encode("utf-8") if isinstance(line, str) else line
@@ -850,6 +909,7 @@ class DevtoolsMixin:
             opts,
             ctypes.byref(out),
         )
+        self._dt_remember(id, keep)
         return BlameResult(out.clicked, out.hovered)
 
     # -- editors ---------------------------------------------------------
@@ -867,7 +927,7 @@ class DevtoolsMixin:
         width: SizeLike = 320.0,
     ) -> KvEditorResult:
         """Editable key/value rows (env vars, headers); returns the new rows."""
-        keep = self._frame_keepalive
+        keep: list = []
         from .._cdefs import CuiKvPair
 
         items = list(pairs)
@@ -903,6 +963,7 @@ class DevtoolsMixin:
                     "secret": bool(array[i].secret),
                 }
             )
+        self._dt_remember(id, keep)
         return KvEditorResult(rows, changed)
 
     def query_builder(
@@ -917,7 +978,7 @@ class DevtoolsMixin:
         read_only: bool = False,
     ) -> QueryBuilderResult:
         """Nested AND/OR rule builder; returns the edited tree."""
-        keep = self._frame_keepalive
+        keep: list = []
         field_array, field_count = _pack(CuiQueryField, fields, keep)
         items = list(nodes)
         capacity = max(capacity, len(items))
@@ -952,6 +1013,7 @@ class DevtoolsMixin:
                     "value": node.value.decode("utf-8", "replace").split("\0", 1)[0],
                 }
             )
+        self._dt_remember(id, keep)
         return QueryBuilderResult(rows, changed)
 
 
