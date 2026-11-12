@@ -5,7 +5,7 @@ from __future__ import annotations
 import ctypes
 from ctypes import c_float
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Sequence, Union
 
 from .._cdefs import (
     CuiTerminalOpts,
@@ -118,6 +118,99 @@ class TextMixin:
 
     def font_add_fallback(self, font_id: int, fallback_font_id: int) -> None:
         self._lib.cui_font_add_fallback(self._ctx, int(font_id), int(fallback_font_id))
+
+    # ---- Whole-UI typography (CUI 1.2+) ----
+
+    def load_font(
+        self,
+        source: Union[str, Path, bytes, bytearray, memoryview],
+        *,
+        fallbacks: Sequence[Union[str, Path, int]] = (),
+    ) -> int:
+        """Load a ``.ttf``/``.otf`` from a path or from bytes and return its font id.
+
+        ``fallbacks`` are font paths (or ids already loaded) consulted for glyphs
+        the font is missing — the usual way to combine a Latin UI font with a
+        Persian/Arabic or CJK one.
+        """
+        if isinstance(source, (bytes, bytearray, memoryview)):
+            font_id = self.font_load_memory(source)
+        else:
+            font_id = self.font_load_file(source)
+        for fallback in fallbacks:
+            other = fallback if isinstance(fallback, int) else self.font_load_file(fallback)
+            self.font_add_fallback(font_id, int(other))
+        return font_id
+
+    def use_font(
+        self,
+        source: Union[str, Path, bytes, bytearray, memoryview, None] = None,
+        *,
+        family: Optional[str] = None,
+        roles: Sequence[FontRole] = (FontRole.BODY, FontRole.MEDIUM, FontRole.DISPLAY),
+        fallbacks: Sequence[Union[str, Path, int]] = (),
+    ) -> int:
+        """Make one font the face of the whole UI and return its font id.
+
+        Accepts a path, raw bytes, or ``family="Segoe UI"`` to look the file up
+        among the installed system fonts.  ``roles`` decides which of the five
+        built-in roles it replaces; leave ``MONO`` and ``ICONS`` out so code and
+        icons keep their own faces::
+
+            ctx.use_font("assets/PlusJakartaSans-Regular.ttf",
+                         fallbacks=[fonts.find_rtl_font()])
+            ctx.use_font(family="DejaVu Sans")
+
+        Persian/Arabic also needs a shaping build; see
+        :func:`nexa.fonts.supports_text_shaping`.
+        """
+        if source is None:
+            if family is None:
+                raise ValueError("pass a font path/bytes or family='System Font Name'")
+            from ..fonts import find_system_font
+
+            found = find_system_font(family)
+            if found is None:
+                raise FileNotFoundError(f"no installed font matches family {family!r}")
+            source = found
+        font_id = self.load_font(source, fallbacks=fallbacks)
+        for role in roles:
+            self.font_set_role(role, font_id)
+        return font_id
+
+    def use_system_font(
+        self,
+        family: str,
+        *,
+        roles: Sequence[FontRole] = (FontRole.BODY, FontRole.MEDIUM, FontRole.DISPLAY),
+        fallbacks: Sequence[Union[str, Path, int]] = (),
+    ) -> int:
+        """``use_font(family=…)`` as a one-liner; raises when the font is not installed."""
+        return self.use_font(family=family, roles=roles, fallbacks=fallbacks)
+
+    def use_rtl_font(
+        self,
+        family: Optional[str] = None,
+        *,
+        roles: Sequence[FontRole] = (FontRole.BODY, FontRole.MEDIUM, FontRole.DISPLAY),
+        fallbacks: Sequence[Union[str, Path, int]] = (),
+    ) -> int:
+        """Install a Persian/Arabic-capable font for the whole UI.
+
+        Without ``family`` the first installed font from
+        :data:`nexa.fonts.RTL_FAMILIES` is used (Vazirmatn, Noto Naskh Arabic,
+        Tahoma, …).  Pair it with ``direction=ui.TextDirection.RTL`` on a
+        container, and build with ``--rtl`` so the glyphs are shaped.
+        """
+        from ..fonts import find_rtl_font, find_system_font
+
+        found = find_system_font(family) if family else find_rtl_font()
+        if found is None:
+            raise FileNotFoundError(
+                "no Persian/Arabic font found; install Vazirmatn or Noto Naskh Arabic, "
+                "or pass the .ttf path to use_font()"
+            )
+        return self.use_font(found, roles=roles, fallbacks=fallbacks)
 
     # ---- Terminal (CUI 1.3) ----
 

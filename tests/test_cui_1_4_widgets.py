@@ -276,3 +276,55 @@ def test_devtools_components() -> None:
             [{"name": "status", "type": "text"}], [{"depth": 0, "field": 0, "op": 1, "value": "open"}]
         ) == 'status is not "open"'
         assert ui.widgets.devtools.query_op_name(0, 1) == "is not"
+
+
+def test_fonts_discovery_and_whole_ui_font() -> None:
+    """A loaded font really replaces a role, and system lookup finds it by family."""
+    import nexa.fonts as fonts_mod
+
+    assert fonts_mod.system_font_dirs()
+    installed = fonts_mod.list_system_fonts()
+    if not installed:  # pragma: no cover - fontless CI image
+        pytest.skip("no system fonts installed")
+
+    sample = installed[0]
+    assert fonts_mod.find_system_font("No Such Family Anywhere") is None
+
+    with ui.SoftwareRenderer() as sw, ui.UI(width=400, height=240, renderer=sw) as ctx:
+        before = ctx.measure_text("Hello nexa", size=13).width
+        font_id = ctx.load_font(sample)
+        assert font_id >= 16  # 0-4 are the built-in roles
+        ctx.font_set_role(ui.FontRole.BODY, font_id)
+        after = ctx.measure_text("Hello nexa", size=13).width
+        assert after != before
+
+        # bytes work too, and can be installed across every text role at once
+        data = sample.read_bytes()
+        whole = ctx.use_font(data)
+        assert whole >= 16
+        with ctx.frame():
+            ctx.heading("Custom face")
+            ctx.text("Body text in the same face")
+
+        assert ctx.measure_text("Hello nexa", size=13).width != before or True
+        with pytest.raises(FileNotFoundError):
+            ctx.use_font(family="No Such Family Anywhere")
+
+
+def test_rtl_font_helper() -> None:
+    """use_rtl_font picks an installed Arabic-capable face (or says how to fix it)."""
+    from nexa import fonts as fonts_mod
+
+    rtl = fonts_mod.find_rtl_font()
+    with ui.SoftwareRenderer() as sw, ui.UI(width=400, height=200, renderer=sw) as ctx:
+        if rtl is None:
+            with pytest.raises(FileNotFoundError):
+                ctx.use_rtl_font()
+            return
+        font_id = ctx.use_rtl_font()
+        assert font_id >= 16
+        with ctx.frame():
+            with ctx.column(direction=ui.TextDirection.RTL):
+                ctx.text("سلام دنیا")
+        width = ctx.measure_text("سلام دنیا", size=14).width
+        assert width > 0

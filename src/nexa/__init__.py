@@ -46,6 +46,7 @@ from .scopes import (
     VirtualListScope,
 )
 from .theme import ThemeProxy, accent_name, mix_colors, oklch, with_alpha
+from . import fonts
 from .util import (
     REGEX_DOTALL,
     REGEX_IGNORECASE,

@@ -123,17 +123,94 @@ Out of the box, `nexa` embeds:
 - **Geist Mono** (`FontRole.MONO`)
 - **Lucide** (`FontRole.ICONS` — `168` crisp vector icons)
 
-To load your own `.ttf` / `.otf` typeface or add CJK / Arabic / Persian / Emoji fallback chains:
+### Make the whole UI use your font
+
+`use_font()` loads a `.ttf`/`.otf` from a **file path**, from **raw bytes**, or by
+**system family name**, installs it into every text role (`BODY`, `MEDIUM`,
+`DISPLAY`) and returns its font id. Call it once, right after creating the UI:
 
 ```python
-# Load primary UI font from file or bytes:
-regular_id = ctx.font_load_file("assets/PlusJakartaSans-Regular.ttf")
-ctx.font_set_role(ui.FontRole.BODY, regular_id)
+import nexa as ui
+from nexa import fonts
 
-# Attach an international fallback font so missing glyphs fall through seamlessly:
-rtl_or_cjk_id = ctx.font_load_file("assets/Vazirmatn-Regular.ttf")
-ctx.font_add_fallback(regular_id, rtl_or_cjk_id)
+with ui.SoftwareRenderer() as sw, ui.UI(width=900, height=600, renderer=sw) as ctx:
+    # 1. a font that ships with your app
+    ctx.use_font("assets/PlusJakartaSans-Regular.ttf")
+
+    # 2. or a font installed on the machine, looked up by family name
+    ctx.use_font(family="Segoe UI")          # Windows
+    ctx.use_font(family="SF Pro Text")       # macOS
+    ctx.use_font(family="DejaVu Sans")       # Linux
+    ctx.use_system_font("Noto Sans")         # shorthand for the same thing
+
+    # 3. or raw bytes (a font embedded in your package / downloaded at runtime)
+    ctx.use_font(Path("assets/brand.ttf").read_bytes())
 ```
+
+`nexa.fonts` finds the files for you: `find_system_font("DejaVu Sans")`,
+`find_system_font("Inter", bold=True)`, `list_system_fonts()`, and
+`system_font_dirs()` (honours `NEXA_FONT_DIRS`). On Linux it also asks
+`fc-match`, so aliases and per-user installs resolve.
+
+### Fallback chains (missing glyphs)
+
+A font only covers the scripts it was designed for. `fallbacks=` attaches up to
+four faces that are consulted for any glyph the primary font lacks — the usual
+combination is a Latin UI font plus a Persian/Arabic or CJK one:
+
+```python
+ctx.use_font("assets/PlusJakartaSans-Regular.ttf",
+             fallbacks=["assets/Vazirmatn-Regular.ttf", "assets/NotoSansCJK-Regular.ttf"])
+
+# or reuse an id you already loaded (roles like ui.FontRole.MONO work as ids too)
+latin = ctx.font_load_file("assets/Inter-Regular.ttf")
+arabic = ctx.font_load_file("assets/Vazirmatn-Regular.ttf")
+ctx.font_set_role(ui.FontRole.BODY, latin)
+ctx.font_add_fallback(latin, arabic)
+```
+
+Low-level pieces, if you want them explicitly: `font_load_file(path)`,
+`font_load_memory(bytes)`, `font_set_role(role, id)`,
+`font_add_fallback(font_id, fallback_id)`.
+
+### Persian / Arabic / Hebrew (RTL)
+
+Right-to-left needs two things: an **RTL build** (CUI's OpenType shaper) and a
+font with Arabic-script coverage.
+
+```bash
+NEXA_TEXT_SHAPING=1 python -m nexa.build -o src/nexa/_native/libnexa_cui.so
+# or: python -m nexa.build --rtl
+```
+
+```python
+import nexa as ui
+from nexa import fonts
+
+print(fonts.supports_text_shaping())      # True with a --rtl build
+
+with ui.SoftwareRenderer() as sw, ui.UI(width=800, height=600, renderer=sw) as ctx:
+    ctx.use_rtl_font()                    # first installed of Vazirmatn, Vazir, Sahel,
+                                          # Noto Naskh Arabic, Tahoma, DejaVu Sans, …
+    # ctx.use_rtl_font("Vazirmatn")       # or name the family yourself
+    # ctx.use_font("assets/Vazirmatn-Regular.ttf")
+
+    with ctx.frame():
+        with ctx.column(pad=16, gap=8, direction=ui.TextDirection.RTL):
+            ctx.heading("سلام دنیا")
+            ctx.text("متن راست‌به‌چپ با شکل‌دهی صحیح حروف.")
+        ctx.text("Mixed LTR/RTL", direction=ui.TextDirection.AUTO)
+```
+
+`direction=` works on `text`, `box`, `row`, `column`, `grid` and `stack`
+(`ui.TextDirection.INHERIT / LTR / RTL / AUTO`); `AUTO` lets the shaper pick the
+paragraph base from the first strong character. Calendar and picker names can be
+localized at the same time with `ctx.set_strings(months=[...], weekdays=[...],
+today="امروز")`.
+
+> **Emoji** are separate from text fonts: `ctx.load_emoji_font()` (system) or
+> `ctx.load_emoji_font("NotoColorEmoji.ttf")` enables `ui.emoji(...)` and
+> `ui.emoji_picker(...)`.
 
 ---
 

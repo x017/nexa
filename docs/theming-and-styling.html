@@ -127,14 +127,57 @@ translucent = ui.with_alpha(brand, <span class="tok-num">0.20</span>)         <s
 <h2 id="5-typography-custom-ttf-fonts-international-fallback">5. Typography, Custom <code>.ttf</code> Fonts &amp; International Fallback</h2>
 <p>Out of the box, <code>nexa</code> embeds:</p>
 <ul><li><strong>Inter</strong> (<code>FontRole.BODY</code>, <code>FontRole.MEDIUM</code>, <code>FontRole.DISPLAY</code>)</li><li><strong>Geist Mono</strong> (<code>FontRole.MONO</code>)</li><li><strong>Lucide</strong> (<code>FontRole.ICONS</code> — <code>168</code> crisp vector icons)</li></ul>
-<p>To load your own <code>.ttf</code> / <code>.otf</code> typeface or add CJK / Arabic / Persian / Emoji fallback chains:</p>
-<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-com"># Load primary UI font from file or bytes:</span>
-regular_id = ctx.font_load_file(<span class="tok-str">&quot;assets/PlusJakartaSans-Regular.ttf&quot;</span>)
-ctx.font_set_role(ui.<span class="tok-cls">FontRole</span>.<span class="tok-cls">BODY</span>, regular_id)
+<h3 id="make-the-whole-ui-use-your-font">Make the whole UI use your font</h3>
+<p><code>use_font()</code> loads a <code>.ttf</code>/<code>.otf</code> from a <strong>file path</strong>, from <strong>raw bytes</strong>, or by <strong>system family name</strong>, installs it into every text role (<code>BODY</code>, <code>MEDIUM</code>, <code>DISPLAY</code>) and returns its font id. Call it once, right after creating the UI:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
+<span class="tok-kw">from</span> nexa <span class="tok-kw">import</span> fonts
 
-<span class="tok-com"># Attach an international fallback font so missing glyphs fall through seamlessly:</span>
-rtl_or_cjk_id = ctx.font_load_file(<span class="tok-str">&quot;assets/Vazirmatn-Regular.ttf&quot;</span>)
-ctx.font_add_fallback(regular_id, rtl_or_cjk_id)</code></pre></div>
+<span class="tok-kw">with</span> ui.<span class="tok-cls">SoftwareRenderer</span>() <span class="tok-kw">as</span> sw, ui.<span class="tok-cls">UI</span>(width=<span class="tok-num">900</span>, height=<span class="tok-num">600</span>, renderer=sw) <span class="tok-kw">as</span> ctx:
+    <span class="tok-com"># 1. a font that ships with your app</span>
+    ctx.use_font(<span class="tok-str">&quot;assets/PlusJakartaSans-Regular.ttf&quot;</span>)
+
+    <span class="tok-com"># 2. or a font installed on the machine, looked up by family name</span>
+    ctx.use_font(family=<span class="tok-str">&quot;Segoe UI&quot;</span>)          <span class="tok-com"># Windows</span>
+    ctx.use_font(family=<span class="tok-str">&quot;SF Pro Text&quot;</span>)       <span class="tok-com"># macOS</span>
+    ctx.use_font(family=<span class="tok-str">&quot;DejaVu Sans&quot;</span>)       <span class="tok-com"># Linux</span>
+    ctx.use_system_font(<span class="tok-str">&quot;Noto Sans&quot;</span>)         <span class="tok-com"># shorthand for the same thing</span>
+
+    <span class="tok-com"># 3. or raw bytes (a font embedded in your package / downloaded at runtime)</span>
+    ctx.use_font(<span class="tok-cls">Path</span>(<span class="tok-str">&quot;assets/brand.ttf&quot;</span>).read_bytes())</code></pre></div>
+<p><code>nexa.fonts</code> finds the files for you: <code>find_system_font(&quot;DejaVu Sans&quot;)</code>, <code>find_system_font(&quot;Inter&quot;, bold=True)</code>, <code>list_system_fonts()</code>, and <code>system_font_dirs()</code> (honours <code>NEXA_FONT_DIRS</code>). On Linux it also asks <code>fc-match</code>, so aliases and per-user installs resolve.</p>
+<h3 id="fallback-chains-missing-glyphs">Fallback chains (missing glyphs)</h3>
+<p>A font only covers the scripts it was designed for. <code>fallbacks=</code> attaches up to four faces that are consulted for any glyph the primary font lacks — the usual combination is a Latin UI font plus a Persian/Arabic or CJK one:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code>ctx.use_font(<span class="tok-str">&quot;assets/PlusJakartaSans-Regular.ttf&quot;</span>,
+             fallbacks=[<span class="tok-str">&quot;assets/Vazirmatn-Regular.ttf&quot;</span>, <span class="tok-str">&quot;assets/NotoSansCJK-Regular.ttf&quot;</span>])
+
+<span class="tok-com"># or reuse an id you already loaded (roles like ui.FontRole.MONO work as ids too)</span>
+latin = ctx.font_load_file(<span class="tok-str">&quot;assets/Inter-Regular.ttf&quot;</span>)
+arabic = ctx.font_load_file(<span class="tok-str">&quot;assets/Vazirmatn-Regular.ttf&quot;</span>)
+ctx.font_set_role(ui.<span class="tok-cls">FontRole</span>.<span class="tok-cls">BODY</span>, latin)
+ctx.font_add_fallback(latin, arabic)</code></pre></div>
+<p>Low-level pieces, if you want them explicitly: <code>font_load_file(path)</code>, <code>font_load_memory(bytes)</code>, <code>font_set_role(role, id)</code>, <code>font_add_fallback(font_id, fallback_id)</code>.</p>
+<h3 id="persian-arabic-hebrew-rtl">Persian / Arabic / Hebrew (RTL)</h3>
+<p>Right-to-left needs two things: an <strong>RTL build</strong> (CUI&#x27;s OpenType shaper) and a font with Arabic-script coverage.</p>
+<div class="code-panel"><div class="code-header"><span>bash</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code>NEXA_TEXT_SHAPING=1 python -m nexa.build -o src/nexa/_native/libnexa_cui.so
+# or: python -m nexa.build --rtl</code></pre></div>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
+<span class="tok-kw">from</span> nexa <span class="tok-kw">import</span> fonts
+
+print(fonts.supports_text_shaping())      <span class="tok-com"># True with a --rtl build</span>
+
+<span class="tok-kw">with</span> ui.<span class="tok-cls">SoftwareRenderer</span>() <span class="tok-kw">as</span> sw, ui.<span class="tok-cls">UI</span>(width=<span class="tok-num">800</span>, height=<span class="tok-num">600</span>, renderer=sw) <span class="tok-kw">as</span> ctx:
+    ctx.use_rtl_font()                    <span class="tok-com"># first installed of Vazirmatn, Vazir, Sahel,</span>
+                                          <span class="tok-com"># Noto Naskh Arabic, Tahoma, DejaVu Sans, …</span>
+    <span class="tok-com"># ctx.use_rtl_font(&quot;Vazirmatn&quot;)       # or name the family yourself</span>
+    <span class="tok-com"># ctx.use_font(&quot;assets/Vazirmatn-Regular.ttf&quot;)</span>
+
+    <span class="tok-kw">with</span> ctx.frame():
+        <span class="tok-kw">with</span> ctx.column(pad=<span class="tok-num">16</span>, gap=<span class="tok-num">8</span>, direction=ui.<span class="tok-cls">TextDirection</span>.<span class="tok-cls">RTL</span>):
+            ctx.heading(<span class="tok-str">&quot;سلام دنیا&quot;</span>)
+            ctx.text(<span class="tok-str">&quot;متن راست‌به‌چپ با شکل‌دهی صحیح حروف.&quot;</span>)
+        ctx.text(<span class="tok-str">&quot;Mixed LTR/RTL&quot;</span>, direction=ui.<span class="tok-cls">TextDirection</span>.<span class="tok-cls">AUTO</span>)</code></pre></div>
+<p><code>direction=</code> works on <code>text</code>, <code>box</code>, <code>row</code>, <code>column</code>, <code>grid</code> and <code>stack</code> (<code>ui.TextDirection.INHERIT / LTR / RTL / AUTO</code>); <code>AUTO</code> lets the shaper pick the paragraph base from the first strong character. Calendar and picker names can be localized at the same time with <code>ctx.set_strings(months=[...], weekdays=[...], today=&quot;امروز&quot;)</code>.</p>
+<blockquote><p><strong>Emoji</strong> are separate from text fonts: <code>ctx.load_emoji_font()</code> (system) or <code>ctx.load_emoji_font(&quot;NotoColorEmoji.ttf&quot;)</code> enables <code>ui.emoji(...)</code> and <code>ui.emoji_picker(...)</code>.</p></blockquote>
 <hr />
 <h2 id="6-icons-ui-icon">6. Icons (<code>ui.Icon</code>)</h2>
 <p>All <strong>168 bundled Lucide icons</strong> are UTF-8 string constants on <code>ui.Icon</code> and can be passed to <code>icon=</code>, <code>ui.icon(...)</code>, <code>ui.icon_button(...)</code>, <code>ui.nav_item(...)</code>, or looked up dynamically by name:</p>
