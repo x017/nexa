@@ -47,6 +47,8 @@ pip install -e .
 
 Only a C99 compiler (`gcc`, `clang`, or MSVC `cl`) is required when building from source—**no `python3-dev` headers, CMake, or `libx11-dev` packages are needed** (`libX11.so.6` is loaded dynamically via `dlopen` on Linux, with automatic headless `SoftwareRenderer` fallback on CI/servers without a display).
 
+> **Upgrading a dev checkout?** `src/nexa/_native/` is git-ignored, so a library built by the previous version survives a `git pull`/`git switch`. It is detected automatically: every build writes a `libnexa_cui.so.stamp` (CUI version + source fingerprint), and on import a mismatched stamp — or a library that lacks the current sentinel symbols — triggers a one-time recompile (about 20 s). You can also force one with `python -m nexa.build`. If you point `NEXA_LIB_PATH` at a stale library yourself, nexa raises a clear error instead of the raw `undefined symbol: cui_…_ex` from `ctypes`.
+
 ---
 
 ## Quickstart: Functional, OOP, & Headless Styles

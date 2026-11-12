@@ -19,6 +19,8 @@ Environment variables (all honored during ``pip install`` and ``nexa-build``):
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
 import platform
 import shlex
@@ -106,6 +108,94 @@ def find_repo_csrc(start: Optional[Path] = None) -> Optional[Path]:
         if (candidate / "include" / "cui" / "cui.h").is_file():
             return candidate.resolve()
     return None
+
+
+# --------------------------------------------------------------------------- #
+# Build stamp: lets the loader tell a current library from one left over by an
+# older checkout (which fails later with "undefined symbol: cui_..._ex").
+# --------------------------------------------------------------------------- #
+
+STAMP_FORMAT = 1
+
+
+def stamp_path(lib_path: Path) -> Path:
+    """Sidecar file recording what a compiled library was built from."""
+    lib_path = Path(lib_path)
+    return lib_path.with_name(lib_path.name + ".stamp")
+
+
+def cui_version(csrc_dir: Path) -> str:
+    """``MAJOR.MINOR.PATCH`` from ``csrc/include/cui/cui.h``."""
+    header = Path(csrc_dir) / "include" / "cui" / "cui.h"
+    try:
+        text = header.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+    nums = {}
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) >= 3 and parts[0] == "#define" and parts[1].startswith("CUI_VERSION_"):
+            key = parts[1][len("CUI_VERSION_") :].lower()
+            if key in ("major", "minor", "patch"):
+                nums[key] = parts[2]
+    if len(nums) != 3:
+        return ""
+    return f"{nums['major']}.{nums['minor']}.{nums['patch']}"
+
+
+def source_fingerprint(csrc_dir: Path) -> str:
+    """Hash of the path and contents of every C/ObjC/header file in ``csrc``.
+
+    Contents (not mtimes) so a rebuild is only triggered by real edits — git
+    rewrites timestamps on every checkout, and some filesystems round mtimes to
+    a whole second.
+    """
+    csrc_dir = Path(csrc_dir)
+    digest = hashlib.sha256()
+    for pattern in ("*.c", "*.m", "*.h"):
+        for path in sorted(csrc_dir.rglob(pattern)):
+            try:
+                data = path.read_bytes()
+            except OSError:
+                continue
+            digest.update(str(path.relative_to(csrc_dir)).encode("utf-8", "replace"))
+            digest.update(b"\0")
+            digest.update(hashlib.sha256(data).digest())
+    return digest.hexdigest()[:32]
+
+
+def _write_stamp(output_path: Path, csrc_dir: Path, options: Dict[str, object]) -> None:
+    record = {
+        "format": STAMP_FORMAT,
+        "cui_version": cui_version(csrc_dir),
+        "fingerprint": source_fingerprint(csrc_dir),
+        "options": dict(options),
+    }
+    try:
+        stamp_path(output_path).write_text(json.dumps(record, sort_keys=True), encoding="utf-8")
+    except OSError:
+        pass  # read-only install dirs are fine: the library still works
+
+
+def read_stamp(lib_path: Path) -> Optional[dict]:
+    try:
+        record = json.loads(stamp_path(lib_path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(record, dict) or record.get("format") != STAMP_FORMAT:
+        return None
+    return record
+
+
+def stamp_matches(lib_path: Path, csrc_dir: Path) -> bool:
+    """True when ``lib_path`` was compiled from the sources currently in ``csrc_dir``."""
+    record = read_stamp(lib_path)
+    if record is None:
+        return False
+    if record.get("fingerprint") != source_fingerprint(csrc_dir):
+        return False
+    version = cui_version(csrc_dir)
+    return not version or record.get("cui_version") == version
 
 
 def _detect_compiler(env: Dict[str, str], sys_name: str) -> str:
@@ -242,6 +332,20 @@ def build_native(
     else:
         defines.append("CUI_NO_APP")
 
+    options: Dict[str, object] = {
+        "backend": plat_choice,
+        "minimal": is_minimal,
+        "fonts": use_fonts,
+        "stb_image": use_stb,
+        "image_all_formats": use_img_all,
+        "text_shaping": use_shape,
+        "app": use_app,
+        "gl": use_gl,
+        "sw": use_sw,
+        "lto": use_lto,
+        "debug": debug,
+    }
+
     cc = _detect_compiler(env, sys_name)
     cc_base = Path(cc).stem.lower()
     inc_dirs = [str(csrc / "include"), str(csrc / "src")]
@@ -281,6 +385,7 @@ def build_native(
         cmd.extend(extra_ldflags)
         with tempfile.TemporaryDirectory() as tmpdir:
             subprocess.run(cmd, cwd=tmpdir, check=True)
+        _write_stamp(output_path, csrc, options)
         return output_path
     else:
         cmd = [cc]
@@ -351,6 +456,7 @@ def build_native(
         cmd.extend(["-o", str(output_path)])
 
     subprocess.run(cmd, check=True)
+    _write_stamp(output_path, csrc, options)
     return output_path
 
 
