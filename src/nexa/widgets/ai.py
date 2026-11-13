@@ -325,7 +325,10 @@ class AIMixin:
         *,
         size: float = 0.0,
         color: ColorLike = None,
+        fg: ColorLike = None,
     ) -> bool:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         opts = CuiVoiceOrbOpts()
         opts.size = float(size)

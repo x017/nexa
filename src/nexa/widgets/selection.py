@@ -207,9 +207,12 @@ class SelectionMixin:
         icon: Optional[str] = None,
         detail: Optional[str] = None,
         color: ColorLike = None,
+        fg: ColorLike = None,
         width: SizeLike = None,
         wide: bool = False,
     ) -> bool:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         c_on = c_bool(bool(on))
         opts = CuiTileOpts()

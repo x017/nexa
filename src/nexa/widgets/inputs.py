@@ -59,11 +59,14 @@ def _build_input_opts(
     suffix: Optional[str] = None,
     bg: ColorLike = None,
     color: ColorLike = None,
+    fg: ColorLike = None,
     text_color: ColorLike = None,
     placeholder_color: ColorLike = None,
     border_color: ColorLike = None,
     focus_color: ColorLike = None,
 ) -> CuiInputOpts:
+    if fg is not None:
+        color = fg
     opts = CuiInputOpts()
     opts.label = encode_opt(label, keep)
     opts.placeholder = encode_opt(placeholder, keep)
@@ -109,6 +112,7 @@ class InputsMixin:
         max_bytes: int = 512,
         bg: ColorLike = None,
         color: ColorLike = None,
+        fg: ColorLike = None,
         text_color: ColorLike = None,
         placeholder_color: ColorLike = None,
         border_color: ColorLike = None,
@@ -125,6 +129,8 @@ class InputsMixin:
         ``focus_color`` (the edge focus blends to). They need the vendored C
         ``cui_input_opts`` colour fields, which nexa carries as a small delta.
         """
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         buf, cap = make_text_buffer(value, max_bytes)
         opts = _build_input_opts(
@@ -151,6 +157,7 @@ class InputsMixin:
         max_bytes: int = 4096,
         bg: ColorLike = None,
         color: ColorLike = None,
+        fg: ColorLike = None,
         text_color: ColorLike = None,
         placeholder_color: ColorLike = None,
         border_color: ColorLike = None,
@@ -161,6 +168,8 @@ class InputsMixin:
 
         Takes the same colour arguments as :meth:`input`.
         """
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         buf, cap = make_text_buffer(value, max_bytes)
         opts = _build_input_opts(
@@ -187,6 +196,7 @@ class InputsMixin:
         max_bytes: int = 256,
         bg: ColorLike = None,
         color: ColorLike = None,
+        fg: ColorLike = None,
         text_color: ColorLike = None,
         placeholder_color: ColorLike = None,
         border_color: ColorLike = None,
@@ -197,6 +207,8 @@ class InputsMixin:
 
         Takes the same colour arguments as :meth:`input`.
         """
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         buf, cap = make_text_buffer(value, max_bytes)
         opts = _build_input_opts(

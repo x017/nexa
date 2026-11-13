@@ -47,6 +47,7 @@ class PickersMixin:
         width: SizeLike = None,
         bg: ColorLike = None,
         color: ColorLike = None,
+        fg: ColorLike = None,
         text_color: ColorLike = None,
         placeholder_color: ColorLike = None,
         border_color: ColorLike = None,
@@ -57,6 +58,8 @@ class PickersMixin:
         hint shown while nothing is chosen, ``border_color`` the resting edge
         and ``focus_color`` the edge it blends to while hovered or open.
         """
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         arr, n = encode_str_array(items, keep)
         icons_arr, _ = encode_str_array(icons, keep) if icons else (None, 0)

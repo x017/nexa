@@ -143,7 +143,10 @@ class ChartsMixin:
         width: SizeLike = 96.0,
         height: float = 28.0,
         color: ColorLike = Color.ACCENT,
+        fg: ColorLike = None,
     ) -> None:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         n = len(values)
         c_vals = (c_float * n)(*(float(v) for v in values))
@@ -215,9 +218,12 @@ class ChartsMixin:
         min_value: float = 0.0,
         max_value: float = 0.0,
         color: ColorLike = None,
+        fg: ColorLike = None,
         format: Optional[str] = None,
         width: SizeLike = None,
     ) -> int:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         expected = int(rows) * int(cols)
         if len(values) < expected:
@@ -249,9 +255,12 @@ class ChartsMixin:
         *,
         cell: float = 0.0,
         color: ColorLike = None,
+        fg: ColorLike = None,
         format: Optional[str] = None,
         unit: Optional[str] = None,
     ) -> int:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         n = len(values)
         c_vals = (c_float * n)(*(float(v) for v in values))
@@ -323,7 +332,10 @@ class ChartsMixin:
         height: float = 0.0,
         format: Optional[str] = None,
         color: ColorLike = None,
+        fg: ColorLike = None,
     ) -> int:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         arr, n = _pack_viz_items(stages, keep)
         opts = CuiFunnelOpts()
@@ -421,7 +433,10 @@ class ChartsMixin:
         max_rows: int = 0,
         keep_order: bool = False,
         color: ColorLike = None,
+        fg: ColorLike = None,
     ) -> int:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         arr, n = _pack_viz_items(items, keep)
         opts = CuiBarListOpts()

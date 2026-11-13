@@ -303,8 +303,11 @@ class OverlaysMixin:
         lines: int = 3,
         size: float = 0.0,
         color: ColorLike = None,
+        fg: ColorLike = None,
         fade_to: ColorLike = None,
     ) -> bool:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         opts = CuiExpandableTextOpts()
         opts.lines = int(lines)
@@ -373,6 +376,7 @@ class OverlaysMixin:
         toggle: bool = True,
         radius: float = 0.0,
         color: ColorLike = None,
+        fg: ColorLike = None,
         width: SizeLike = None,
     ) -> VeilScope:
         """Cover the content built inside with slowly moving dither dots
@@ -389,6 +393,8 @@ class OverlaysMixin:
                 ctx.text(SECRET)
             revealed = v.revealed
         """
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         holder = c_bool(bool(revealed))
         opts = CuiVeilOpts()

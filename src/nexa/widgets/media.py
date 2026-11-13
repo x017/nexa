@@ -277,7 +277,10 @@ class MediaMixin:
         bar: float = 0.0,
         gap: float = 0.0,
         color: ColorLike = None,
+        fg: ColorLike = None,
     ) -> float:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         n = len(peaks)
         c_peaks = (c_float * n)(*(float(p) for p in peaks))
@@ -338,8 +341,11 @@ class MediaMixin:
         size: float = 0.0,
         font: Union[FontRole, int] = FontRole.BODY,
         color: ColorLike = None,
+        fg: ColorLike = None,
         group_thousands: bool = True,
     ) -> None:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         opts = CuiCounterOpts()
         opts.format = encode_opt(format, keep)
@@ -418,6 +424,7 @@ class MediaMixin:
         owners: Optional[Sequence[int]] = None,
         owner: int = 0,
         color: ColorLike = None,
+        fg: ColorLike = None,
         pitch: float = 0.0,
         step: float = 0.0,
         width: SizeLike = None,
@@ -428,6 +435,8 @@ class MediaMixin:
         arrow keys). ``owners`` marks which of two voices each column belongs
         to (0/1); ``owner`` picks the voice being shown.
         """
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         n = len(levels)
         c_levels = (c_float * max(n, 1))(*(float(v) for v in levels))

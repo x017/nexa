@@ -156,6 +156,12 @@ colouring (buttons, inputs, tables, charts…) keep the palette they already use
 pass them their own colour argument, or wrap the region and use `text()` for the
 copy you want tinted.
 
+**`fg=` on the widget itself.** Every component that takes `color=` also
+accepts `fg=` as a plain alias of its own — `ctx.heading("Hi", fg="#ffcc00")`
+is exactly `ctx.heading("Hi", color="#ffcc00")` and renders the same pixels.
+If both are passed, `fg=` wins. (`input`, `textarea`, `search` and `select`
+also keep `text_color=`, which still takes precedence over both.)
+
 **What it costs.** Entering and leaving a coloured scope is a stack push/pop —
 8.6 µs measured, nearly all of it the container node CUI creates anyway. On the
 hot path each `text()` does one attribute read plus a memoised colour
@@ -176,7 +182,7 @@ translucent = ui.with_alpha(brand, 0.20)         # Multiply alpha by 0.20
 
 ### Recoloring One Component (without touching the theme)
 
-Theme tokens restyle everything; these arguments restyle a single widget and leave the rest of the app alone — same `ColorLike` forms as above.
+Theme tokens restyle everything; these arguments restyle a single widget and leave the rest of the app alone — same `ColorLike` forms as above. Every `color=` in this table also accepts `fg=` as an alias (the containers' `fg=` is instead the inherited region colour described above).
 
 | Component | Color arguments |
 |---|---|

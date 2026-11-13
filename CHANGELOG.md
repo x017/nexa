@@ -81,6 +81,11 @@ release that picks it up. The published version of this page is
   `fg` / `bg` / `border_color` (and the full field palette) as real parameters
   instead of swallowing them in `**kwargs`, so they show up in signatures and
   IDE completion.
+- **`fg=` everywhere `color=` is**: every component with a `color=` argument
+  also accepts `fg=` as an alias (keyword-only, resolved before use; it wins
+  if both are passed), so `ctx.heading("Hi", fg="#ff2040")` works as written.
+  Containers keep the inherited-region meaning of `fg=`; `fg=None` changes
+  nothing.
 - **Colours on `select`, `tabs`, `tab_bar` and `table`** — the collection
   widgets were theme-only; they now take their own palette:
   - `select(...)` uses the same field palette as `input`: `bg`, `color`

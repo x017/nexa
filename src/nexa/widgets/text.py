@@ -48,6 +48,7 @@ class TextMixin:
         font: Union[FontRole, int] = FontRole.BODY,
         size: float = 0.0,
         color: ColorLike = None,
+        fg: ColorLike = None,
         align: TextAlign = TextAlign.LEFT,
         nowrap: bool = False,
         tabular: bool = False,
@@ -56,6 +57,8 @@ class TextMixin:
         line_height: float = 0.0,
         direction: TextDirection = TextDirection.INHERIT,
     ) -> None:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         opts = CuiTextOpts()
         opts.font = int(font)
@@ -77,6 +80,7 @@ class TextMixin:
         level: int = 2,
         *,
         color: ColorLike = None,
+        fg: ColorLike = None,
         size: float = 0.0,
         line_height: float = 0.0,
         width: SizeLike = None,
@@ -95,6 +99,8 @@ class TextMixin:
         ``radius`` tune that chip). Without ``color`` it uses the inherited
         ``fg=`` of the enclosing container, then the theme foreground.
         """
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         if (
             color is None
@@ -158,7 +164,9 @@ class TextMixin:
         self._record_change(clicked)
         return clicked
 
-    def icon(self, glyph: str, size: float = 16.0, color: ColorLike = Color.FOREGROUND) -> None:
+    def icon(self, glyph: str, size: float = 16.0, color: ColorLike = Color.FOREGROUND, *, fg: ColorLike = None) -> None:
+        if fg is not None:
+            color = fg
         self._lib.nexa_icon(
             self._ctx, encode_str(glyph, self._frame_keepalive), float(size), to_packed_color(color)
         )

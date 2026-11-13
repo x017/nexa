@@ -2,6 +2,8 @@
 
 Every widget method below is available **both** on `ctx: ui.UI` (`ctx.button(...)`) **and** as a top-level function when inside an active frame (`import nexa as ui; ui.button(...)`).
 
+**Colour note:** any parameter documented as `color=` also accepts `fg=` as an alias (keyword-only; wins if both are passed). Containers (`box`, `row`, `column`, `grid`, `stack`, `card`) take `fg=` as the inherited region colour instead — see *Theming & Styling*.
+
 ---
 
 ## 1. Layout & Containers (`nexa.widgets.layout`)

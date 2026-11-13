@@ -601,10 +601,13 @@ class DataMixin:
         fit_content: bool = False,
         size: float = 0.0,
         color: ColorLike = None,
+        fg: ColorLike = None,
         streaming: bool = False,
         compact: bool = False,
     ) -> MarkdownResult:
         """Render CommonMark + GFM markdown (headings, lists, task items, tables, fenced code, alerts, links)."""
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         raw = encode_str(text, keep)
         opts = CuiMarkdownOpts()

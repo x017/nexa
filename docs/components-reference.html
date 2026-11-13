@@ -73,6 +73,7 @@
           <article class="prose" id="docs-article">
 <h1 id="complete-component-reference-190-widgets-across-22-domains">Complete Component Reference (190+ Widgets Across 22 Domains)</h1>
 <p>Every widget method below is available <strong>both</strong> on <code>ctx: ui.UI</code> (<code>ctx.button(...)</code>) <strong>and</strong> as a top-level function when inside an active frame (<code>import nexa as ui; ui.button(...)</code>).</p>
+<p><strong>Colour note:</strong> any parameter documented as <code>color=</code> also accepts <code>fg=</code> as an alias (keyword-only; wins if both are passed). Containers (<code>box</code>, <code>row</code>, <code>column</code>, <code>grid</code>, <code>stack</code>, <code>card</code>) take <code>fg=</code> as the inherited region colour instead — see <em>Theming &amp; Styling</em>.</p>
 <hr />
 <h2 id="1-layout-containers-nexa-widgets-layout">1. Layout &amp; Containers (<code>nexa.widgets.layout</code>)</h2>
 <p>All layout scopes are <strong>unconditional</strong> (<code>with ui.row(...):</code> always enters).</p>

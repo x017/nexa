@@ -153,6 +153,7 @@ class FeedbackMixin:
         *,
         style: SpinnerStyle = SpinnerStyle.ARC,
         color: ColorLike = None,
+        fg: ColorLike = None,
         track: ColorLike = None,
     ) -> None:
         """Loading spinner. ``style`` picks a dither animation (CUI post-1.4):
@@ -160,6 +161,8 @@ class FeedbackMixin:
         ``ARC`` with no colours is the plain ring. ``track`` is the dots' base
         colour (defaults to ``color`` at 12%).
         """
+        if fg is not None:
+            color = fg
         if style == SpinnerStyle.ARC and color is None and track is None:
             self._lib.cui_spinner(self._ctx, float(size))
             return
@@ -177,7 +180,10 @@ class FeedbackMixin:
         style: LoaderStyle = LoaderStyle.DOTS,
         size: float = 0.0,
         color: ColorLike = None,
+        fg: ColorLike = None,
     ) -> None:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         opts = CuiLoaderOpts()
         opts.style = int(style)
@@ -218,6 +224,7 @@ class FeedbackMixin:
         *,
         size: float = 0.0,
         color: ColorLike = None,
+        fg: ColorLike = None,
         keep_visible: bool = False,
     ) -> bool:
         """A dither ring while ``status`` is BUSY that resolves to a check or
@@ -225,6 +232,8 @@ class FeedbackMixin:
         show, so you can drop the widget; ``keep_visible=True`` holds the
         result instead of dissolving it.
         """
+        if fg is not None:
+            color = fg
         ka = self._frame_keepalive
         opts = CuiStatusSpinnerOpts()
         opts.size = float(size)

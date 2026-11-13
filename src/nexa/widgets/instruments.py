@@ -65,8 +65,11 @@ class InstrumentsMixin:
         hide_value: bool = False,
         disabled: bool = False,
         color: ColorLike = None,
+        fg: ColorLike = None,
     ) -> float:
         """Rotary knob dragged vertically (or with the arrow keys); returns the new value."""
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         opts = CuiKnobOpts()
         opts.label = encode_opt(label, keep)
@@ -312,6 +315,7 @@ class InstrumentsMixin:
         *,
         pitch: float = 0.0,
         color: ColorLike = None,
+        fg: ColorLike = None,
         accent: bool = False,
         no_dim: bool = False,
         marquee: bool = False,
@@ -319,6 +323,8 @@ class InstrumentsMixin:
         width: SizeLike = None,
     ) -> None:
         """Text in a 5x7 dot font, for clocks, counters and status lines."""
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         opts = CuiDotDisplayOpts()
         opts.pitch = float(pitch)

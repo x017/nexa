@@ -40,6 +40,7 @@ class NavigationMixin:
         full_width: bool = False,
         bg: ColorLike = None,
         color: ColorLike = None,
+        fg: ColorLike = None,
         active_color: ColorLike = None,
         indicator_color: ColorLike = None,
     ) -> int:
@@ -48,6 +49,8 @@ class NavigationMixin:
         and icons, ``active_color`` the selected one, and ``indicator_color``
         the underline or the pill that moves behind the selection.
         """
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         arr, n = encode_str_array(items, keep)
         icons_arr, _ = encode_str_array(icons, keep) if icons else (None, 0)
@@ -173,6 +176,7 @@ class NavigationMixin:
         bg: ColorLike = None,
         border_color: ColorLike = None,
         color: ColorLike = None,
+        fg: ColorLike = None,
         active_color: ColorLike = None,
         indicator_color: ColorLike = None,
     ) -> int:
@@ -180,6 +184,8 @@ class NavigationMixin:
         resting icons and labels, ``active_color`` the selected one, and
         ``indicator_color`` the tint that slides behind the selection.
         """
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         n = len(items)
         arr = (CuiTabBarItem * n)()
@@ -221,9 +227,12 @@ class NavigationMixin:
         label: str,
         *,
         color: ColorLike = None,
+        fg: ColorLike = None,
         running: bool = False,
         badge: int = 0,
     ) -> bool:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         opts = CuiDockItemOpts()
         opts.color = to_c_color(color)

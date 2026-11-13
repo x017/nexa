@@ -114,6 +114,7 @@ class CreativeMixin:
         track: GradientTrack = GradientTrack.HUE,
         stops: Optional[Sequence[GradientStop]] = None,
         color: ColorLike = None,
+        fg: ColorLike = None,
         step: float = 0.0,
         format: Optional[str] = None,
         value_text: Optional[str] = None,
@@ -129,6 +130,8 @@ class CreativeMixin:
         Returns :class:`nexa.WellResult` — the new value, whether it changed,
         and whether the optional ``tool`` button was clicked.
         """
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         c_val = c_float(float(value))
         opts = CuiGradientSliderOpts()

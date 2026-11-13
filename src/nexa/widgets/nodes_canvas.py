@@ -174,7 +174,10 @@ class NodesCanvasMixin:
         spread: float = 0.0,
         offset: Union[Vec2, Tuple[float, float]] = (0.0, 2.0),
         color: ColorLike = (0, 0, 0, 64),
+        fg: ColorLike = None,
     ) -> None:
+        if fg is not None:
+            color = fg
         x, y, w, h = _unpack_rect(rect)
         ox, oy = _unpack_xy(offset)
         c = to_c_corners(radius)
@@ -189,7 +192,11 @@ class NodesCanvasMixin:
         b: Union[Vec2, Tuple[float, float]],
         color: ColorLike,
         thickness: float = 1.5,
+        *,
+        fg: ColorLike = None,
     ) -> None:
+        if fg is not None:
+            color = fg
         ax, ay = _unpack_xy(a)
         bx, by = _unpack_xy(b)
         self._lib.nexa_draw_line(self._ctx, ax, ay, bx, by, float(thickness), to_packed_color(color))
@@ -201,7 +208,10 @@ class NodesCanvasMixin:
         thickness: float = 1.5,
         *,
         closed: bool = False,
+        fg: ColorLike = None,
     ) -> None:
+        if fg is not None:
+            color = fg
         n = len(points)
         if n < 2:
             return
@@ -216,7 +226,11 @@ class NodesCanvasMixin:
         self,
         points: Sequence[Union[Vec2, Tuple[float, float]]],
         color: ColorLike,
+        *,
+        fg: ColorLike = None,
     ) -> None:
+        if fg is not None:
+            color = fg
         n = len(points)
         if n < 3:
             return
@@ -230,7 +244,11 @@ class NodesCanvasMixin:
         center: Union[Vec2, Tuple[float, float]],
         radius: float,
         color: ColorLike,
+        *,
+        fg: ColorLike = None,
     ) -> None:
+        if fg is not None:
+            color = fg
         cx, cy = _unpack_xy(center)
         self._lib.nexa_draw_circle(self._ctx, cx, cy, float(radius), to_packed_color(color))
 
@@ -242,7 +260,11 @@ class NodesCanvasMixin:
         angle_end: float,
         color: ColorLike,
         thickness: float = 2.0,
+        *,
+        fg: ColorLike = None,
     ) -> None:
+        if fg is not None:
+            color = fg
         cx, cy = _unpack_xy(center)
         self._lib.nexa_draw_arc(
             self._ctx, cx, cy, float(radius), float(angle_start), float(angle_end),
@@ -259,8 +281,11 @@ class NodesCanvasMixin:
         thickness: float = 1.5,
         *,
         segments: int = 24,
+        fg: ColorLike = None,
     ) -> None:
         """Draw a smooth cubic Bézier curve through ``(p0, p1, p2, p3)``."""
+        if fg is not None:
+            color = fg
         n_seg = max(2, int(segments))
         x0, y0 = _unpack_xy(p0)
         x1, y1 = _unpack_xy(p1)
@@ -289,7 +314,10 @@ class NodesCanvasMixin:
         *,
         size: float = 13.0,
         font: Union[FontRole, int] = FontRole.BODY,
+        fg: ColorLike = None,
     ) -> None:
+        if fg is not None:
+            color = fg
         px, py = _unpack_xy(pos)
         raw = text.encode("utf-8")
         self._lib.nexa_draw_text(
@@ -303,7 +331,10 @@ class NodesCanvasMixin:
         color: ColorLike,
         *,
         size: float = 16.0,
+        fg: ColorLike = None,
     ) -> None:
+        if fg is not None:
+            color = fg
         x, y, w, h = _unpack_rect(rect)
         self._lib.nexa_draw_icon(
             self._ctx, icon.encode("utf-8"), x, y, w, h, float(size), to_packed_color(color)
@@ -408,8 +439,10 @@ class NodesCanvasMixin:
         keep.extend((arr, opts))
         self._lib.cui_presence_pill_ex(self._ctx, encode_str(id, keep), arr, n, ctypes.byref(opts))
 
-    def selection_ring(self, color: ColorLike, *, name: Optional[str] = None, radius: float = 0.0) -> None:
+    def selection_ring(self, color: ColorLike, *, fg: ColorLike = None, name: Optional[str] = None, radius: float = 0.0) -> None:
         """Marks what someone else has selected on a shared canvas (CUI post-1.4)."""
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         opts = CuiSelectionRingOpts()
         opts.name = encode_opt(name, keep)
