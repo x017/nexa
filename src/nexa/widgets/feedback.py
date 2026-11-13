@@ -16,8 +16,13 @@ from .._cdefs import (
     CuiCountdownOpts,
     CuiEmptyOpts,
     CuiLoaderOpts,
+    CuiMeterPart,
     CuiMetricOpts,
+    CuiPatternMeterOpts,
     CuiProgressOpts,
+    CuiSkeletonGroupOpts,
+    CuiSpinnerOpts,
+    CuiStatusSpinnerOpts,
     CuiToastOpts,
     c_texture,
     encode_opt,
@@ -26,7 +31,18 @@ from .._cdefs import (
     to_c_color,
     to_c_size,
 )
-from ..types import CheckStep, ColorLike, ControlSize, LoaderStyle, SizeLike, Tone
+from ..scopes import SimpleScope
+from ..types import (
+    CheckStep,
+    ColorLike,
+    ControlSize,
+    LoaderStyle,
+    MeterPart,
+    SizeLike,
+    SpinnerStyle,
+    Status,
+    Tone,
+)
 
 
 class FeedbackMixin:
@@ -112,6 +128,7 @@ class FeedbackMixin:
         label: Optional[str] = None,
         show_value: bool = False,
         width: SizeLike = None,
+        dither: bool = False,
     ) -> None:
         keep = self._frame_keepalive
         opts = CuiProgressOpts()
@@ -121,6 +138,7 @@ class FeedbackMixin:
         opts.label = encode_opt(label, keep)
         opts.show_value = bool(show_value)
         opts.width = to_c_size(width)
+        opts.dither = bool(dither)
         keep.append(opts)
         self._lib.cui_progress_ex(self._ctx, float(value), ctypes.byref(opts))
 
@@ -129,8 +147,32 @@ class FeedbackMixin:
             self._ctx, encode_str(label, self._frame_keepalive), float(value), float(size)
         )
 
-    def spinner(self, size: float = 18.0) -> None:
-        self._lib.cui_spinner(self._ctx, float(size))
+    def spinner(
+        self,
+        size: float = 18.0,
+        *,
+        style: SpinnerStyle = SpinnerStyle.ARC,
+        color: ColorLike = None,
+        fg: ColorLike = None,
+        track: ColorLike = None,
+    ) -> None:
+        """Loading spinner. ``style`` picks a dither animation (CUI post-1.4):
+        comet ring, dot matrix, radar sweep, orbit, spiral …; the default
+        ``ARC`` with no colours is the plain ring. ``track`` is the dots' base
+        colour (defaults to ``color`` at 12%).
+        """
+        if fg is not None:
+            color = fg
+        if style == SpinnerStyle.ARC and color is None and track is None:
+            self._lib.cui_spinner(self._ctx, float(size))
+            return
+        keep = self._frame_keepalive
+        opts = CuiSpinnerOpts()
+        opts.style = int(style)
+        opts.color = to_c_color(color)
+        opts.track = to_c_color(track)
+        keep.append(opts)
+        self._lib.cui_spinner_ex(self._ctx, float(size), ctypes.byref(opts))
 
     def loader(
         self,
@@ -138,7 +180,10 @@ class FeedbackMixin:
         style: LoaderStyle = LoaderStyle.DOTS,
         size: float = 0.0,
         color: ColorLike = None,
+        fg: ColorLike = None,
     ) -> None:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         opts = CuiLoaderOpts()
         opts.style = int(style)
@@ -150,6 +195,105 @@ class FeedbackMixin:
     def skeleton(self, width: SizeLike = None, height: float = 16.0) -> None:
         s = to_c_size(width)
         self._lib.nexa_skeleton(self._ctx, int(s.kind), float(s.value), float(height))
+
+    def skeleton_group(
+        self,
+        *,
+        dither: bool = False,
+        width: SizeLike = None,
+        gap: float = 8.0,
+    ) -> SimpleScope:
+        """Placeholders built inside this scope share one shine (CUI post-1.4).
+
+        With ``dither`` they are drawn in dots with a brighter band sweeping
+        across. Nest groups; build the skeletons inside with :meth:`skeleton`.
+        """
+        keep = self._frame_keepalive
+        opts = CuiSkeletonGroupOpts()
+        opts.dither = bool(dither)
+        opts.width = to_c_size(width)
+        opts.gap = float(gap)
+        keep.append(opts)
+        self._lib.cui_skeleton_group_begin_ex(self._ctx, ctypes.byref(opts))
+        return SimpleScope(self._ctx, self._lib.cui_skeleton_group_end)
+
+    def status_spinner(
+        self,
+        id: str,
+        status: Status,
+        *,
+        size: float = 0.0,
+        color: ColorLike = None,
+        fg: ColorLike = None,
+        keep_visible: bool = False,
+    ) -> bool:
+        """A dither ring while ``status`` is BUSY that resolves to a check or
+        cross (CUI post-1.4). Returns ``False`` once there is nothing left to
+        show, so you can drop the widget; ``keep_visible=True`` holds the
+        result instead of dissolving it.
+        """
+        if fg is not None:
+            color = fg
+        ka = self._frame_keepalive
+        opts = CuiStatusSpinnerOpts()
+        opts.size = float(size)
+        opts.color = to_c_color(color)
+        opts.keep = bool(keep_visible)
+        ka.append(opts)
+        alive = bool(self._lib.cui_status_spinner_ex(
+            self._ctx, encode_str(id, ka), int(status), ctypes.byref(opts)
+        ))
+        self._record_change(alive)
+        return alive
+
+    def pattern_meter(
+        self,
+        id: str,
+        parts: Sequence[object],
+        *,
+        total: float = 0.0,
+        label: Optional[str] = None,
+        unit: Optional[str] = None,
+        format: Optional[str] = None,
+        free_label: Optional[str] = None,
+        grayscale: bool = False,
+        no_legend: bool = False,
+        height: float = 0.0,
+        width: SizeLike = None,
+    ) -> int:
+        """Stacked usage bar whose parts differ in colour and dot density
+        (CUI post-1.4). ``parts`` are :class:`nexa.MeterPart` (or plain
+        ``(name, value[, color[, density]])`` tuples). Returns the part under
+        the pointer / keyboard focus, or ``-1``.
+        """
+        keep = self._frame_keepalive
+        n = len(parts)
+        c_parts = (CuiMeterPart * max(n, 1))()
+        for i, p in enumerate(parts):
+            if not isinstance(p, MeterPart):
+                p = MeterPart(*p)  # type: ignore[misc]
+            c_parts[i].name = encode_str(p.name, keep)
+            c_parts[i].value = float(p.value)
+            if p.color is not None:
+                c_parts[i].color = to_c_color(p.color)
+            c_parts[i].density = float(p.density)
+        keep.append(c_parts)
+        opts = CuiPatternMeterOpts()
+        opts.total = float(total)
+        opts.label = encode_opt(label, keep)
+        opts.unit = encode_opt(unit, keep)
+        opts.format = encode_opt(format, keep)
+        opts.free_label = encode_opt(free_label, keep)
+        opts.grayscale = bool(grayscale)
+        opts.no_legend = bool(no_legend)
+        opts.height = float(height)
+        opts.width = to_c_size(width)
+        keep.append(opts)
+        focused = int(self._lib.cui_pattern_meter_ex(
+            self._ctx, encode_str(id, keep), c_parts, n, ctypes.byref(opts)
+        ))
+        self._record_change(focused >= 0)
+        return focused
 
     def badge(
         self,

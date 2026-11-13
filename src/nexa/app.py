@@ -375,6 +375,18 @@ class App:
 
     # ---- Cleanup ----
 
+    def follow_system_theme(self, follow: bool = True) -> None:
+        """Start or stop following the OS light/dark setting while the app
+        runs (CUI post-1.4) — for a theme switcher with Light/Dark/System.
+
+        Stopping keeps the current theme, so a later ``set_theme`` lasts;
+        starting applies the system setting at once. The constructor's
+        ``follow_system_theme=`` starts this way.
+        """
+        if self._app is None:
+            raise RuntimeError("follow_system_theme() requires a running App")
+        self._lib.cui_app_follow_system_theme(self._app, bool(follow))
+
     def close(self) -> None:
         if self._ctx_token is not None:
             try:

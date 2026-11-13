@@ -45,7 +45,21 @@ class PickersMixin:
         searchable: bool = False,
         disabled: bool = False,
         width: SizeLike = None,
+        bg: ColorLike = None,
+        color: ColorLike = None,
+        fg: ColorLike = None,
+        text_color: ColorLike = None,
+        placeholder_color: ColorLike = None,
+        border_color: ColorLike = None,
+        focus_color: ColorLike = None,
     ) -> int:
+        """Dropdown. Colours mirror :meth:`input`: ``bg`` is the field surface,
+        ``color``/``text_color`` the selected value, ``placeholder_color`` the
+        hint shown while nothing is chosen, ``border_color`` the resting edge
+        and ``focus_color`` the edge it blends to while hovered or open.
+        """
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         arr, n = encode_str_array(items, keep)
         icons_arr, _ = encode_str_array(icons, keep) if icons else (None, 0)
@@ -58,6 +72,16 @@ class PickersMixin:
         opts.searchable = bool(searchable)
         opts.disabled = bool(disabled)
         opts.width = to_c_size(width)
+        if bg is not None:
+            opts.bg = to_c_color(bg)
+        if text_color is not None or color is not None:
+            opts.text_color = to_c_color(text_color if text_color is not None else color)
+        if placeholder_color is not None:
+            opts.placeholder_color = to_c_color(placeholder_color)
+        if border_color is not None:
+            opts.border_color = to_c_color(border_color)
+        if focus_color is not None:
+            opts.focus_color = to_c_color(focus_color)
         keep.append(opts)
         changed = bool(self._lib.cui_select_ex(
             self._ctx, encode_str(id, keep), arr, n, ctypes.byref(c_idx), ctypes.byref(opts)

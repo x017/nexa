@@ -47,6 +47,55 @@ class BoxScope:
         self._end_fn(self._ctx)
 
 
+class ColorScope:
+    """Wraps a scope and gives its children a default text colour (``fg=``).
+
+    ``with ctx.column(fg="#7c5cff"):`` pushes the colour for the lifetime of the
+    block; ``ctx.text()`` and ``ctx.heading()`` use it when no ``color=`` is
+    passed. Attributes of the wrapped scope (``.id``, ``.clicked``, ``.open``)
+    are reachable through the wrapper, and ``bool()`` follows the inner scope.
+    """
+
+    __slots__ = ("_ui", "_inner", "_fg", "_pushed", "_prev")
+
+    def __init__(self, ui: Any, inner: Any, fg: Any) -> None:
+        self._ui = ui
+        self._inner = inner
+        self._fg = fg
+        self._pushed = False
+        self._prev = None
+
+    def __enter__(self) -> Any:
+        if self._fg is not None:
+            stack = self._ui._fg_stack
+            self._prev = stack[-1] if stack else None
+            stack.append(self._fg)
+            # mirrored on a plain attribute: text() reads it on every call, and a
+            # property access there costs ~0.1 µs (measured) on a hot path
+            self._ui._fg_current = self._fg
+            self._pushed = True
+        return self._inner.__enter__()
+
+    def __exit__(self, *exc: Any) -> Any:
+        try:
+            return self._inner.__exit__(*exc)
+        finally:
+            if self._pushed:
+                self._ui._fg_stack.pop()
+                self._ui._fg_current = self._prev
+                self._pushed = False
+
+    def __bool__(self) -> bool:
+        return bool(self._inner)
+
+    def __getattr__(self, name: str) -> Any:
+        try:
+            inner = object.__getattribute__(self, "_inner")
+        except AttributeError:  # pragma: no cover - defensive
+            raise AttributeError(name) from None
+        return getattr(inner, name)
+
+
 class SimpleScope:
     """Unconditional scope calling ``end_fn(ctx)`` on exit."""
 
@@ -108,6 +157,29 @@ class ConditionalScope:
     def __exit__(self, *exc) -> None:
         if self.visible:
             self._end_fn(self._ctx)
+
+
+class VeilScope:
+    """Scope around veil content (CUI post-1.4).
+
+    The body always builds (it is the covered content). Read ``revealed`` after
+    the block for the updated cover state — a click or Enter/Space dissolves the
+    veil and sets it to ``True``; assigning ``False`` re-covers the content.
+    """
+
+    __slots__ = ("_ctx", "_end_fn", "revealed", "changed")
+
+    def __init__(self, ctx: int, end_fn: Callable[[int], Any], revealed: bool, changed: bool = False) -> None:
+        self._ctx = ctx
+        self._end_fn = end_fn
+        self.revealed = bool(revealed)
+        self.changed = bool(changed)
+
+    def __enter__(self) -> VeilScope:
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self._end_fn(self._ctx)
 
 
 class OpenStateScope:

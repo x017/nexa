@@ -2,6 +2,8 @@
 
 Every widget method below is available **both** on `ctx: ui.UI` (`ctx.button(...)`) **and** as a top-level function when inside an active frame (`import nexa as ui; ui.button(...)`).
 
+**Colour note:** any parameter documented as `color=` also accepts `fg=` as an alias (keyword-only; wins if both are passed). Containers (`box`, `row`, `column`, `grid`, `stack`, `card`) take `fg=` as the inherited region colour instead — see *Theming & Styling*.
+
 ---
 
 ## 1. Layout & Containers (`nexa.widgets.layout`)
@@ -91,7 +93,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ## 6. Pickers (`nexa.widgets.pickers`)
 
-- **`select(id, items, index: int, *, label=None, placeholder=None, icons=None, searchable=False, disabled=False, width=None) -> int`**
+- **`select(id, items, index: int, *, label=None, placeholder=None, icons=None, searchable=False, disabled=False, width=None, bg=None, color=None, text_color=None, placeholder_color=None, border_color=None, focus_color=None) -> int`**
 - **`combobox(id, items, index: int, **select_opts) -> int`**
 - **`multi_select(id, items, selected: Sequence[bool], *, label=None, placeholder=None, icons=None, searchable=True, max_chips=0, width=None) -> list[bool]`**
 - **`calendar(id, value: Date) -> Date`**
@@ -109,13 +111,13 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ## 7. Navigation (`nexa.widgets.navigation`)
 
-- **`tabs(id, items, index: int, *, variant=TabsVariant.UNDERLINE, icons=None, full_width=False) -> int`** (`TabsVariant`: `UNDERLINE` / `LINE`, `PILL`)
+- **`tabs(id, items, index: int, *, variant=TabsVariant.UNDERLINE, icons=None, full_width=False, bg=None, color=None, active_color=None, indicator_color=None) -> int`** (`TabsVariant`: `UNDERLINE` / `LINE`, `PILL`)
 - **`nav_section(title)`** | **`nav_item(label, *, icon=None, badge=None, selected=False, group=None) -> bool`**
 - **`breadcrumb(items) -> int`** (returns clicked crumb index or `-1`)
 - **`path_bar(id, segments: Sequence[str], *, icon=None, text=None, placeholder=None, size=ControlSize.MD, width=None, menus=False, no_edit=False) -> PathBarResult`** *(New in 1.1)* — Editable file-manager / IDE breadcrumb address bar (`clicked`, `submitted`, `editing`) + **`path_bar_menu(id)`** (`PathBarMenuScope` exposing `menu.segment`).
 - **`pagination(id, page: int, page_count: int) -> int`**
 - **`stepper(steps, current: int)`**
-- **`tab_bar(id, items: Sequence[TabBarItem], selected: int, *, width=None, labels_on_selected_only=False) -> int`**
+- **`tab_bar(id, items: Sequence[TabBarItem], selected: int, *, width=None, labels_on_selected_only=False, bg=None, border_color=None, color=None, active_color=None, indicator_color=None) -> int`**
 - **`dock(id, *, size=0.0, magnify=0.0)`** -> `SimpleScope` + **`dock_item(icon, label, *, color=None, running=False, badge=0) -> bool`** + **`dock_separator()`**
 - **`toc(scroll_id, items: Sequence[TocItem]) -> int`** + **`toc_anchor(anchor)`**
 
@@ -144,9 +146,9 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
 - **`toast(title, *, description=None, tone=Tone.NEUTRAL, duration=0.0, action=None, show_timer=False) -> int`** (+ `toast_action_clicked(handle)`, `toast_dismiss(handle)`)
 - **`alert(title, *, description=None, tone=Tone.NEUTRAL, icon=None, dismissible=False) -> bool`**
 - **`banner(text, is_open: bool, *, tone=Tone.INFO, icon=None, action=None, dismissible=True) -> tuple[bool, bool]`**
-- **`progress(value=0.0, *, indeterminate=False, tone=Tone.ACCENT, height=0.0, label=None, show_value=False, width=None)`**
+- **`progress(value=0.0, *, indeterminate=False, tone=Tone.ACCENT, height=0.0, label=None, show_value=False, width=None, dither=False)`**
 - **`progress_ring(label, value: float, *, size=80.0)`**
-- **`spinner(size=18.0)`** | **`loader(*, style=LoaderStyle.DOTS, size=0.0, color=None)`** (`LoaderStyle`: `DOTS`, `BARS`, `PULSE`, `ORBIT`, `GRID`) | **`skeleton(width=None, height=16.0)`**
+- **`spinner(size=18.0, *, style=SpinnerStyle.ARC, color=None, track=None)`** (`SpinnerStyle`: `ARC`, `COMET`, `DOT_MATRIX`, `FILL_DRAIN`, `RADAR`, `RIPPLE`, `UPLOAD`, `DOWNLOAD`, `TRANSFER`, `ORBIT`, `BOUNCE`, `SCAN`, `PULSE`, `SPIRAL`, `PLASMA`) | **`loader(*, style=LoaderStyle.DOTS, size=0.0, color=None)`** (`LoaderStyle`: `DOTS`, `BARS`, `PULSE`, `ORBIT`, `GRID`) | **`skeleton(width=None, height=16.0)`**
 - **`badge(text, *, tone=Tone.NEUTRAL, dot=False, solid=False, icon=None, size=ControlSize.MD)`**
 - **`avatar(name, *, size=0.0, image=0, status=None, square=False)`** | **`avatar_group(names, *, max_visible=4, size=32.0)`** | **`avatar_upload(id, name, image=0, *, size=72.0) -> tuple[int, bool]`**
 - **`empty_state(title, *, icon=None, description=None, action=None) -> bool`**
@@ -164,7 +166,7 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
 - **`virtual_list(id, count: int, row_height: float, height: SizeLike = None)`** -> `VirtualListScope` (iterate `for i in vl.indices:`—renders 1,000,000+ rows in O(visible)!).
 - **`reorder(id, order: Sequence[int])`** -> `ReorderScope` (`with ro.item(pos): ...`; read `ro.order`).
 - **`timeline_item(title, *, time=None, description=None, icon=None, tone=Tone.NEUTRAL, last=False)`**
-- **`table(id, columns: Sequence[TableColumn], *, sort=None, height=None, striped=False, compact=False, selectable=False)`** -> `TableScope` (`if tbl:`; `tbl.row(selected=...) -> bool`, `tbl.cell()`, `tbl.cell_text(s)`, `tbl.sort`).
+- **`table(id, columns: Sequence[TableColumn], *, sort=None, height=None, striped=False, compact=False, selectable=False, bg=None, border_color=None, header_bg=None, header_color=None, text_color=None, selected_bg=None)`** -> `TableScope` (`if tbl:`; `tbl.row(selected=...) -> bool`, `tbl.cell()`, `tbl.cell_text(s)`, `tbl.sort`).
 - **`data_grid(id, columns: Sequence[GridColumn], row_count: int, *, width=None, height=None, row_height=0.0, selected=None, sort=None, striped=False, cursor=None, hide_checkboxes=False, anchor=None)`** -> `DataGridScope` (`if dg:`; `for r in dg.rows:`, `dg.row(r)`, `dg.cell_text(s)`, `dg.edit(val)`, `dg.selected`, `dg.sort`, `dg.cursor`, `dg.anchor`; `GridColumn(..., priority=0)` hides lower-priority columns gracefully).
 - **`tree_table(id, columns: Sequence[GridColumn], nodes: Sequence[TreeNode], *, width=None, height=None, row_height=0.0, root=0, sort=None, cursor=None, guides=True, labels=None, label_fn=None)`** -> `TreeTableScope` *(New in 1.1)* — Virtualized hierarchical tree-grid (`for idx in tt.rows(): tt.name(label, icon=...); tt.cell_text(...)`; synchronizes `TreeNode.flags` and exposes `tt.events: TreeTableEvents`) + **`tree_sort(nodes, root=-1, *, key=None, reverse=False) -> int`**.
 - **`filter_bar(id, fields: Sequence[FilterField], selected_masks: Sequence[int], search: str, *, max_search_bytes=256) -> tuple[list[int], str]`**
@@ -178,7 +180,7 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
 
 ## 11. Charts & Data Visualization (`nexa.widgets.charts`)
 
-- **`line_chart(id, series: Sequence[Series], *, width=None, height=0.0, labels=None, area=False, no_grid=False, no_legend=False, stacked=False, smooth=False, format=None, min_y=0.0, max_y=0.0)`**
+- **`line_chart(id, series: Sequence[Series], *, width=None, height=0.0, labels=None, area=False, no_grid=False, no_legend=False, stacked=False, smooth=False, format=None, min_y=0.0, max_y=0.0, dither=False)`** — `dither=True` fills each band with dots that thin out toward the baseline; `stacked=True` now works for line charts too
 - **`bar_chart(id, series: Sequence[Series], *, width=None, height=0.0, labels=None, stacked=False, no_grid=False, no_legend=False, format=None, min_y=0.0, max_y=0.0)`**
 - **`donut_chart(id, values, labels, *, width=None, height=0.0, no_legend=False, format=None)`**
 - **`sparkline(values, *, width=96.0, height=28.0, color=Color.ACCENT)`**
@@ -212,12 +214,12 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
   - `response_actions(id, *, copy_text=None, vote=0, no_regenerate=False, no_share=False) -> tuple[ResponseActionFlags, int]`
   - `prompt_suggestions(id, items: Sequence[PromptSuggestion], *, columns=0) -> int`
   - `model_picker(id, models: Sequence[ModelInfo], selected: int, *, ghost=False, placement=Placement.BOTTOM_START) -> int`
-  - `chat_composer(id, text: str, *, placeholder=None, busy=False, attachments=None, models=None, model=0, max_lines=0, width=None, max_bytes=8192) -> ComposerResult`
+  - `chat_composer(id, text: str, *, placeholder=None, busy=False, attachments=None, models=None, model=0, max_lines=0, width=None, max_bytes=8192, mic=False, recording=False, levels=None, record_seconds=0.0) -> ComposerResult` — `mic=True` adds the record button; `RECORD`/`CANCEL`/`VOICE` flags drive the recorder state
   - `voice_orb(id, state=VoiceState.IDLE, level=0.0, *, size=0.0, color=None) -> bool`
 - **Social (`nexa.widgets.social`)**: `chat_message(text, *, mine=False, author=None, time=None, status=None, grouped=False, last_in_group=True, avatar=0, markdown=False) -> Optional[MarkdownResult]`, `chat_divider`, `typing_indicator`, `comment`, `presence`.
 - **Media (`nexa.widgets.media`)**: `image_load`, `image_load_bytes`, `image_create`, `image_destroy`, `image`, `carousel`, `image_compare`, `card_stack`, `waveform`, `now_playing`, `counter`, `ticker` (`TickerItem`).
 - **Motion (`nexa.widgets.motion`)**: `shimmer_text`, `typewriter`, `text_reveal`, `word_rotate`, `number_roll`, `gradient_text`, `spotlight`, `animate`, `animate_spring`.
-- **Desktop Chrome & Docking (`nexa.widgets.chrome`)**: `menu_bar` + `menu_bar_menu`, `toolbar` + `toolbar_button` / `toolbar_toggle` / `toolbar_separator` / `toolbar_spacer`, `status_bar` + `status_bar_item` / `status_bar_text` / `status_bar_progress` / `status_bar_spacer`, `doc_tabs` (`DocTabsResult.apply_to(tabs)`), and *(New in 1.1)* **`dockspace(id="dockspace", *, layout=None, width=None, height=None, min_panel_width=0.0, min_panel_height=0.0, shortcuts=True)`** + **`dock_panel(title, is_open=None, *, icon=None, dirty=False)`** + **`dock_save(id="dockspace") -> str`** + **`dock_load(id, layout) -> bool`**.
+- **Desktop Chrome & Docking (`nexa.widgets.chrome`)**: `menu_bar` + `menu_bar_menu`, `toolbar(*, style=ToolbarStyle.PLAIN)` + `toolbar_button` / `toolbar_toggle` / `toolbar_separator` / `toolbar_spacer` / `toolbar_group` / `toolbar_radio` / `toolbar_cycle` / `toolbar_primary` / `flyout_mark`, `status_bar` + `status_bar_item` / `status_bar_text` / `status_bar_progress` / `status_bar_spacer`, `doc_tabs` (`DocTabsResult.apply_to(tabs)`), and *(New in 1.1)* **`dockspace(id="dockspace", *, layout=None, width=None, height=None, min_panel_width=0.0, min_panel_height=0.0, shortcuts=True)`** + **`dock_panel(title, is_open=None, *, icon=None, dirty=False)`** + **`dock_save(id="dockspace") -> str`** + **`dock_load(id, layout) -> bool`**.
 - **Developer & Creative Studio Tools (`nexa.widgets.tools`)**: `inspector` + `inspector_group`, `prop_float`, `prop_int`, `prop_text`, `prop_bool`, `prop_enum`, `prop_color`, `prop_vec` / `prop_vec2` / `prop_vec3` / `prop_vec4`, `LogBuffer` + `log_view`, plus *(New in 1.1)*:
   - **`hex_view(id, data, selection=None, *, width=None, height=280.0, base=0, bytes_per_row=16, ranges=None, editable=False, no_ascii=False, no_header=False, size=0.0) -> HexResult`** + **`hex_view_goto(id, offset)`**
   - **`flame_graph(id, spans, *, view=None, selected=None, width=None, height=240.0, row_height=0.0, min_range=0.0) -> FlameResult`** + **`flame_sort(spans)`** + **`flame_span_rect(flame_id, span)`**
@@ -277,3 +279,42 @@ attributes) named after the C struct fields, and returns a named tuple:
 - **Right-to-left**: `direction=` on `text`, `row`, `column`, `box`, `grid`, `stack` (`ui.TextDirection.LTR/RTL/AUTO`); glyph shaping is compiled in by default (`--no-rtl` to drop it).
 - **Typography**: `use_font(path | bytes, *, family=None, roles=(BODY, MEDIUM, DISPLAY), fallbacks=())`, `use_system_font(family)`, `use_rtl_font(family=None)`, `load_font(source, *, fallbacks=())`, plus `font_load_file` / `font_load_memory` / `font_set_role` / `font_add_fallback`; discovery helpers live in `nexa.fonts` (`find_system_font`, `find_rtl_font`, `list_system_fonts`, `supports_text_shaping`).
 - **Context helpers**: `UI.request_wakeup(seconds)`, `UI.set_strings(...)` / `UI.get_strings()`, `UI.response_status(status, seconds=, size=)`, `UI.is_software()`, and the context-free `ui.regex_search`, `ui.cron_next`, `ui.cron_describe`, `ui.url_params`, `ui.url_set_params`, `ui.http_reason`, `ui.http_method_name`.
+
+
+---
+
+## 23. Post-1.4: Dither, Creative, Canvas & Bars, Voice *(New in 1.4+)*
+
+Synced from CUI master after v1.4.0. Every example below runs in `examples/dither.py`,
+`examples/creative.py`, `examples/voice.py` and `examples/studio.py`.
+
+- **Dither family** (`nexa.widgets.feedback` / `nexa.widgets.overlays`):
+  - `veil(id, revealed=False, *, label=None, hint=None, toggle=True, radius=0.0, color=None, width=None) -> VeilScope` — read `scope.revealed` after the block; a click/Enter/Space dissolves the cover.
+  - `pattern_meter(id, parts: Sequence[MeterPart], *, total=0.0, label=None, unit=None, format=None, free_label=None, grayscale=False, no_legend=False, height=0.0, width=None) -> int` — `MeterPart(name, value, color=None, density=0.0)`; returns the focused part or `-1`.
+  - `status_spinner(id, status: Status, *, size=0.0, color=None, keep_visible=False) -> bool` — ring → check/cross; `False` once it has nothing left to show.
+  - `skeleton_group(*, dither=False, width=None, gap=8.0) -> SimpleScope` — placeholders inside share one shine.
+  - `spinner(size=18.0, *, style=SpinnerStyle.ARC, color=None, track=None)` and `progress(..., dither=True)`, `line_chart(..., dither=True, stacked=True)`.
+- **Creative controls** (`nexa.widgets.creative`):
+  - `status_tag(label, status=TagStatus.PENDING, *, size=ControlSize.MD, removable=False, icon=None, tone=None, id=None) -> bool`
+  - `ratio_slider(first, second, ratio, *, tone=Tone.NEUTRAL, step=0.0, height=0.0, width=None, disabled=False) -> float`
+  - `gradient_slider(label, value, *, min=0.0, max=1.0, track=GradientTrack.HUE, stops=None, color=None, step=0.0, format=None, value_text=None, swatch=False, tool=None, tool_tooltip=None, tool_on=False, plain=False, disabled=False) -> WellResult`
+  - `step_slider(label, value, *, min=0, max=10, labels=None, format=None, value_text=None, tool=None, tool_tooltip=None, tool_on=False, plain=False, disabled=False) -> WellResult`
+  - `palette_strip(label, colors: list, locked: list | None = None, *, seed=None, value_text=None, no_shuffle=False, height=32.0, plain=False) -> bool` — `colors`/`locked` update in place.
+  - `aspect_picker(label, index, *, ratios=None, custom=True, custom_label=None, base=0, value_text=None, plain=False) -> int` — `ratios` are `(w, h[, label])` tuples.
+  - `option_action(label, items, index, *, icon=None, tooltip=None, action_on=False, action_disabled=False, value_text=None, plain=False) -> WellResult`
+  - `seed_field(label, seed, locked=False, *, value_text=None, random_text=None, fixed_text=None, plain=False) -> SeedResult`
+  - `WellResult(value, changed, action)` / `SeedResult(seed, locked, changed)` unpack like tuples.
+- **Canvas & bars** (`nexa.widgets.chrome` / `nodes_canvas` / `selection` / `text` / `media`):
+  - `toolbar(id="toolbar", *, no_border=False, style=ToolbarStyle.PLAIN)` with `toolbar_group() -> SimpleScope`, `toolbar_radio(id, icons, index, *, labels=None) -> int`, `toolbar_cycle(id, items, index, **tool) -> int`, `toolbar_primary(icon=None, **tool) -> bool`, `flyout_mark()`; `toolbar_button`/`toolbar_toggle` gained `tone=` and `flyout=`.
+  - `format_bar(id, fmt: TextFormat, *, styles=None, colors=None, footer=None, footer_keys=None, delete_question=None, no_delete=False, no_more=False) -> FormatBarResult` — edits `fmt` in place; flags are `changed`/`link`/`delete`/`more`.
+  - `live_cursors(id, users: Sequence[LiveUser], *, view=None, no_glide=False)`, `presence_pill(id, users, *, size=0.0, max_visible=0)`, `selection_ring(color, *, name=None, radius=0.0)` — `LiveUser(name, x, y, *, color=None, tone=…, says=None, speaking=False, away=False, avatar=0)`.
+  - `canvas_controls(id, view: NodeView, *, steps=None, content=None, toggles=None, no_fit=False, start_side=False) -> CanvasControlsResult` — updates `view` and each `CanvasToggle.on` in place; flags are `zoomed`/`fit`/`toggled`.
+  - `selection_bar(id, actions: Sequence[SelectionAction], selected: list, *, count_format=None, anchor=0, no_escape=False) -> int` — returns the action index, `-1` (none) or `-2` (cleared); `selected` updates in place.
+  - `result_card(id, image, title, *, caption=None, badge=None, badge_tone=Tone.NEUTRAL, image_w=0, image_h=0, width=None, aspect=1.25) -> bool`
+- **Voice** (`nexa.widgets.media`):
+  - `voice_wave(id, levels, *, clip=False, progress=0.0, owners=None, owner=0, color=None, pitch=0.0, step=0.0, width=None) -> float` — returns the updated `progress` (seek by click/drag/arrows).
+  - `voice_note(id, levels, duration, *, position=0.0, speed=1.0, playing=False, mine=False, width=None) -> VoiceNoteResult` — `position`/`speed`/`playing` written back.
+  - `voice_session(id, state: VoiceState, levels=None, *, owners=None, label=None, transcript=None, upcoming=None, speaker=0, you=None, assistant=None, muted=None, no_end=False, width=None) -> int` — `muted` is a one-element list updated in place.
+- **App & UI**:
+  - `UI.set_clipboard(text)` / `UI.get_clipboard() -> str` — the same platform hooks the copy button uses.
+  - `App.follow_system_theme(follow=True)` — Light/Dark/**System** theme switcher (constructor kwarg already existed).

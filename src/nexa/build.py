@@ -83,6 +83,10 @@ CORE_C_FILES: Sequence[str] = (
     "src/cui_files.c",
     "src/cui_terminal.c",
     "src/cui_emoji.c",
+    "src/cui_loading.c",
+    "src/cui_creative.c",
+    "src/cui_canvas.c",
+    "src/cui_voice.c",
 )
 
 

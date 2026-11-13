@@ -64,6 +64,9 @@ dev = [
     "pytest>=7.0",
     "build>=1.0",
     "twine>=5.0",
+    # the sdist tests build with --no-isolation, so the venv's setuptools must
+    # understand the SPDX `license = "MIT"` form (PEP 639, setuptools>=77)
+    "setuptools>=77.0",
 ]
 
 [project.scripts]

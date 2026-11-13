@@ -28,6 +28,27 @@ release that picks it up. The published version of this page is
   - *Utilities*: `regex_search`, `cron_next` / `cron_describe`, `url_params` /
     `url_set_params`, `http_reason` / `http_method_name`, `UI.request_wakeup`,
     `set_strings` / `get_strings`, `response_status`, `is_software`.
+- **CUI post-1.4 sync** — 69 engine commits past v1.4.0, every new component
+  exposed to Python:
+  - *Dither family* (an 8×8 ordered dither; a dot is the colour or nothing):
+    `veil`, `pattern_meter`, `status_spinner`, `skeleton_group`,
+    `spinner(style=…)` with 15 dot animations, `progress(dither=True)` and
+    `line_chart(dither=True, stacked=True)`.
+  - *Creative controls*: `status_tag`, `ratio_slider`, `gradient_slider`,
+    `step_slider`, `palette_strip`, `aspect_picker`, `option_action`,
+    `seed_field` — value in, `WellResult`/`SeedResult` out.
+  - *Canvas & bars*: `toolbar(style=GROUPED|FLOATING)` with `toolbar_group`,
+    `toolbar_radio`, `toolbar_cycle`, `toolbar_primary`, `flyout_mark`,
+    `format_bar` (edits a `TextFormat` in place), `live_cursors` +
+    `presence_pill` + `selection_ring`, `canvas_controls`, `result_card` and
+    `selection_bar`.
+  - *Voice*: `voice_wave`, `voice_note`, `voice_session`, plus the composer's
+    `mic=` / `recording=` / `levels=` recorder and `ComposerFlags.RECORD/CANCEL/VOICE`.
+  - *API & fixes*: `UI.set_clipboard` / `UI.get_clipboard`,
+    `App.follow_system_theme(...)`, SQL colours via `code_block(lang="sql")`,
+    and the engine's input/focus/caret/wheel/IME/macOS-quit fixes.
+  - Four examples (`dither.py`, `creative.py`, `voice.py`, `studio.py`) and
+    `tests/test_post_1_4_widgets.py` (21 tests).
 - **Whole-UI typography.** `UI.load_font()`, `UI.use_font()`,
   `UI.use_system_font()` and `UI.use_rtl_font()` re-face the entire app in one
   call (body/medium/display roles, with fallback chains; MONO and ICONS keep
@@ -47,6 +68,39 @@ release that picks it up. The published version of this page is
 
   Every colour argument accepts a theme token, `"#7c5cff"`, `(r, g, b[, a])`,
   `ui.Color`, or the result of `ui.mix_colors()` / `ui.with_alpha()`.
+- **`fg=` on containers** — `box`, `row`, `column`, `grid`, `stack` and `card`
+  take a text colour that everything inside inherits, so a region can be
+  recoloured in one place instead of threading `color=` through every call:
+  `with ctx.column(fg="#7c5cff"): ctx.heading("Deploy log"); ctx.text("…")`.
+  An explicit `color=` still wins, scopes nest and restore the outer colour, the
+  stack unwinds when the block raises, and `markdown()` / `expandable_text()`
+  honour it too. The theme micro-styles (`label`, `secondary`, `muted`, `code`,
+  `kbd`, `link`) and self-colouring widgets keep their own palettes.
+- **Discoverable colour arguments**: the containers (`box`, `row`, `column`,
+  `grid`, `stack`) and the text fields (`input`, `textarea`, `search`) now list
+  `fg` / `bg` / `border_color` (and the full field palette) as real parameters
+  instead of swallowing them in `**kwargs`, so they show up in signatures and
+  IDE completion.
+- **`fg=` everywhere `color=` is**: every component with a `color=` argument
+  also accepts `fg=` as an alias (keyword-only, resolved before use; it wins
+  if both are passed), so `ctx.heading("Hi", fg="#ff2040")` works as written.
+  Containers keep the inherited-region meaning of `fg=`; `fg=None` changes
+  nothing.
+- **Colours on `select`, `tabs`, `tab_bar` and `table`** — the collection
+  widgets were theme-only; they now take their own palette:
+  - `select(...)` uses the same field palette as `input`: `bg`, `color`
+    (alias `text_color`), `placeholder_color`, `border_color`, `focus_color`.
+  - `tabs(...)`: `bg` (the track, or the 1px baseline under an underline row),
+    `color`, `active_color`, `indicator_color` (the underline or the pill that
+    moves behind the selection).
+  - `tab_bar(...)`: `bg`, `border_color`, `color`, `active_color`,
+    `indicator_color`.
+  - `table(...)`: `bg`, `border_color` (outer border and row separators),
+    `header_bg`, `header_color`, `text_color`, `selected_bg`.
+
+  Every argument is unset by default, so existing code renders exactly the same
+  pixels — the C opts structs gained the fields at the end, keeping the layout
+  compatible.
 - **Examples**: `examples/instruments.py` (Reactor Console), `examples/devtools.py`
   (all 20 dev panels across tabs) and `examples/rtl.py` (Persian/Arabic app with
   RTL layout, localized calendar, terminal and charts).
@@ -54,6 +108,18 @@ release that picks it up. The published version of this page is
   `examples`, `docs`, `dist`, `check`, `publish`, `ci`, …) that works with
   **uv** (pip-less virtualenvs, `uv pip`/`uv venv`/`uv sync`) or **pip**, and a
   documented rebuild command, `python -m nexa.build`.
+- **`make doctor`** — diagnoses a checkout before a build does: root-owned or
+  read-only paths (the cause of setuptools' `Cannot update time stamp of
+  directory 'src/nexa_ui.egg-info'`), dangling symlinks, a stale compiled
+  library, a library built without shaping, a missing C compiler, a bad
+  `NEXA_LIB_PATH`, and an editable install that points at a *different* checkout
+  (tracebacks then name files you are not editing) — each with the fix to run.
+  `--json` for CI and bug reports.
+- **Root-safe tooling**: `make install`, `native`, `test`, `examples` and `dist`
+  refuse to run as root in a checkout owned by someone else (that is what leaves
+  root-owned artifacts behind), `make clean` removes what it can and names the
+  rest instead of dying with `Permission denied`, and `make fix-permissions`
+  hands the tree back to you.
 
 ### Changed
 

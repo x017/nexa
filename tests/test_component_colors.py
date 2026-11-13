@@ -86,3 +86,26 @@ def test_box_border_colour_still_works() -> None:
 def _box(ctx: ui.UI) -> None:
     with ctx.box(bg="#101820", border_color="#00c8ff", border=2.0, pad=10, radius=8):
         ctx.text("boxed")
+
+
+def test_colour_arguments_are_visible_in_the_public_signatures() -> None:
+    """A colour you cannot discover is a colour nobody uses."""
+    import inspect
+
+    for name in ("input", "textarea", "search"):
+        params = inspect.signature(getattr(ui.UI, name)).parameters
+        for kw in ("bg", "color", "text_color", "placeholder_color", "border_color", "focus_color"):
+            assert kw in params, f"{name}() does not expose {kw}="
+
+
+def test_number_has_no_colour_arguments_yet() -> None:
+    """`cui_number_opts` carries no colours upstream, so there is nothing to pass.
+
+    Pinned so the day CUI (or a local delta) adds them, this test fails and the
+    docs table gets updated instead of quietly going stale.
+    """
+    import inspect
+
+    params = inspect.signature(ui.UI.number).parameters
+    for kw in ("bg", "color", "text_color", "border_color", "focus_color", "fg"):
+        assert kw not in params, f"number() gained {kw}=; update the colour table in docs"

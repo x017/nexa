@@ -24,12 +24,15 @@ def _build_text_fx_opts(
     font: Union[FontRole, int] = FontRole.BODY,
     size: float = 0.0,
     color: ColorLike = None,
+    fg: ColorLike = None,
     width: SizeLike = None,
     nowrap: bool = False,
     speed: float = 0.0,
     delay: float = 0.0,
     caret: bool = False,
 ) -> CuiTextFxOpts:
+    if fg is not None:
+        color = fg
     opts = CuiTextFxOpts()
     opts.font = int(font)
     opts.size = float(size)
@@ -113,8 +116,11 @@ class MotionMixin:
         pad: float = 0.0,
         gap: float = 0.0,
         color: ColorLike = None,
+        fg: ColorLike = None,
         beam: bool = False,
     ) -> SimpleScope:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         opts = CuiSpotlightOpts()
         opts.width = to_c_size(width)

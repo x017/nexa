@@ -59,11 +59,14 @@ def _build_input_opts(
     suffix: Optional[str] = None,
     bg: ColorLike = None,
     color: ColorLike = None,
+    fg: ColorLike = None,
     text_color: ColorLike = None,
     placeholder_color: ColorLike = None,
     border_color: ColorLike = None,
     focus_color: ColorLike = None,
 ) -> CuiInputOpts:
+    if fg is not None:
+        color = fg
     opts = CuiInputOpts()
     opts.label = encode_opt(label, keep)
     opts.placeholder = encode_opt(placeholder, keep)
@@ -101,37 +104,123 @@ def _build_input_opts(
 class InputsMixin:
     __slots__ = ()
 
-    def input(self, id: str, value: str, *, max_bytes: int = 512, **kwargs) -> str:
+    def input(
+        self,
+        id: str,
+        value: str,
+        *,
+        max_bytes: int = 512,
+        bg: ColorLike = None,
+        color: ColorLike = None,
+        fg: ColorLike = None,
+        text_color: ColorLike = None,
+        placeholder_color: ColorLike = None,
+        border_color: ColorLike = None,
+        focus_color: ColorLike = None,
+        **kwargs,
+    ) -> str:
         """Single-line text input returning the updated string.
 
         Inspect ``ui.changed``, ``ui.submitted`` (Enter), ``ui.focused``, or ``ui.blurred``
         after calling if you need transition flags.
+
+        Colours are per field: ``bg`` (field surface), ``color`` / ``text_color``
+        (the value), ``placeholder_color``, ``border_color`` (resting edge) and
+        ``focus_color`` (the edge focus blends to). They need the vendored C
+        ``cui_input_opts`` colour fields, which nexa carries as a small delta.
         """
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         buf, cap = make_text_buffer(value, max_bytes)
-        opts = _build_input_opts(keep, **kwargs)
+        opts = _build_input_opts(
+            keep,
+            bg=bg,
+            color=color,
+            text_color=text_color,
+            placeholder_color=placeholder_color,
+            border_color=border_color,
+            focus_color=focus_color,
+            **kwargs,
+        )
         flags = int(self._lib.cui_input_ex(self._ctx, encode_str(id, keep), buf, cap, ctypes.byref(opts)))
         self._record_input_flags(flags)
         if flags & InputFlags.CHANGED:
             return buf.value.decode("utf-8", errors="replace")
         return value
 
-    def textarea(self, id: str, value: str, *, max_bytes: int = 4096, **kwargs) -> str:
-        """Multi-line word-wrapping text editor returning the updated string."""
+    def textarea(
+        self,
+        id: str,
+        value: str,
+        *,
+        max_bytes: int = 4096,
+        bg: ColorLike = None,
+        color: ColorLike = None,
+        fg: ColorLike = None,
+        text_color: ColorLike = None,
+        placeholder_color: ColorLike = None,
+        border_color: ColorLike = None,
+        focus_color: ColorLike = None,
+        **kwargs,
+    ) -> str:
+        """Multi-line word-wrapping text editor returning the updated string.
+
+        Takes the same colour arguments as :meth:`input`.
+        """
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         buf, cap = make_text_buffer(value, max_bytes)
-        opts = _build_input_opts(keep, **kwargs)
+        opts = _build_input_opts(
+            keep,
+            bg=bg,
+            color=color,
+            text_color=text_color,
+            placeholder_color=placeholder_color,
+            border_color=border_color,
+            focus_color=focus_color,
+            **kwargs,
+        )
         flags = int(self._lib.cui_textarea_ex(self._ctx, encode_str(id, keep), buf, cap, ctypes.byref(opts)))
         self._record_input_flags(flags)
         if flags & InputFlags.CHANGED:
             return buf.value.decode("utf-8", errors="replace")
         return value
 
-    def search(self, id: str, value: str, *, max_bytes: int = 256, **kwargs) -> str:
-        """Search box with leading lens icon & clear button, returning updated query."""
+    def search(
+        self,
+        id: str,
+        value: str,
+        *,
+        max_bytes: int = 256,
+        bg: ColorLike = None,
+        color: ColorLike = None,
+        fg: ColorLike = None,
+        text_color: ColorLike = None,
+        placeholder_color: ColorLike = None,
+        border_color: ColorLike = None,
+        focus_color: ColorLike = None,
+        **kwargs,
+    ) -> str:
+        """Search box with leading lens icon & clear button, returning updated query.
+
+        Takes the same colour arguments as :meth:`input`.
+        """
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         buf, cap = make_text_buffer(value, max_bytes)
-        opts = _build_input_opts(keep, **kwargs)
+        opts = _build_input_opts(
+            keep,
+            bg=bg,
+            color=color,
+            text_color=text_color,
+            placeholder_color=placeholder_color,
+            border_color=border_color,
+            focus_color=focus_color,
+            **kwargs,
+        )
         flags = int(self._lib.cui_search_ex(self._ctx, encode_str(id, keep), buf, cap, ctypes.byref(opts)))
         self._record_input_flags(flags)
         if flags & InputFlags.CHANGED:

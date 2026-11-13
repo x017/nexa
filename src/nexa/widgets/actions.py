@@ -55,7 +55,10 @@ def _build_button_opts(
     shortcut: Optional[str] = None,
     width: SizeLike = None,
     color: ColorLike = None,
+    fg: ColorLike = None,
 ) -> CuiButtonOpts:
+    if fg is not None:
+        color = fg
     opts = CuiButtonOpts()
     opts.variant = int(variant)
     opts.size = int(size)

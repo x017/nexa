@@ -29,22 +29,14 @@ from ._cdefs import (
     CuiChartAnnotation,
     CuiColor,
     CuiDate,
+    CuiGradientStop,
     CuiKeyCombo,
+    CuiNodeView,
     CuiRect,
     CuiSeries,
     CuiSize,
     CuiVec2,
 )
-class CuiStrings(Structure):
-    _fields_ = [
-        ("month", c_char_p * 12),
-        ("month_short", c_char_p * 12),
-        ("weekday", c_char_p * 7),
-        ("weekday_short", c_char_p * 7),
-        ("weekday_min", c_char_p * 7),
-        ("today", c_char_p),
-    ]
-
 class CuiTextMetrics(Structure):
     _fields_ = [
         ("width", c_float),
@@ -74,6 +66,44 @@ class CuiTourOpts(Structure):
         ("count_format", c_char_p),
     ]
 
+class CuiSpinnerOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("style", c_int),
+        ("color", CuiColor),
+        ("track", CuiColor),
+    ]
+
+class CuiSkeletonGroupOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("dither", c_bool),
+        ("width", CuiSize),
+        ("gap", c_float),
+    ]
+
+class CuiMeterPart(Structure):
+    _fields_ = [
+        ("name", c_char_p),
+        ("value", c_float),
+        ("color", CuiColor),
+        ("density", c_float),
+    ]
+
+class CuiPatternMeterOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("total", c_float),
+        ("label", c_char_p),
+        ("unit", c_char_p),
+        ("format", c_char_p),
+        ("free_label", c_char_p),
+        ("grayscale", c_bool),
+        ("no_legend", c_bool),
+        ("height", c_float),
+        ("width", CuiSize),
+    ]
+
 class CuiImageView(Structure):
     _fields_ = [
         ("zoom", c_float),
@@ -99,6 +129,14 @@ class CuiCropperOpts(Structure):
         ("aspect", c_float),
         ("round", c_bool),
         ("min_size", c_float),
+    ]
+
+class CuiStatusSpinnerOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("size", c_float),
+        ("color", CuiColor),
+        ("keep", c_bool),
     ]
 
 class CuiFileEntry(Structure):
@@ -151,6 +189,7 @@ class CuiGaugeBand(Structure):
     _fields_ = [
         ("to", c_float),
         ("tone", c_int),
+        ("name", c_char_p),
     ]
 
 class CuiRadialGaugeOpts(Structure):
@@ -167,6 +206,9 @@ class CuiRadialGaugeOpts(Structure):
         ("target", c_float),
         ("show_target", c_bool),
         ("no_needle", c_bool),
+        ("style", c_int),
+        ("detail", c_char_p),
+        ("color", CuiColor),
     ]
 
 class CuiCandle(Structure):
@@ -191,6 +233,51 @@ class CuiCandlestickOpts(Structure):
         ("ohlc", c_bool),
         ("up", CuiColor),
         ("down", CuiColor),
+    ]
+
+class CuiVoiceWaveOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("clip", c_bool),
+        ("progress", POINTER(c_float)),
+        ("owners", POINTER(c_uint8)),
+        ("owner", c_int),
+        ("color", CuiColor),
+        ("pitch", c_float),
+        ("step", c_float),
+        ("width", CuiSize),
+    ]
+
+class CuiVoiceNote(Structure):
+    _fields_ = [
+        ("levels", POINTER(c_float)),
+        ("count", c_int),
+        ("position", c_float),
+        ("duration", c_float),
+        ("speed", c_float),
+        ("playing", c_bool),
+    ]
+
+class CuiVoiceNoteOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("mine", c_bool),
+        ("width", CuiSize),
+    ]
+
+class CuiVoiceSessionOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("owners", POINTER(c_uint8)),
+        ("label", c_char_p),
+        ("transcript", c_char_p),
+        ("upcoming", c_char_p),
+        ("speaker", c_int),
+        ("you", c_char_p),
+        ("assistant", c_char_p),
+        ("muted", POINTER(c_bool)),
+        ("no_end", c_bool),
+        ("width", CuiSize),
     ]
 
 class CuiMonthEvent(Structure):
@@ -221,6 +308,17 @@ class CuiMonthResult(Structure):
         ("day_clicked", c_bool),
         ("day_activated", c_bool),
         ("month_changed", c_bool),
+    ]
+
+class CuiVeilOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("label", c_char_p),
+        ("hint", c_char_p),
+        ("toggle", c_bool),
+        ("radius", c_float),
+        ("color", CuiColor),
+        ("width", CuiSize),
     ]
 
 class CuiKnobOpts(Structure):
@@ -269,6 +367,12 @@ class CuiLevelMeterOpts(Structure):
         ("segmented", c_bool),
         ("hold", c_float),
         ("decay", c_float),
+    ]
+
+class CuiToolbarRadioOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("labels", POINTER(c_char_p)),
     ]
 
 class CuiDocTabsResult(Structure):
@@ -342,6 +446,106 @@ class CuiEmojiPickerOpts(Structure):
         ("no_search", c_bool),
         ("no_preview", c_bool),
         ("no_tone", c_bool),
+    ]
+
+class CuiStatusTagOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("size", c_int),
+        ("removable", c_bool),
+        ("icon", c_char_p),
+        ("tone", c_int),
+        ("id", c_char_p),
+    ]
+
+class CuiRatioSliderOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("tone", c_int),
+        ("step", c_float),
+        ("height", c_float),
+        ("width", CuiSize),
+        ("disabled", c_bool),
+    ]
+
+class CuiGradientSliderOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("track", c_int),
+        ("stops", POINTER(CuiGradientStop)),
+        ("stop_count", c_int),
+        ("color", CuiColor),
+        ("color_out", POINTER(CuiColor)),
+        ("step", c_float),
+        ("format", c_char_p),
+        ("value", c_char_p),
+        ("swatch", c_bool),
+        ("tool", c_char_p),
+        ("tool_tooltip", c_char_p),
+        ("tool_on", c_bool),
+        ("plain", c_bool),
+        ("disabled", c_bool),
+    ]
+
+class CuiStepSliderOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("labels", POINTER(c_char_p)),
+        ("format", c_char_p),
+        ("value", c_char_p),
+        ("tool", c_char_p),
+        ("tool_tooltip", c_char_p),
+        ("tool_on", c_bool),
+        ("plain", c_bool),
+        ("disabled", c_bool),
+    ]
+
+class CuiPaletteStripOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("seed", POINTER(c_uint32)),
+        ("value", c_char_p),
+        ("no_shuffle", c_bool),
+        ("height", c_float),
+        ("plain", c_bool),
+    ]
+
+class CuiAspect(Structure):
+    _fields_ = [
+        ("w", c_int),
+        ("h", c_int),
+        ("label", c_char_p),
+    ]
+
+class CuiAspectPickerOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("ratios", POINTER(CuiAspect)),
+        ("count", c_int),
+        ("custom", c_bool),
+        ("custom_label", c_char_p),
+        ("base", c_int),
+        ("value", c_char_p),
+        ("plain", c_bool),
+    ]
+
+class CuiOptionActionOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("tooltip", c_char_p),
+        ("action_on", c_bool),
+        ("action_disabled", c_bool),
+        ("value", c_char_p),
+        ("plain", c_bool),
+    ]
+
+class CuiSeedFieldOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("value", c_char_p),
+        ("random_text", c_char_p),
+        ("fixed_text", c_char_p),
+        ("plain", c_bool),
     ]
 
 class CuiKvPair(Structure):
@@ -911,6 +1115,114 @@ class CuiDotDisplayOpts(Structure):
         ("marquee", c_bool),
         ("align", c_int),
         ("width", CuiSize),
+    ]
+
+class CuiTextFormat(Structure):
+    _fields_ = [
+        ("color", c_int),
+        ("bold", c_bool),
+        ("underline", c_bool),
+        ("link", c_bool),
+        ("style", c_int),
+        ("size", c_float),
+        ("align", c_int),
+        ("list", c_int),
+    ]
+
+class CuiFormatBarOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("styles", c_void_p),
+        ("style_count", c_int),
+        ("colors", c_void_p),
+        ("color_count", c_int),
+        ("footer", c_char_p),
+        ("footer_keys", c_char_p),
+        ("delete_question", c_char_p),
+        ("no_delete", c_bool),
+        ("no_more", c_bool),
+    ]
+
+class CuiLiveUser(Structure):
+    _fields_ = [
+        ("name", c_char_p),
+        ("color", CuiColor),
+        ("tone", c_int),
+        ("x", c_float),
+        ("y", c_float),
+        ("says", c_char_p),
+        ("speaking", c_bool),
+        ("away", c_bool),
+        ("avatar", c_size_t),
+    ]
+
+class CuiLiveCursorsOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("view", POINTER(CuiNodeView)),
+        ("no_glide", c_bool),
+    ]
+
+class CuiPresencePillOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("size", c_float),
+        ("max_visible", c_int),
+    ]
+
+class CuiSelectionRingOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("name", c_char_p),
+        ("radius", c_float),
+    ]
+
+class CuiCanvasToggle(Structure):
+    _fields_ = [
+        ("icon", c_char_p),
+        ("label", c_char_p),
+        ("on", POINTER(c_bool)),
+    ]
+
+class CuiCanvasControlsOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("steps", POINTER(c_float)),
+        ("step_count", c_int),
+        ("content", CuiRect),
+        ("toggles", POINTER(CuiCanvasToggle)),
+        ("toggle_count", c_int),
+        ("no_fit", c_bool),
+        ("start_side", c_bool),
+    ]
+
+class CuiResultCardOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("caption", c_char_p),
+        ("badge", c_char_p),
+        ("badge_tone", c_int),
+        ("image_w", c_int),
+        ("image_h", c_int),
+        ("width", CuiSize),
+        ("aspect", c_float),
+    ]
+
+class CuiSelectionAction(Structure):
+    _fields_ = [
+        ("icon", c_char_p),
+        ("label", c_char_p),
+        ("tone", c_int),
+    ]
+
+class CuiSelectionBarOpts(Structure):
+    _fields_ = [
+        ("_", c_int),
+        ("selected", POINTER(c_bool)),
+        ("item_count", c_int),
+        ("count_format", c_char_p),
+        ("anchor", c_uint32),
+        ("no_escape", c_bool),
     ]
 
 class CuiCanvasResult(Structure):

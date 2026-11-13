@@ -35,6 +35,7 @@ _SENTINEL_SYMBOLS: tuple[str, ...] = (
     "cui_pipeline_ex",        # CUI 1.3  (dev tools)
     "cui_dot_display_ex",     # CUI 1.4  (instruments)
     "cui_terminal_ex",
+    "cui_pattern_meter_ex",   # CUI post-1.4 (dither, creative, canvas, voice)
 )
 
 

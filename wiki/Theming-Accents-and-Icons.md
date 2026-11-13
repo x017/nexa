@@ -125,6 +125,53 @@ with ctx.box(bg=ui.Color.SURFACE_RAISED, pad=10, radius=12):
 
 > `ctx.heading(...)` with no `color`/`size`/`bg` is the plain CUI heading: theme heading size in `FOREGROUND`. The overrides above are resolved in Python from `ctx.theme.headings`, so they follow `ctx.theme.font_scale` and your own `ctx.theme.headings = (...)` edits.
 
+#### One colour for a whole region: `fg=`
+
+Instead of threading `color=` through every call, put it on the container. `fg=`
+is pushed for the lifetime of the `with` block and used by `text()` and
+`heading()` whenever they are not given an explicit `color=`:
+
+```python
+with ctx.column(pad=16, gap=8, fg="#7c5cff"):
+    ctx.heading("Deploy log")            # purple
+    ctx.text("14:02 build started")      # purple
+    ctx.text("14:03 done", color=ui.Color.SUCCESS)   # explicit colour still wins
+
+# scopes nest and restore: the inner block returns to the outer colour
+with ctx.column(fg="#7c5cff"):
+    ctx.text("purple")
+    with ctx.box(fg=ui.Color.DANGER):
+        ctx.text("red")
+    ctx.text("purple again")             # stack unwound
+
+# it works on cards and grids too, and unwinds even when the block raises
+with ctx.card(fg=ui.Color.TEXT_SECONDARY, pad=18):
+    ctx.text("muted body copy")
+```
+
+`fg=` reaches `text()`, `heading()`, `markdown()` and `expandable_text()` —
+anything that takes `color=`. The shorthand micro-styles (`label`,
+`secondary`, `muted`, `code`, `kbd`, `link`) and widgets that own their
+colouring (buttons, inputs, tables, charts…) keep the palette they already use;
+pass them their own colour argument, or wrap the region and use `text()` for the
+copy you want tinted.
+
+**`fg=` on the widget itself.** Every component that takes `color=` also
+accepts `fg=` as a plain alias of its own — `ctx.heading("Hi", fg="#ffcc00")`
+is exactly `ctx.heading("Hi", color="#ffcc00")` and renders the same pixels.
+If both are passed, `fg=` wins. (`input`, `textarea`, `search` and `select`
+also keep `text_color=`, which still takes precedence over both.)
+
+**What it costs.** Entering and leaving a coloured scope is a stack push/pop —
+8.6 µs measured, nearly all of it the container node CUI creates anyway. On the
+hot path each `text()` does one attribute read plus a memoised colour
+conversion: **0.29 µs per call**, which is *the same* as passing `color=` to
+every child (measured on a 4000-row list: 26.4 ms uncoloured, 27.6 ms with
+`fg=`, 27.7 ms with inline `color=`). So a coloured region costs exactly the
+colours inside it and nothing for its size — the stack depth follows nesting,
+never row count, and a 500-row block measured +0.2 ms (7.9 → 8.1 ms). Leave
+`fg=` off and the path is untouched: no stack, no attribute, no conversion.
+
 ### Perceptual Color Math (`oklch`, `mix_colors`, `with_alpha`)
 
 ```python
@@ -135,21 +182,51 @@ translucent = ui.with_alpha(brand, 0.20)         # Multiply alpha by 0.20
 
 ### Recoloring One Component (without touching the theme)
 
-Theme tokens restyle everything; these arguments restyle a single widget and leave the rest of the app alone — same `ColorLike` forms as above.
+Theme tokens restyle everything; these arguments restyle a single widget and leave the rest of the app alone — same `ColorLike` forms as above. Every `color=` in this table also accepts `fg=` as an alias (the containers' `fg=` is instead the inherited region colour described above).
 
 | Component | Color arguments |
 |---|---|
 | `heading(...)` | `color=`, `bg=` (+ `pad`, `radius`, `width=ui.FILL` for a banner) |
 | `text(...)`, `markdown(...)`, `expandable_text(...)` | `color=` |
-| `input` / `textarea` / `search` / `number` | `bg=`, `color=` (alias `text_color=`), `placeholder_color=`, `border_color=`, `focus_color=` |
+| `input` / `textarea` / `search` | `bg=`, `color=` (alias `text_color=`), `placeholder_color=`, `border_color=`, `focus_color=` |
+| `select(...)` | the same field palette as `input`: `bg=`, `color=` (alias `text_color=`), `placeholder_color=`, `border_color=`, `focus_color=` |
+| `tabs(...)` | `bg=` (the track, or the 1px baseline under an underline row), `color=`, `active_color=`, `indicator_color=` |
+| `tab_bar(...)` | `bg=`, `border_color=`, `color=`, `active_color=`, `indicator_color=` |
+| `table(...)` | `bg=`, `border_color=` (outer border + row separators), `header_bg=`, `header_color=`, `text_color=`, `selected_bg=` |
 | `card(...)` | `bg=`, `border_color=` (with `muted=`, `selected=`) |
-| `box(...)`, `row`, `column`, `grid`, `stack` | `bg=`, `border_color=`, `border=`, `radius=` |
+| `box(...)`, `row`, `column`, `grid`, `stack`, `card(...)` | `bg=`, `border_color=`, `border=`, `radius=`, and `fg=` — the text colour inherited by everything drawn inside |
 | `button` / `icon_button` | `color=` (label + glyph tint) |
 | `badge`, `progress`, `readout`, `status_bar_text`, `timeline_item` | `tone=` (semantic palette) |
 | `image(...)` | `tint=` |
 | `knob`, `dot_display`, `loader`, `voice_orb`, `dock_item`, `gradient_text`, `spotlight` | `color=` / `from_color=`, `to_color=` |
 | `line_chart`, `bar_chart`, `donut_chart`, `area`, `sparkline`, … and every `Series` | per-series `color=` |
-| everything else (selects, checkboxes, switches, sliders, tables, editors, docks…) | follows `ctx.theme[...]` — change a token, or wrap the region in `ctx.set_accent` |
+| `spinner`, `status_spinner`, `veil`, `voice_wave`, `selection_ring` | `color=` (`spinner` also `track=`) |\n| `pattern_meter` | per-part `color=` on each `MeterPart` |\n| everything else (checkboxes, switches, sliders, trees, editors, docks, toolbars, dialogs…) | follows `ctx.theme[...]` — change a token, or wrap the region in `ctx.set_accent` |
+
+**How far does this reach?** Not every component has a colour argument, and that
+is a boundary of the vendored engine rather than an omission: a widget can only
+be recoloured per-call if its C opts struct carries a `cui_color`. Today
+**72 of ~300** widget methods take any colour argument:
+
+- **6 containers** take `fg=` (and `bg=` / `border_color=`): `box`, `row`,
+  `column`, `grid`, `stack`, `card`. `fg=` is inherited by the text drawn inside,
+  so one line can tint a whole region.
+- **3 text fields** take the full field palette: `input`, `textarea`, `search`
+  (`bg`, `color`/`text_color`, `placeholder_color`, `border_color`,
+  `focus_color`).
+- **4 collection widgets** take their own small palette: `select` (the field
+  palette above), `tabs` and `tab_bar` (`bg`, `color`, `active_color`,
+  `indicator_color`), and `table` (`bg`, `border_color`, `header_bg`,
+  `header_color`, `text_color`, `selected_bg`). `table` striping still uses the
+  theme's translucent overlay on top of `bg=`.
+- **5 post-1.4 widgets** take a direct `color=`: `spinner(color, track)`,
+  `status_spinner(color)`, `veil(color)`, `voice_wave(color)`,
+  `selection_ring(color)` — plus the per-part `color=` of `pattern_meter`.
+- **~45 widgets** take a foreground/`tone`/`tint` (text, headings, markdown,
+  buttons, badges, charts, knobs, image tint, `status_tag`, toolbar `tone=`, …).
+- **Everything else follows the theme**: `tree`, `menu`, `checkbox`,
+  `switch`/`slider`, `number`, toolbars, dialogs/popovers/tooltips, docks. For
+  those, change the token (`ctx.theme[...]` / `ctx.set_accent`) or wrap the
+  region in `fg=` and draw the copy yourself with `text()`.
 
 > Color arguments cost nothing when you don't use them: the default path skips the conversion entirely, and every `ColorLike` value is memoised by its input (a hex string parses once, then costs ~0.1 µs) — so restyling 60 inputs every frame adds ~0.2 ms to the frame.
 

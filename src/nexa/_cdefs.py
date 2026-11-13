@@ -361,6 +361,11 @@ class CuiSelectOpts(Structure):
         ("searchable", c_bool),
         ("disabled", c_bool),
         ("width", CuiSize),
+        ("bg", CuiColor),
+        ("text_color", CuiColor),
+        ("placeholder_color", CuiColor),
+        ("border_color", CuiColor),
+        ("focus_color", CuiColor),
     ]
 
 
@@ -387,7 +392,16 @@ class CuiDateRangeOpts(Structure):
 
 
 class CuiTabsOpts(Structure):
-    _fields_ = [("_", c_int), ("variant", c_int), ("icons", POINTER(c_char_p)), ("full_width", c_bool)]
+    _fields_ = [
+        ("_", c_int),
+        ("variant", c_int),
+        ("icons", POINTER(c_char_p)),
+        ("full_width", c_bool),
+        ("bg", CuiColor),
+        ("color", CuiColor),
+        ("active_color", CuiColor),
+        ("indicator_color", CuiColor),
+    ]
 
 
 class CuiNavOpts(Structure):
@@ -417,6 +431,8 @@ class CuiMenuItemOpts(Structure):
         ("danger", c_bool),
         ("disabled", c_bool),
         ("checked", c_bool),
+        ("font", c_int),
+        ("text_size", c_float),
     ]
 
 
@@ -517,6 +533,12 @@ class CuiTableOpts(Structure):
         ("striped", c_bool),
         ("compact", c_bool),
         ("selectable", c_bool),
+        ("bg", CuiColor),
+        ("border_color", CuiColor),
+        ("header_bg", CuiColor),
+        ("header_color", CuiColor),
+        ("text_color", CuiColor),
+        ("selected_bg", CuiColor),
     ]
 
 
@@ -825,7 +847,7 @@ class CuiVizItem(Structure):
 
 
 class CuiTreemapOpts(Structure):
-    _fields_ = [("_", c_int), ("width", CuiSize), ("height", c_float), ("format", c_char_p)]
+    _fields_ = [("_", c_int), ("width", CuiSize), ("height", c_float), ("format", c_char_p), ("selected", POINTER(c_int))]
 
 
 class CuiRadarOpts(Structure):
@@ -841,7 +863,14 @@ class CuiSankeyLink(Structure):
 
 
 class CuiSankeyOpts(Structure):
-    _fields_ = [("_", c_int), ("width", CuiSize), ("height", c_float), ("format", c_char_p), ("node_width", c_float)]
+    _fields_ = [
+        ("_", c_int),
+        ("width", CuiSize),
+        ("height", c_float),
+        ("format", c_char_p),
+        ("node_width", c_float),
+        ("node_colors", POINTER(CuiColor)),
+    ]
 
 
 class CuiWaffleOpts(Structure):
@@ -952,7 +981,16 @@ class CuiTabBarItem(Structure):
 
 
 class CuiTabBarOpts(Structure):
-    _fields_ = [("_", c_int), ("width", CuiSize), ("labels_on_selected_only", c_bool)]
+    _fields_ = [
+        ("_", c_int),
+        ("width", CuiSize),
+        ("labels_on_selected_only", c_bool),
+        ("bg", CuiColor),
+        ("border_color", CuiColor),
+        ("color", CuiColor),
+        ("active_color", CuiColor),
+        ("indicator_color", CuiColor),
+    ]
 
 
 class CuiTileOpts(Structure):
@@ -1068,6 +1106,11 @@ class CuiComposerOpts(Structure):
         ("model", POINTER(c_int)),
         ("max_lines", c_int),
         ("width", CuiSize),
+        ("mic", c_bool),
+        ("recording", c_bool),
+        ("levels", POINTER(c_float)),
+        ("level_count", c_int),
+        ("record_seconds", c_float),
     ]
 
 
@@ -1115,6 +1158,7 @@ class CuiGanttTask(Structure):
         ("tone", c_int),
         ("depends_on", c_int),
         ("milestone", c_bool),
+        ("state", c_int),
     ]
 
 
@@ -1251,6 +1295,17 @@ class CuiDropzoneOpts(Structure):
     ]
 
 
+class CuiTextStyle(Structure):
+    """One entry of the ``format_bar`` style menu (hand mirror; generator skips it)."""
+
+    _fields_ = [
+        ("name", c_char_p),
+        ("size", c_float),
+        ("preview_size", c_float),
+        ("font", c_int),
+    ]
+
+
 class CuiInlineEditOpts(Structure):
     _fields_ = [("_", c_int), ("font", c_int), ("size", c_float), ("placeholder", c_char_p), ("width", CuiSize)]
 
@@ -1319,7 +1374,7 @@ class CuiMenuBarMenuOpts(Structure):
 
 
 class CuiToolbarOpts(Structure):
-    _fields_ = [("_", c_int), ("no_border", c_bool)]
+    _fields_ = [("_", c_int), ("no_border", c_bool), ("style", c_int)]
 
 
 class CuiToolOpts(Structure):
@@ -1330,6 +1385,8 @@ class CuiToolOpts(Structure):
         ("shortcut", c_char_p),
         ("toggle", POINTER(c_bool)),
         ("disabled", c_bool),
+        ("tone", c_int),
+        ("flyout", c_bool),
     ]
 
 
@@ -2629,6 +2686,42 @@ def bind_prototypes(lib: ctypes.CDLL) -> list:
         ("cui_state", [c_void_p, c_uint32, c_size_t], c_void_p),
         ("cui_animate", [c_void_p, c_uint32, c_float], c_float),
         ("cui_animate_spring", [c_void_p, c_uint32, c_float, c_float, c_float], c_float),
+
+        # ---- CUI post-1.4: dither family, creative controls, canvas & bars, voice ----
+        ("cui_spinner_ex", [c_void_p, c_float, P(CuiSpinnerOpts)], None),
+        ("cui_skeleton_group_begin_ex", [c_void_p, P(CuiSkeletonGroupOpts)], None),
+        ("cui_skeleton_group_end", [c_void_p], None),
+        ("cui_pattern_meter_ex", [c_void_p, c_char_p, P(CuiMeterPart), c_int, P(CuiPatternMeterOpts)], c_int),
+        ("cui_status_spinner_ex", [c_void_p, c_char_p, c_int, P(CuiStatusSpinnerOpts)], c_bool),
+        ("cui_veil_begin_ex", [c_void_p, c_char_p, P(c_bool), P(CuiVeilOpts)], c_bool),
+        ("cui_veil_end", [c_void_p], None),
+        ("cui_status_tag_ex", [c_void_p, c_char_p, c_int, P(CuiStatusTagOpts)], c_bool),
+        ("cui_ratio_slider_ex", [c_void_p, c_char_p, c_char_p, P(c_float), P(CuiRatioSliderOpts)], c_bool),
+        ("cui_gradient_slider_ex", [c_void_p, c_char_p, P(c_float), c_float, c_float, P(CuiGradientSliderOpts)], c_int),
+        ("cui_step_slider_ex", [c_void_p, c_char_p, P(c_int), c_int, c_int, P(CuiStepSliderOpts)], c_int),
+        ("cui_palette_strip_ex", [c_void_p, c_char_p, P(CuiColor), P(c_bool), c_int, P(CuiPaletteStripOpts)], c_int),
+        ("cui_aspect_picker_ex", [c_void_p, c_char_p, P(c_int), P(CuiAspectPickerOpts)], c_bool),
+        ("cui_option_action_ex", [c_void_p, c_char_p, P(c_char_p), c_int, P(c_int), c_char_p, P(CuiOptionActionOpts)], c_int),
+        ("cui_seed_field_ex", [c_void_p, c_char_p, P(c_uint32), P(c_bool), P(CuiSeedFieldOpts)], c_int),
+        ("cui_format_bar_ex", [c_void_p, c_char_p, P(CuiTextFormat), P(CuiFormatBarOpts)], c_int),
+        ("cui_live_cursors_ex", [c_void_p, c_char_p, P(CuiLiveUser), c_int, P(CuiLiveCursorsOpts)], None),
+        ("cui_presence_pill_ex", [c_void_p, c_char_p, P(CuiLiveUser), c_int, P(CuiPresencePillOpts)], None),
+        ("cui_selection_ring_ex", [c_void_p, CuiColor, P(CuiSelectionRingOpts)], None),
+        ("cui_canvas_controls_ex", [c_void_p, c_char_p, P(CuiNodeView), P(CuiCanvasControlsOpts)], c_int),
+        ("cui_result_card_ex", [c_void_p, c_char_p, c_size_t, c_char_p, P(CuiResultCardOpts)], c_bool),
+        ("cui_selection_bar_ex", [c_void_p, c_char_p, c_int, P(CuiSelectionAction), c_int, P(CuiSelectionBarOpts)], c_int),
+        ("cui_toolbar_group_begin", [c_void_p], None),
+        ("cui_toolbar_group_end", [c_void_p], None),
+        ("cui_toolbar_radio_ex", [c_void_p, c_char_p, P(c_char_p), c_int, P(c_int), P(CuiToolbarRadioOpts)], c_bool),
+        ("cui_toolbar_primary_ex", [c_void_p, c_char_p, P(CuiToolOpts)], c_bool),
+        ("cui_toolbar_cycle_ex", [c_void_p, c_char_p, P(c_char_p), c_int, P(c_int), P(CuiToolOpts)], c_bool),
+        ("cui_flyout_mark", [c_void_p], None),
+        ("cui_voice_wave_ex", [c_void_p, c_char_p, P(c_float), c_int, P(CuiVoiceWaveOpts)], c_bool),
+        ("cui_voice_note_ex", [c_void_p, c_char_p, P(CuiVoiceNote), P(CuiVoiceNoteOpts)], c_int),
+        ("cui_voice_session_ex", [c_void_p, c_char_p, c_int, P(c_float), c_int, P(CuiVoiceSessionOpts)], c_int),
+        ("cui_set_clipboard_text", [c_void_p, c_char_p], None),
+        ("cui_get_clipboard_text", [c_void_p], c_char_p),
+        ("cui_app_follow_system_theme", [c_void_p, c_bool], None),
     ]
 
     missing: list = []

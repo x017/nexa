@@ -5,7 +5,7 @@ from __future__ import annotations
 import ctypes
 import os
 import tempfile
-from ctypes import c_float, c_int
+from ctypes import c_bool, c_float, c_int, c_uint8
 from pathlib import Path
 from typing import Optional, Sequence, Tuple, Union
 
@@ -21,8 +21,13 @@ from .._cdefs import (
     CuiImageOpts,
     CuiNowPlaying,
     CuiNowPlayingOpts,
+    CuiResultCardOpts,
     CuiTickerItem,
     CuiTickerOpts,
+    CuiVoiceNote,
+    CuiVoiceNoteOpts,
+    CuiVoiceSessionOpts,
+    CuiVoiceWaveOpts,
     CuiWaveformOpts,
     encode_opt,
     encode_str,
@@ -39,6 +44,9 @@ from ..types import (
     Rect,
     SizeLike,
     TickerItem,
+    Tone,
+    VoiceNoteResult,
+    VoiceState,
 )
 
 
@@ -269,7 +277,10 @@ class MediaMixin:
         bar: float = 0.0,
         gap: float = 0.0,
         color: ColorLike = None,
+        fg: ColorLike = None,
     ) -> float:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         n = len(peaks)
         c_peaks = (c_float * n)(*(float(p) for p in peaks))
@@ -330,8 +341,11 @@ class MediaMixin:
         size: float = 0.0,
         font: Union[FontRole, int] = FontRole.BODY,
         color: ColorLike = None,
+        fg: ColorLike = None,
         group_thousands: bool = True,
     ) -> None:
+        if fg is not None:
+            color = fg
         keep = self._frame_keepalive
         opts = CuiCounterOpts()
         opts.format = encode_opt(format, keep)
@@ -363,3 +377,187 @@ class MediaMixin:
         opts = CuiTickerOpts(0, float(speed), float(height))
         keep.extend((arr, opts))
         self._lib.cui_ticker_ex(self._ctx, encode_str(id, keep), arr, n, ctypes.byref(opts))
+
+    # ---- Canvas & bars / voice (CUI post-1.4) ----
+
+    def result_card(
+        self,
+        id: str,
+        image: int,
+        title: str,
+        *,
+        caption: Optional[str] = None,
+        badge: Optional[str] = None,
+        badge_tone: Tone = Tone.NEUTRAL,
+        image_w: int = 0,
+        image_h: int = 0,
+        width: SizeLike = None,
+        aspect: float = 1.25,
+    ) -> bool:
+        """Picture cropped to rounded corners with a status chip, title and
+        caption on a fade (CUI post-1.4). Returns ``True`` when the card was
+        activated.
+        """
+        keep = self._frame_keepalive
+        opts = CuiResultCardOpts()
+        opts.caption = encode_opt(caption, keep)
+        opts.badge = encode_opt(badge, keep)
+        opts.badge_tone = int(badge_tone)
+        opts.image_w = int(image_w)
+        opts.image_h = int(image_h)
+        opts.width = to_c_size(width)
+        opts.aspect = float(aspect)
+        keep.append(opts)
+        clicked = bool(self._lib.cui_result_card_ex(
+            self._ctx, encode_str(id, keep), int(image), encode_str(title, keep), ctypes.byref(opts)
+        ))
+        self._record_change(clicked)
+        return clicked
+
+    def voice_wave(
+        self,
+        id: str,
+        levels: Sequence[float],
+        *,
+        clip: bool = False,
+        progress: float = 0.0,
+        owners: Optional[Sequence[int]] = None,
+        owner: int = 0,
+        color: ColorLike = None,
+        fg: ColorLike = None,
+        pitch: float = 0.0,
+        step: float = 0.0,
+        width: SizeLike = None,
+    ) -> float:
+        """A voice drawn as fine dots — 13 rows mirrored around a centre line
+        (CUI post-1.4). With ``clip=True`` it shows a whole clip with a
+        playhead; returns the updated ``progress`` (seek by click, drag or
+        arrow keys). ``owners`` marks which of two voices each column belongs
+        to (0/1); ``owner`` picks the voice being shown.
+        """
+        if fg is not None:
+            color = fg
+        keep = self._frame_keepalive
+        n = len(levels)
+        c_levels = (c_float * max(n, 1))(*(float(v) for v in levels))
+        c_prog = c_float(float(progress))
+        opts = CuiVoiceWaveOpts()
+        opts.clip = bool(clip)
+        opts.progress = ctypes.pointer(c_prog)
+        if owners:
+            m = max(n, 1)
+            o_arr = (c_uint8 * m)()
+            for i in range(m):
+                o_arr[i] = int(owners[i]) & 0xFF if i < len(owners) else 0
+            opts.owners = o_arr
+            keep.append(o_arr)
+        opts.owner = int(owner)
+        opts.color = to_c_color(color)
+        opts.pitch = float(pitch)
+        opts.step = float(step)
+        opts.width = to_c_size(width)
+        keep.extend((c_levels, c_prog, opts))
+        changed = bool(self._lib.cui_voice_wave_ex(
+            self._ctx, encode_str(id, keep), c_levels, n, ctypes.byref(opts)
+        ))
+        self._record_change(changed)
+        return float(c_prog.value)
+
+    def voice_note(
+        self,
+        id: str,
+        levels: Sequence[float],
+        duration: float,
+        *,
+        position: float = 0.0,
+        speed: float = 1.0,
+        playing: bool = False,
+        mine: bool = False,
+        width: SizeLike = None,
+    ) -> VoiceNoteResult:
+        """A recorded message in a bubble: play/pause, the waveform as the
+        seek bar, played/total time and a 1x/1.5x/2x speed chip
+        (CUI post-1.4). The app plays the audio and passes the position back;
+        returns the updated :class:`nexa.VoiceNoteResult`.
+        """
+        keep = self._frame_keepalive
+        n = len(levels)
+        c_levels = (c_float * max(n, 1))(*(float(v) for v in levels))
+        note = CuiVoiceNote()
+        note.levels = c_levels
+        note.count = n
+        note.position = float(position)
+        note.duration = float(duration)
+        note.speed = float(speed)
+        note.playing = bool(playing)
+        opts = CuiVoiceNoteOpts()
+        opts.mine = bool(mine)
+        opts.width = to_c_size(width)
+        keep.extend((c_levels, note, opts))
+        flags = int(self._lib.cui_voice_note_ex(
+            self._ctx, encode_str(id, keep), ctypes.byref(note), ctypes.byref(opts)
+        ))
+        self._record_change(bool(flags) or note.playing != playing)
+        return VoiceNoteResult(float(note.position), float(note.speed), bool(note.playing), flags)
+
+    def voice_session(
+        self,
+        id: str,
+        state: VoiceState,
+        levels: Optional[Sequence[float]] = None,
+        *,
+        owners: Optional[Sequence[int]] = None,
+        label: Optional[str] = None,
+        transcript: Optional[str] = None,
+        upcoming: Optional[str] = None,
+        speaker: int = 0,
+        you: Optional[str] = None,
+        assistant: Optional[str] = None,
+        muted: Optional[list] = None,
+        no_end: bool = False,
+        width: SizeLike = None,
+    ) -> int:
+        """A spoken conversation with an assistant on one scrolling timeline
+        (CUI post-1.4): state label (Listening/Thinking/Speaking/Muted), the
+        live transcript with the unspoken part dimmed, and Mute/End buttons.
+
+        ``muted`` is a one-element list updated in place; returns CUI's raw
+        result (non-zero when the user interacted).
+        """
+        keep = self._frame_keepalive
+        c_muted = None
+        if muted is not None:
+            c_muted = c_bool(bool(muted[0] if muted else False))
+            keep.append(c_muted)
+        n = 0
+        c_levels = None
+        if levels is not None:
+            n = len(levels)
+            c_levels = (c_float * max(n, 1))(*(float(v) for v in levels))
+            keep.append(c_levels)
+        opts = CuiVoiceSessionOpts()
+        if owners:
+            m = max(n, 1)
+            o_arr = (c_uint8 * m)()
+            for i in range(m):
+                o_arr[i] = int(owners[i]) & 0xFF if i < len(owners) else 0
+            opts.owners = o_arr
+            keep.append(o_arr)
+        opts.label = encode_opt(label, keep)
+        opts.transcript = encode_opt(transcript, keep)
+        opts.upcoming = encode_opt(upcoming, keep)
+        opts.speaker = int(speaker)
+        opts.you = encode_opt(you, keep)
+        opts.assistant = encode_opt(assistant, keep)
+        if c_muted is not None:
+            opts.muted = ctypes.pointer(c_muted)
+        opts.no_end = bool(no_end)
+        opts.width = to_c_size(width)
+        keep.append(opts)
+        result = int(self._lib.cui_voice_session_ex(
+            self._ctx, encode_str(id, keep), int(state), c_levels, n, ctypes.byref(opts)
+        ))
+        if muted is not None and c_muted is not None and muted:
+            muted[0] = bool(c_muted.value)
+        self._record_change(bool(result))
+        return result
