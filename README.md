@@ -263,6 +263,12 @@ pytest -v
 
 ---
 
+## Changelog
+
+Release notes for every version — components, engine changes, fixes and
+measurements — live in [CHANGELOG.md](CHANGELOG.md), and on the site at
+[guide.html#changelog](http://parsa.x017.ir/nexa/guide.html#changelog).
+
 ## Development
 
 ```bash

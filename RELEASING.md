@@ -39,6 +39,8 @@ Pushing a `v*.*.*` git tag triggers [`.github/workflows/release.yml`](.github/wo
 # 1. Update version in BOTH files so they match:
 #    - pyproject.toml        -> version = "1.4.0"
 #    - src/nexa/__init__.py  -> __version__ = "1.4.0"
+#    ...and move the CHANGELOG.md "unreleased" section under that number
+#    (plus the matching entry in docs/build_docs_bundle.py, then `make docs`)"
 
 # 2. Run the full verification suite locally:
 pytest -v -W error
