@@ -54,6 +54,11 @@ release that picks it up. The published version of this page is
   `examples`, `docs`, `dist`, `check`, `publish`, `ci`, …) that works with
   **uv** (pip-less virtualenvs, `uv pip`/`uv venv`/`uv sync`) or **pip**, and a
   documented rebuild command, `python -m nexa.build`.
+- **`make doctor`** — diagnoses a checkout before a build does: root-owned or
+  read-only paths (the cause of setuptools' `Cannot update time stamp of
+  directory 'src/nexa_ui.egg-info'`), dangling symlinks, a stale compiled
+  library, a library built without shaping, a missing C compiler, and a bad
+  `NEXA_LIB_PATH` — each with the fix to run. `--json` for CI and bug reports.
 
 ### Changed
 

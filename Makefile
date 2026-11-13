@@ -84,7 +84,8 @@ help: ## Show this help
 	@printf 'nexa-ui developer tasks\n\n'
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
 		| sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
-	@printf '\nInstaller: %s%s\n' "$(INSTALLER)" "$(if $(strip $(UV)), ($(UV)),)"
+	@printf '\nBuild failing? `make doctor` explains why.\n'
+	@printf 'Installer: %s%s\n' "$(INSTALLER)" "$(if $(strip $(UV)), ($(UV)),)"
 	@printf 'Variables: PY=%s  VENV=%s  RTL=%s  HEADLESS=%s  MINIMAL=%s  LTO=%s  DEBUG=%s  OUT=%s\n' \
 		"$(PY)" "$(VENV)" "$(RTL)" "$(HEADLESS)" "$(MINIMAL)" "$(LTO)" "$(DEBUG)" "$(OUT)"
 
@@ -158,6 +159,9 @@ bridge-check: ## Fail if the generated bridges are out of date
 
 abi: ## Regenerate ctypes mirrors from csrc/include/cui/cui.h
 	$(PY) tools/gen_abi.py
+
+doctor: ## Diagnose the checkout: ownership/permissions, stale library, compiler, python
+	$(PY) tools/doctor.py
 
 verify: ## Smoke-test the installed binding end to end
 	@$(PY) -c "import nexa as ui; from nexa import fonts; \

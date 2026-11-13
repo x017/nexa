@@ -189,6 +189,43 @@ Because CUI computes flexbox/grid layout in a single pass inside `end_frame()`:
 
 ---
 
+## 7. Troubleshooting a Build
+
+Run `make doctor` (or `python tools/doctor.py`) first — it checks the things that
+actually break a checkout and prints the exact fix for each. The three that come
+up most often:
+
+**`error: Cannot update time stamp of directory 'src/nexa_ui.egg-info'`**
+
+That is setuptools' `egg_info` running `os.utime()` on the egg-info directory and
+getting `EACCES`/`ENOENT`: the directory is not yours, is on a read-only mount, or
+is a dangling symlink — typically left behind by a Docker build or a `sudo` run.
+
+```bash
+ls -ld src/*.egg-info src/nexa/_native      # who owns the leftovers?
+sudo rm -rf src/*.egg-info build dist        # or: sudo chown -R "$(id -u):$(id -g)" .
+uv sync --extra dev                          # or: make install-dev
+```
+
+**`uv add nexa-ui --dev` inside the nexa checkout**
+
+Don't: that adds the project to itself as a development dependency, and uv then
+builds the checkout through the same path that broke above. Syncing the project's
+own environment is enough:
+
+```bash
+uv sync --extra dev      # or: make sync
+uv remove nexa-ui --dev  # undo the self-dependency
+```
+
+**`AttributeError: … undefined symbol: cui_dot_display_ex`**
+
+A compiled library from an older version survived the update (`src/nexa/_native/`
+is git-ignored). A source checkout now detects that on import and rebuilds once;
+for a forced rebuild, `make native` — or delete `src/nexa/_native/` and import again.
+
+---
+
 ## Next Steps
 
 Choose the coding style you want to learn first (most developers read **both**, because they share the exact same widget names and compose together!):
