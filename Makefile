@@ -76,7 +76,7 @@ EXAMPLES := $(sort $(basename $(notdir $(wildcard examples/*.py))))
 
 .DEFAULT_GOAL := help
 .PHONY: help guard install install-dev sync venv native native-info test test-quick examples \
-        example docs bridge bridge-check abi verify dist check testpypi publish \
+        example docs bridge bridge-check abi verify dist check require-twine testpypi publish \
         clean clean-native clean-dist ci
 
 # ---------------------------------------------------------------------------
@@ -178,10 +178,18 @@ verify: ## Smoke-test the installed binding end to end
 	print('ok —', ui.get_library_path(), '| shaping:', fonts.supports_text_shaping())"
 
 # ---- packaging ------------------------------------------------------------
+# twine runs as `$(PY) -m twine`; when the dev extra is missing give the fix
+# instead of a raw `No module named twine`.
+require-twine: ## Check that twine is installed for $(PY)
+	@$(TWINE) --version >/dev/null 2>&1 || { \
+		echo "twine is not installed in $(PY)."; \
+		echo "  run: make install-dev     (twine ships in the [dev] extra)"; \
+		exit 2; }
+
 dist: clean-dist guard ## Build sdist + wheel into dist/
 	NEXA_LTO=1 $(PY) -m build
 
-check: ## Validate dist/ metadata and README rendering (twine --strict)
+check: require-twine ## Validate dist/ metadata and README rendering (twine --strict)
 	@ls dist/* >/dev/null 2>&1 || { echo "no dist/ yet — run 'make dist' first"; exit 2; }
 	$(TWINE) check --strict dist/*
 
