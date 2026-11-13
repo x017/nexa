@@ -361,6 +361,11 @@ class CuiSelectOpts(Structure):
         ("searchable", c_bool),
         ("disabled", c_bool),
         ("width", CuiSize),
+        ("bg", CuiColor),
+        ("text_color", CuiColor),
+        ("placeholder_color", CuiColor),
+        ("border_color", CuiColor),
+        ("focus_color", CuiColor),
     ]
 
 
@@ -387,7 +392,16 @@ class CuiDateRangeOpts(Structure):
 
 
 class CuiTabsOpts(Structure):
-    _fields_ = [("_", c_int), ("variant", c_int), ("icons", POINTER(c_char_p)), ("full_width", c_bool)]
+    _fields_ = [
+        ("_", c_int),
+        ("variant", c_int),
+        ("icons", POINTER(c_char_p)),
+        ("full_width", c_bool),
+        ("bg", CuiColor),
+        ("color", CuiColor),
+        ("active_color", CuiColor),
+        ("indicator_color", CuiColor),
+    ]
 
 
 class CuiNavOpts(Structure):
@@ -517,6 +531,12 @@ class CuiTableOpts(Structure):
         ("striped", c_bool),
         ("compact", c_bool),
         ("selectable", c_bool),
+        ("bg", CuiColor),
+        ("border_color", CuiColor),
+        ("header_bg", CuiColor),
+        ("header_color", CuiColor),
+        ("text_color", CuiColor),
+        ("selected_bg", CuiColor),
     ]
 
 
@@ -952,7 +972,16 @@ class CuiTabBarItem(Structure):
 
 
 class CuiTabBarOpts(Structure):
-    _fields_ = [("_", c_int), ("width", CuiSize), ("labels_on_selected_only", c_bool)]
+    _fields_ = [
+        ("_", c_int),
+        ("width", CuiSize),
+        ("labels_on_selected_only", c_bool),
+        ("bg", CuiColor),
+        ("border_color", CuiColor),
+        ("color", CuiColor),
+        ("active_color", CuiColor),
+        ("indicator_color", CuiColor),
+    ]
 
 
 class CuiTileOpts(Structure):

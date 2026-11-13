@@ -38,7 +38,16 @@ class NavigationMixin:
         variant: TabsVariant = TabsVariant.UNDERLINE,
         icons: Optional[Sequence[Optional[str]]] = None,
         full_width: bool = False,
+        bg: ColorLike = None,
+        color: ColorLike = None,
+        active_color: ColorLike = None,
+        indicator_color: ColorLike = None,
     ) -> int:
+        """Tab strip. ``bg`` paints the track (segmented and pill variants) or
+        the 1px baseline under an underline row, ``color`` the resting labels
+        and icons, ``active_color`` the selected one, and ``indicator_color``
+        the underline or the pill that moves behind the selection.
+        """
         keep = self._frame_keepalive
         arr, n = encode_str_array(items, keep)
         icons_arr, _ = encode_str_array(icons, keep) if icons else (None, 0)
@@ -48,6 +57,14 @@ class NavigationMixin:
         if icons_arr is not None:
             opts.icons = icons_arr
         opts.full_width = bool(full_width)
+        if bg is not None:
+            opts.bg = to_c_color(bg)
+        if color is not None:
+            opts.color = to_c_color(color)
+        if active_color is not None:
+            opts.active_color = to_c_color(active_color)
+        if indicator_color is not None:
+            opts.indicator_color = to_c_color(indicator_color)
         keep.append(opts)
         changed = bool(self._lib.cui_tabs_ex(
             self._ctx, encode_str(id, keep), arr, n, ctypes.byref(c_idx), ctypes.byref(opts)
@@ -153,7 +170,16 @@ class NavigationMixin:
         *,
         width: SizeLike = None,
         labels_on_selected_only: bool = False,
+        bg: ColorLike = None,
+        border_color: ColorLike = None,
+        color: ColorLike = None,
+        active_color: ColorLike = None,
+        indicator_color: ColorLike = None,
     ) -> int:
+        """Icon tab bar. ``bg``/``border_color`` paint the bar, ``color`` the
+        resting icons and labels, ``active_color`` the selected one, and
+        ``indicator_color`` the tint that slides behind the selection.
+        """
         keep = self._frame_keepalive
         n = len(items)
         arr = (CuiTabBarItem * n)()
@@ -165,6 +191,16 @@ class NavigationMixin:
         opts = CuiTabBarOpts()
         opts.width = to_c_size(width)
         opts.labels_on_selected_only = bool(labels_on_selected_only)
+        if bg is not None:
+            opts.bg = to_c_color(bg)
+        if border_color is not None:
+            opts.border_color = to_c_color(border_color)
+        if color is not None:
+            opts.color = to_c_color(color)
+        if active_color is not None:
+            opts.active_color = to_c_color(active_color)
+        if indicator_color is not None:
+            opts.indicator_color = to_c_color(indicator_color)
         keep.extend((arr, opts))
         changed = bool(self._lib.cui_tab_bar_ex(
             self._ctx, encode_str(id, keep), arr, n, ctypes.byref(c_sel), ctypes.byref(opts)

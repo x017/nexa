@@ -745,11 +745,13 @@ bool cui_tab_bar_ex(cui_ctx *ui, const char *id_str, const cui_tab_bar_item *ite
     nd->w = o->width.kind ? o->width : CUI_FILL;
     nd->h = CUI_PX(64);
     nd->radius = CUI_CORNERS(ui->theme.radius_surface);
-    nd->bg = CUI_C(ui, SURFACE_RAISED);
-    nd->border = 1; nd->border_color = ui->mode == CUI_THEME_DARK ? CUI_C(ui, BORDER) : cui__rgba(0, 0, 0, 18);
+    nd->bg = cui__color_set(o->bg) ? o->bg : CUI_C(ui, SURFACE_RAISED);
+    nd->border = 1; nd->border_color = cui__color_set(o->border_color) ? o->border_color
+                                   : (ui->mode == CUI_THEME_DARK ? CUI_C(ui, BORDER) : cui__rgba(0, 0, 0, 18));
     nd->elevation = CUI_ELEVATION_RAISED; nd->elevation_alpha = 1;
     cui__tb_paint *p = cui__frame_alloc(ui, sizeof *p);
-    p->c = ui->accent == CUI_ACCENT_NEUTRAL ? cui_alpha(CUI_C(ui, FOREGROUND), ui->mode == CUI_THEME_DARK ? 0.12f : 0.07f) : CUI_C(ui, ACCENT_SUBTLE);
+    p->c = cui__color_set(o->indicator_color) ? o->indicator_color
+          : (ui->accent == CUI_ACCENT_NEUTRAL ? cui_alpha(CUI_C(ui, FOREGROUND), ui->mode == CUI_THEME_DARK ? 0.12f : 0.07f) : CUI_C(ui, ACCENT_SUBTLE));
     p->w = 0;
     nd->paint = cui__paint_tab_bar;
     nd->paint_data = p;
@@ -775,7 +777,10 @@ bool cui_tab_bar_ex(cui_ctx *ui, const char *id_str, const cui_tab_bar_item *ite
         cui__mark_interactive(ui, it, CUI_IF_FOCUSABLE);
         if (r.hovered) cui__set_cursor(ui, CUI_CURSOR_HAND);
         cui__open(ui, it);
-        cui_color fg = cui_mix(cui_mix(CUI_C(ui, TEXT_MUTED), CUI_C(ui, TEXT_SECONDARY), hv[1]), cui__mo_accent(ui), hv[0]);
+        cui_color rest = cui__color_set(o->color) ? o->color : CUI_C(ui, TEXT_MUTED);
+        cui_color hov = cui__color_set(o->color) ? o->color : CUI_C(ui, TEXT_SECONDARY);
+        cui_color act = cui__color_set(o->active_color) ? o->active_color : cui__mo_accent(ui);
+        cui_color fg = cui_mix(cui_mix(rest, hov, hv[1]), act, hv[0]);
         int ic = cui__node_new(ui, 0);
         ui->nodes[ic].dir = CUI_STACK; ui->nodes[ic].w = CUI_PX(22); ui->nodes[ic].h = CUI_PX(22);
         ui->nodes[ic].align = CUI_ALIGN_CENTER; ui->nodes[ic].justify = CUI_JUSTIFY_CENTER;

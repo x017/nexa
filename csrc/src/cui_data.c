@@ -302,6 +302,7 @@ struct cui_table_build {
     bool in_row;
     bool compact, striped, selectable;
     bool scroll;
+    cui_color bg, border_color, header_bg, header_color, text_color, selected_bg;
     struct cui_table_build *prev;
 };
 
@@ -325,15 +326,18 @@ bool cui_table_begin_ex(cui_ctx *ui, const char *id_str, const cui_table_column 
     struct cui_table_build *t = cui__frame_alloc(ui, sizeof *t);
     t->id = id; t->cols = cols; t->ncols = ncols;
     t->compact = o->compact; t->striped = o->striped; t->selectable = o->selectable;
+    t->bg = o->bg; t->border_color = o->border_color; t->header_bg = o->header_bg;
+    t->header_color = o->header_color; t->text_color = o->text_color; t->selected_bg = o->selected_bg;
     t->prev = ui->building.table;
     ui->building.table = t;
     cui_push_id(ui, id_str);
     int wrap = cui__node_new(ui, id);
     cui_node *wn = &ui->nodes[wrap];
     wn->w = CUI_FILL; wn->self_align = CUI_ALIGN_STRETCH;
-    wn->border = 1; wn->border_color = CUI_C(ui, BORDER);
+    wn->border = 1;
+    wn->border_color = cui__color_set(o->border_color) ? o->border_color : CUI_C(ui, BORDER);
     wn->radius = CUI_CORNERS(ui->theme.radius_control);
-    wn->bg = CUI_C(ui, SURFACE);
+    wn->bg = cui__color_set(o->bg) ? o->bg : CUI_C(ui, SURFACE);
     wn->flags |= CUI_NF_CLIP;
     if (o->height.kind) wn->h = o->height;
     cui__open(ui, wrap);
@@ -361,7 +365,7 @@ bool cui_table_begin_ex(cui_ctx *ui, const char *id_str, const cui_table_column 
     hn->dir = CUI_ROW; hn->align = CUI_ALIGN_CENTER;
     hn->h = CUI_PX(38);
     hn->pad[1] = hn->pad[3] = 8;
-    hn->bg = CUI_C(ui, SURFACE_MUTED);
+    hn->bg = cui__color_set(o->header_bg) ? o->header_bg : CUI_C(ui, SURFACE_MUTED);
     hn->w = CUI_FILL;
     hn->radius.tl = hn->radius.tr = ui->theme.radius_control - 1;
     cui__open(ui, head);
@@ -390,8 +394,11 @@ bool cui_table_begin_ex(cui_ctx *ui, const char *id_str, const cui_table_column 
         }
         cui__open(ui, cell);
         bool sorted = o->sort && o->sort->column == k && c->sortable;
+        cui_color head_fg = CUI_C(ui, TEXT_SECONDARY);
+        if (cui__color_set(o->header_color)) head_fg = o->header_color;
+        if (sorted || r.hovered) head_fg = CUI_C(ui, FOREGROUND);
         int tx = cui__text_node(ui, c->title ? c->title : "", -1, CUI_FONT_MEDIUM, cui__fs(ui, ui->theme.text_sm),
-                                (sorted || r.hovered) ? CUI_C(ui, FOREGROUND) : CUI_C(ui, TEXT_SECONDARY), false);
+                                head_fg, false);
         ui->nodes[tx].line_height = 1.3f;
         if (c->sortable && o->sort) {
             const char *ic = sorted ? (o->sort->descending ? CUI_ICON_ARROW_DOWN : CUI_ICON_ARROW_UP) : CUI_ICON_CHEVRONS_UP_DOWN;
@@ -401,7 +408,7 @@ bool cui_table_begin_ex(cui_ctx *ui, const char *id_str, const cui_table_column 
     }
     cui__close(ui);
     int line = cui__leaf(ui, 0, CUI_FILL, CUI_PX(1));
-    ui->nodes[line].bg = CUI_C(ui, BORDER);
+    ui->nodes[line].bg = cui__color_set(o->border_color) ? o->border_color : CUI_C(ui, BORDER);
     t->scroll = o->height.kind != CUI_SIZE_FIT;
     if (t->scroll) {
         cui_box sb;
@@ -418,7 +425,7 @@ bool cui_table_row(cui_ctx *ui, bool selected) {
     cui__table_close_row(ui, t);
     if (t->row_index > 0) {
         int line = cui__leaf(ui, 0, CUI_FILL, CUI_PX(1));
-        ui->nodes[line].bg = CUI_C(ui, BORDER_SUBTLE);
+        ui->nodes[line].bg = cui__color_set(t->border_color) ? cui_alpha(t->border_color, 0.6f) : CUI_C(ui, BORDER_SUBTLE);
     }
     int ri = t->row_index++;
     cui_id rid = cui__hash(&ri, sizeof ri, t->id ^ 0x20Bu);
@@ -430,9 +437,9 @@ bool cui_table_row(cui_ctx *ui, bool selected) {
     n->min_h = t->compact ? 36 : 44;
     n->pad[1] = n->pad[3] = 8;
     n->w = CUI_FILL;
-    cui_color bg = cui__rgba(0, 0, 0, 0);
+    cui_color bg = cui__color_set(t->bg) ? t->bg : cui__rgba(0, 0, 0, 0);
     if (t->striped && (ri & 1)) bg = cui_alpha(CUI_C(ui, FOREGROUND), 0.018f);
-    if (selected) bg = CUI_C(ui, ACCENT_SUBTLE);
+    if (selected) bg = cui__color_set(t->selected_bg) ? t->selected_bg : CUI_C(ui, ACCENT_SUBTLE);
     else bg = cui_mix(bg, CUI_C(ui, HOVER), *hv);
     n->bg = bg;
     cui__mark_interactive(ui, row, t->selectable ? CUI_IF_FOCUSABLE : 0);
@@ -465,7 +472,8 @@ void cui_table_cell_text(cui_ctx *ui, const char *text) {
     cui_table_cell(ui);
     struct cui_table_build *t = ui->building.table;
     bool right = t && t->col - 1 < t->ncols && t->cols[t->col - 1].align == CUI_TEXT_RIGHT;
-    int tx = cui__text_node(ui, text, -1, CUI_FONT_BODY, cui__fs(ui, ui->theme.text_body), CUI_C(ui, FOREGROUND), false);
+    cui_color fg = (t && cui__color_set(t->text_color)) ? t->text_color : CUI_C(ui, FOREGROUND);
+    int tx = cui__text_node(ui, text, -1, CUI_FONT_BODY, cui__fs(ui, ui->theme.text_body), fg, false);
     ui->nodes[tx].line_height = 1.3f;
     if (right) ui->nodes[tx].flags |= CUI_NF_TABULAR;
 }

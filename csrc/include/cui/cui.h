@@ -667,6 +667,13 @@ typedef struct cui_select_opts {
     bool searchable;           /* combobox: filter options by typing */
     bool disabled;
     cui_size width;
+    /* per-field colours; 0 keeps the theme token (nexa delta, appended so the
+     * layout stays backward compatible) */
+    cui_color bg;              /* field surface (default SURFACE) */
+    cui_color text_color;      /* the selected value (default FOREGROUND) */
+    cui_color placeholder_color; /* shown when nothing is selected (default TEXT_MUTED) */
+    cui_color border_color;    /* resting edge (default the theme control edge) */
+    cui_color focus_color;     /* edge while hovered/open blends to (default ACCENT) */
 } cui_select_opts;
 CUI_API bool cui_select_ex(cui_ctx *ui, const char *id, const char *const *items, int count, int *index, const cui_select_opts *opts);
 
@@ -683,7 +690,17 @@ CUI_API bool cui_color_picker(cui_ctx *ui, const char *id, cui_color *value);
 /* ------------------------------------------------------------------------ */
 
 typedef enum cui_tabs_variant { CUI_TABS_UNDERLINE = 0, CUI_TABS_PILL } cui_tabs_variant;
-typedef struct cui_tabs_opts { int _; cui_tabs_variant variant; const char *const *icons; bool full_width; } cui_tabs_opts;
+typedef struct cui_tabs_opts {
+    int _;
+    cui_tabs_variant variant;
+    const char *const *icons;
+    bool full_width;
+    /* colours; 0 keeps the theme token (nexa delta, appended) */
+    cui_color bg;               /* the track / the 1px baseline under an underline tab row */
+    cui_color color;            /* resting label and icon */
+    cui_color active_color;     /* the selected label and icon */
+    cui_color indicator_color;  /* underline, or the pill highlight behind the selected tab */
+} cui_tabs_opts;
 CUI_API bool cui_tabs_ex(cui_ctx *ui, const char *id, const char *const *items, int count, int *index, const cui_tabs_opts *opts);
 
 /* Sidebar navigation item with a gliding selection highlight shared by all
@@ -932,6 +949,13 @@ typedef struct cui_table_opts {
     bool striped;
     bool compact;              /* rows at least 36 points tall instead of 44 */
     bool selectable;           /* rows take keyboard focus and show the hand cursor (pass the chosen row's state to `cui_table_row`) */
+    /* colours; 0 keeps the theme token (nexa delta, appended) */
+    cui_color bg;              /* table surface (default SURFACE) */
+    cui_color border_color;    /* outer border and row separators (default BORDER) */
+    cui_color header_bg;       /* header row (default SURFACE_MUTED) */
+    cui_color header_color;    /* header labels (default TEXT_SECONDARY) */
+    cui_color text_color;      /* body cell text drawn by cui_table_cell_text (default FOREGROUND) */
+    cui_color selected_bg;     /* selected row (default ACCENT_SUBTLE) */
 } cui_table_opts;
 CUI_API bool cui_table_begin_ex(cui_ctx *ui, const char *id, const cui_table_column *columns, int column_count, const cui_table_opts *opts);
 /* Begin a row. Returns true when the row is clicked. */
@@ -2108,6 +2132,12 @@ typedef struct cui_tab_bar_opts {
     int _;
     cui_size width;
     bool labels_on_selected_only;   /* only the selected tab shows its label; the others show just their icon */
+    /* colours; 0 keeps the theme token (nexa delta, appended) */
+    cui_color bg;               /* the bar surface (default SURFACE_RAISED) */
+    cui_color border_color;     /* the bar edge */
+    cui_color color;            /* resting icons and labels */
+    cui_color active_color;     /* the selected icon and label */
+    cui_color indicator_color;  /* the tint that slides behind the selection */
 } cui_tab_bar_opts;
 CUI_API bool cui_tab_bar_ex(cui_ctx *ui, const char *id, const cui_tab_bar_item *items, int count, int *selected, const cui_tab_bar_opts *opts);
 

@@ -306,7 +306,18 @@ class DataMixin:
         striped: bool = False,
         compact: bool = False,
         selectable: bool = False,
+        bg: ColorLike = None,
+        border_color: ColorLike = None,
+        header_bg: ColorLike = None,
+        header_color: ColorLike = None,
+        text_color: ColorLike = None,
+        selected_bg: ColorLike = None,
     ) -> TableScope:
+        """Table. ``bg`` is the surface the rows sit on, ``border_color`` the
+        outer border and the row separators, ``header_bg``/``header_color`` the
+        header row and its labels, ``text_color`` the body cells drawn by
+        ``cell_text()``, and ``selected_bg`` a selected row.
+        """
         keep = self._frame_keepalive
         ncols = len(columns)
         c_cols = (CuiTableColumn * ncols)()
@@ -324,6 +335,18 @@ class DataMixin:
         opts.striped = bool(striped)
         opts.compact = bool(compact)
         opts.selectable = bool(selectable)
+        if bg is not None:
+            opts.bg = to_c_color(bg)
+        if border_color is not None:
+            opts.border_color = to_c_color(border_color)
+        if header_bg is not None:
+            opts.header_bg = to_c_color(header_bg)
+        if header_color is not None:
+            opts.header_color = to_c_color(header_color)
+        if text_color is not None:
+            opts.text_color = to_c_color(text_color)
+        if selected_bg is not None:
+            opts.selected_bg = to_c_color(selected_bg)
         keep.extend((c_cols, opts))
         vis = bool(self._lib.cui_table_begin_ex(
             self._ctx, encode_str(id, keep), c_cols, ncols, ctypes.byref(opts)

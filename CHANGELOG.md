@@ -60,6 +60,21 @@ release that picks it up. The published version of this page is
   `fg` / `bg` / `border_color` (and the full field palette) as real parameters
   instead of swallowing them in `**kwargs`, so they show up in signatures and
   IDE completion.
+- **Colours on `select`, `tabs`, `tab_bar` and `table`** — the collection
+  widgets were theme-only; they now take their own palette:
+  - `select(...)` uses the same field palette as `input`: `bg`, `color`
+    (alias `text_color`), `placeholder_color`, `border_color`, `focus_color`.
+  - `tabs(...)`: `bg` (the track, or the 1px baseline under an underline row),
+    `color`, `active_color`, `indicator_color` (the underline or the pill that
+    moves behind the selection).
+  - `tab_bar(...)`: `bg`, `border_color`, `color`, `active_color`,
+    `indicator_color`.
+  - `table(...)`: `bg`, `border_color` (outer border and row separators),
+    `header_bg`, `header_color`, `text_color`, `selected_bg`.
+
+  Every argument is unset by default, so existing code renders exactly the same
+  pixels — the C opts structs gained the fields at the end, keeping the layout
+  compatible.
 - **Examples**: `examples/instruments.py` (Reactor Console), `examples/devtools.py`
   (all 20 dev panels across tabs) and `examples/rtl.py` (Persian/Arabic app with
   RTL layout, localized calendar, terminal and charts).

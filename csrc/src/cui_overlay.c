@@ -346,9 +346,12 @@ bool cui_select_ex(cui_ctx *ui, const char *id_str, const char *const *items, in
     n->pad[1] = CUI__FIELD_PAD_ICON; n->pad[3] = CUI__FIELD_PAD;
     n->radius = CUI_CORNERS(CUI__R_CONTROL(ui, h));
     n->bg = CUI_C(ui, SURFACE);
+    if (cui__color_set(o->bg)) n->bg = o->bg;
     n->border = 1;
     cui_color border = cui__control_edge(ui, st->hover);
-    n->border_color = cui_mix(border, cui__edge_on(ui), open ? 1.0f : 0.0f);
+    if (cui__color_set(o->border_color)) border = o->border_color;
+    cui_color edge_on = cui__color_set(o->focus_color) ? o->focus_color : cui__edge_on(ui);
+    n->border_color = cui_mix(border, edge_on, open ? 1.0f : 0.0f);
     n->opacity = disabled ? CUI__DISABLED : 1.0f;
     cui__mark_interactive(ui, i, CUI_IF_FOCUSABLE);
     if (r.hovered) cui__set_cursor(ui, CUI_CURSOR_HAND);
@@ -356,7 +359,10 @@ bool cui_select_ex(cui_ctx *ui, const char *id_str, const char *const *items, in
     bool has = *index >= 0 && *index < count;
     if (has && o->icons && o->icons[*index]) cui__icon_node(ui, o->icons[*index], 16, CUI_C(ui, TEXT_SECONDARY));
     const char *shown = has ? items[*index] : (o->placeholder ? o->placeholder : "Select");
-    int t = cui__text_node(ui, shown, -1, CUI_FONT_BODY, cui__fs(ui, ui->theme.text_body), has ? CUI_C(ui, FOREGROUND) : CUI_C(ui, TEXT_MUTED), false);
+    cui_color fg = has ? CUI_C(ui, FOREGROUND) : CUI_C(ui, TEXT_MUTED);
+    if (has && cui__color_set(o->text_color)) fg = o->text_color;
+    if (!has && cui__color_set(o->placeholder_color)) fg = o->placeholder_color;
+    int t = cui__text_node(ui, shown, -1, CUI_FONT_BODY, cui__fs(ui, ui->theme.text_body), fg, false);
     ui->nodes[t].line_height = 1.3f;
     ui->nodes[t].w = CUI_FILL;
     cui__icon_node(ui, CUI_ICON_CHEVRONS_UP_DOWN, 16, CUI_C(ui, TEXT_MUTED));

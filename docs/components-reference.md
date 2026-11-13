@@ -91,7 +91,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ## 6. Pickers (`nexa.widgets.pickers`)
 
-- **`select(id, items, index: int, *, label=None, placeholder=None, icons=None, searchable=False, disabled=False, width=None) -> int`**
+- **`select(id, items, index: int, *, label=None, placeholder=None, icons=None, searchable=False, disabled=False, width=None, bg=None, color=None, text_color=None, placeholder_color=None, border_color=None, focus_color=None) -> int`**
 - **`combobox(id, items, index: int, **select_opts) -> int`**
 - **`multi_select(id, items, selected: Sequence[bool], *, label=None, placeholder=None, icons=None, searchable=True, max_chips=0, width=None) -> list[bool]`**
 - **`calendar(id, value: Date) -> Date`**
@@ -109,13 +109,13 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ## 7. Navigation (`nexa.widgets.navigation`)
 
-- **`tabs(id, items, index: int, *, variant=TabsVariant.UNDERLINE, icons=None, full_width=False) -> int`** (`TabsVariant`: `UNDERLINE` / `LINE`, `PILL`)
+- **`tabs(id, items, index: int, *, variant=TabsVariant.UNDERLINE, icons=None, full_width=False, bg=None, color=None, active_color=None, indicator_color=None) -> int`** (`TabsVariant`: `UNDERLINE` / `LINE`, `PILL`)
 - **`nav_section(title)`** | **`nav_item(label, *, icon=None, badge=None, selected=False, group=None) -> bool`**
 - **`breadcrumb(items) -> int`** (returns clicked crumb index or `-1`)
 - **`path_bar(id, segments: Sequence[str], *, icon=None, text=None, placeholder=None, size=ControlSize.MD, width=None, menus=False, no_edit=False) -> PathBarResult`** *(New in 1.1)* — Editable file-manager / IDE breadcrumb address bar (`clicked`, `submitted`, `editing`) + **`path_bar_menu(id)`** (`PathBarMenuScope` exposing `menu.segment`).
 - **`pagination(id, page: int, page_count: int) -> int`**
 - **`stepper(steps, current: int)`**
-- **`tab_bar(id, items: Sequence[TabBarItem], selected: int, *, width=None, labels_on_selected_only=False) -> int`**
+- **`tab_bar(id, items: Sequence[TabBarItem], selected: int, *, width=None, labels_on_selected_only=False, bg=None, border_color=None, color=None, active_color=None, indicator_color=None) -> int`**
 - **`dock(id, *, size=0.0, magnify=0.0)`** -> `SimpleScope` + **`dock_item(icon, label, *, color=None, running=False, badge=0) -> bool`** + **`dock_separator()`**
 - **`toc(scroll_id, items: Sequence[TocItem]) -> int`** + **`toc_anchor(anchor)`**
 
@@ -164,7 +164,7 @@ All popup/overlay scopes are **conditional**—always write `with ui.dialog(...)
 - **`virtual_list(id, count: int, row_height: float, height: SizeLike = None)`** -> `VirtualListScope` (iterate `for i in vl.indices:`—renders 1,000,000+ rows in O(visible)!).
 - **`reorder(id, order: Sequence[int])`** -> `ReorderScope` (`with ro.item(pos): ...`; read `ro.order`).
 - **`timeline_item(title, *, time=None, description=None, icon=None, tone=Tone.NEUTRAL, last=False)`**
-- **`table(id, columns: Sequence[TableColumn], *, sort=None, height=None, striped=False, compact=False, selectable=False)`** -> `TableScope` (`if tbl:`; `tbl.row(selected=...) -> bool`, `tbl.cell()`, `tbl.cell_text(s)`, `tbl.sort`).
+- **`table(id, columns: Sequence[TableColumn], *, sort=None, height=None, striped=False, compact=False, selectable=False, bg=None, border_color=None, header_bg=None, header_color=None, text_color=None, selected_bg=None)`** -> `TableScope` (`if tbl:`; `tbl.row(selected=...) -> bool`, `tbl.cell()`, `tbl.cell_text(s)`, `tbl.sort`).
 - **`data_grid(id, columns: Sequence[GridColumn], row_count: int, *, width=None, height=None, row_height=0.0, selected=None, sort=None, striped=False, cursor=None, hide_checkboxes=False, anchor=None)`** -> `DataGridScope` (`if dg:`; `for r in dg.rows:`, `dg.row(r)`, `dg.cell_text(s)`, `dg.edit(val)`, `dg.selected`, `dg.sort`, `dg.cursor`, `dg.anchor`; `GridColumn(..., priority=0)` hides lower-priority columns gracefully).
 - **`tree_table(id, columns: Sequence[GridColumn], nodes: Sequence[TreeNode], *, width=None, height=None, row_height=0.0, root=0, sort=None, cursor=None, guides=True, labels=None, label_fn=None)`** -> `TreeTableScope` *(New in 1.1)* — Virtualized hierarchical tree-grid (`for idx in tt.rows(): tt.name(label, icon=...); tt.cell_text(...)`; synchronizes `TreeNode.flags` and exposes `tt.events: TreeTableEvents`) + **`tree_sort(nodes, root=-1, *, key=None, reverse=False) -> int`**.
 - **`filter_bar(id, fields: Sequence[FilterField], selected_masks: Sequence[int], search: str, *, max_search_bytes=256) -> tuple[list[int], str]`**

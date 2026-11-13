@@ -183,6 +183,10 @@ Theme tokens restyle everything; these arguments restyle a single widget and lea
 | `heading(...)` | `color=`, `bg=` (+ `pad`, `radius`, `width=ui.FILL` for a banner) |
 | `text(...)`, `markdown(...)`, `expandable_text(...)` | `color=` |
 | `input` / `textarea` / `search` | `bg=`, `color=` (alias `text_color=`), `placeholder_color=`, `border_color=`, `focus_color=` |
+| `select(...)` | the same field palette as `input`: `bg=`, `color=` (alias `text_color=`), `placeholder_color=`, `border_color=`, `focus_color=` |
+| `tabs(...)` | `bg=` (the track, or the 1px baseline under an underline row), `color=`, `active_color=`, `indicator_color=` |
+| `tab_bar(...)` | `bg=`, `border_color=`, `color=`, `active_color=`, `indicator_color=` |
+| `table(...)` | `bg=`, `border_color=` (outer border + row separators), `header_bg=`, `header_color=`, `text_color=`, `selected_bg=` |
 | `card(...)` | `bg=`, `border_color=` (with `muted=`, `selected=`) |
 | `box(...)`, `row`, `column`, `grid`, `stack`, `card(...)` | `bg=`, `border_color=`, `border=`, `radius=`, and `fg=` — the text colour inherited by everything drawn inside |
 | `button` / `icon_button` | `color=` (label + glyph tint) |
@@ -190,12 +194,12 @@ Theme tokens restyle everything; these arguments restyle a single widget and lea
 | `image(...)` | `tint=` |
 | `knob`, `dot_display`, `loader`, `voice_orb`, `dock_item`, `gradient_text`, `spotlight` | `color=` / `from_color=`, `to_color=` |
 | `line_chart`, `bar_chart`, `donut_chart`, `area`, `sparkline`, … and every `Series` | per-series `color=` |
-| everything else (selects, checkboxes, switches, sliders, tables, editors, docks…) | follows `ctx.theme[...]` — change a token, or wrap the region in `ctx.set_accent` |
+| everything else (checkboxes, switches, sliders, trees, editors, docks, toolbars, dialogs…) | follows `ctx.theme[...]` — change a token, or wrap the region in `ctx.set_accent` |
 
 **How far does this reach?** Not every component has a colour argument, and that
 is a boundary of the vendored engine rather than an omission: a widget can only
 be recoloured per-call if its C opts struct carries a `cui_color`. Today
-**63 of ~300** widget methods take any colour argument:
+**67 of ~300** widget methods take any colour argument:
 
 - **6 containers** take `fg=` (and `bg=` / `border_color=`): `box`, `row`,
   `column`, `grid`, `stack`, `card`. `fg=` is inherited by the text drawn inside,
@@ -203,12 +207,17 @@ be recoloured per-call if its C opts struct carries a `cui_color`. Today
 - **3 text fields** take the full field palette: `input`, `textarea`, `search`
   (`bg`, `color`/`text_color`, `placeholder_color`, `border_color`,
   `focus_color`).
+- **4 collection widgets** take their own small palette: `select` (the field
+  palette above), `tabs` and `tab_bar` (`bg`, `color`, `active_color`,
+  `indicator_color`), and `table` (`bg`, `border_color`, `header_bg`,
+  `header_color`, `text_color`, `selected_bg`). `table` striping still uses the
+  theme's translucent overlay on top of `bg=`.
 - **~40 widgets** take a foreground/`tone`/`tint` (text, headings, markdown,
   buttons, badges, charts, knobs, image tint, …).
-- **Everything else follows the theme**: `table`, `tree`, `tabs`/`menu`,
-  `select`/`checkbox`/`switch`/`slider`, `number`, toolbars, dialogs/popovers/
-  tooltips, docks. For those, change the token (`ctx.theme[...]` / `ctx.set_accent`)
-  or wrap the region in `fg=` and draw the copy yourself with `text()`.
+- **Everything else follows the theme**: `tree`, `menu`, `checkbox`,
+  `switch`/`slider`, `number`, toolbars, dialogs/popovers/tooltips, docks. For
+  those, change the token (`ctx.theme[...]` / `ctx.set_accent`) or wrap the
+  region in `fg=` and draw the copy yourself with `text()`.
 
 > Color arguments cost nothing when you don't use them: the default path skips the conversion entirely, and every `ColorLike` value is memoised by its input (a hex string parses once, then costs ~0.1 µs) — so restyling 60 inputs every frame adds ~0.2 ms to the frame.
 

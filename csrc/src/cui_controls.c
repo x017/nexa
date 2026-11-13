@@ -521,8 +521,13 @@ static void cui__paint_highlight(cui_ctx *ui, cui_node *n, void *data) {
 }
 
 /* Shared builder for segmented controls and tabs. kind: 0 segmented, 1 tabs underline, 2 tabs pill */
+/* Colour overrides shared by segmented controls and tabs; every field may be 0
+ * to keep the theme token. Only tabs expose them to users today. */
+typedef struct { cui_color track, label, active_label, indicator; } cui__seg_colors;
+
 static bool cui__segments(cui_ctx *ui, const char *id_str, const char *const *items, const char *const *icons, int count,
-                          int *index, int kind, cui_control_size size, bool full_width) {
+                          int *index, int kind, cui_control_size size, bool full_width,
+                          const cui__seg_colors *cc) {
     if (count <= 0) return false;
     if (count > 32) count = 32;
     cui_id id = cui_make_id(ui, id_str);
@@ -592,6 +597,7 @@ static bool cui__segments(cui_ctx *ui, const char *id_str, const char *const *it
         rn->pad[0] = rn->pad[1] = rn->pad[2] = rn->pad[3] = 3;
         rn->radius = CUI_CORNERS(CUI_MIN(ui->theme.radius_control, h * 0.5f));
         rn->bg = cui_alpha(CUI_C(ui, FOREGROUND), 0.06f);
+        if (cc && cui__color_set(cc->track)) rn->bg = cc->track;
         rn->gap = 0;
         inner_h = h - 6;
     } else if (kind == 1) {
@@ -599,6 +605,11 @@ static bool cui__segments(cui_ctx *ui, const char *id_str, const char *const *it
     } else {
         rn->gap = 4;
         inner_h = h - 4;
+        if (cc && cui__color_set(cc->track)) {   /* pill tabs have no track of their own: a custom one gets a soft inset */
+            rn->bg = cc->track;
+            rn->pad[0] = rn->pad[1] = rn->pad[2] = rn->pad[3] = 2;
+            rn->radius = CUI_CORNERS(CUI_MIN(ui->theme.radius_control, h * 0.5f));
+        }
     }
     cui__open(ui, row);
     if (have && st->init) {
@@ -617,6 +628,7 @@ static bool cui__segments(cui_ctx *ui, const char *id_str, const char *const *it
             p->bg = CUI_C(ui, ACTIVE);
             p->radius = CUI_MIN(ui->theme.radius_control, inner_h * 0.5f);
         }
+        if (cc && cui__color_set(cc->indicator)) p->bg = cc->indicator;
         ui->nodes[hl].paint = cui__paint_highlight;
         ui->nodes[hl].paint_data = p;
     }
@@ -643,7 +655,10 @@ static bool cui__segments(cui_ctx *ui, const char *id_str, const char *const *it
             in->paint = NULL;
         }
         cui__open(ui, it);
-        cui_color fg = sel ? CUI_C(ui, FOREGROUND) : cui_mix(CUI_C(ui, TEXT_SECONDARY), CUI_C(ui, FOREGROUND), st->hover[k] * 0.7f);
+        cui_color fg;
+        if (sel) fg = (cc && cui__color_set(cc->active_label)) ? cc->active_label : CUI_C(ui, FOREGROUND);
+        else if (cc && cui__color_set(cc->label)) fg = cc->label;   /* a custom resting colour does not blend */
+        else fg = cui_mix(CUI_C(ui, TEXT_SECONDARY), CUI_C(ui, FOREGROUND), st->hover[k] * 0.7f);
         if (icons && icons[k]) cui__icon_node(ui, icons[k], 16, fg);
         if (items[k] && cui__display_len(items[k]) > 0) cui__label_text(ui, items[k], CUI_FONT_MEDIUM, cui__fs(ui, size == CUI_SIZE_SM ? ui->theme.text_sm : ui->theme.text_body), fg);
         cui__close(ui);
@@ -674,7 +689,7 @@ bool cui_segmented_ex(cui_ctx *ui, const char *id, const char *const *items, int
     cui_segmented_opts d;
     memset(&d, 0, sizeof d);
     if (!o) o = &d;
-    return cui__segments(ui, id, items, o->icons, count, index, 0, o->size, o->full_width);
+    return cui__segments(ui, id, items, o->icons, count, index, 0, o->size, o->full_width, NULL);
 }
 
 bool cui_tabs_ex(cui_ctx *ui, const char *id, const char *const *items, int count, int *index, const cui_tabs_opts *o) {
@@ -682,7 +697,13 @@ bool cui_tabs_ex(cui_ctx *ui, const char *id, const char *const *items, int coun
     memset(&d, 0, sizeof d);
     if (!o) o = &d;
     bool pill = o->variant == CUI_TABS_PILL;
-    if (pill && o->full_width) return cui__segments(ui, id, items, o->icons, count, index, 2, CUI_SIZE_MD, true);
+    cui__seg_colors cset;
+    memset(&cset, 0, sizeof cset);
+    cset.track = o->bg;
+    cset.label = o->color;
+    cset.active_label = o->active_color;
+    cset.indicator = o->indicator_color;
+    if (pill && o->full_width) return cui__segments(ui, id, items, o->icons, count, index, 2, CUI_SIZE_MD, true, &cset);
     /* Tabs never truncate: when they are wider than their container the
      * strip scrolls sideways, fades at the edge with more, and brings a newly
      * selected tab into view. */
@@ -709,10 +730,11 @@ bool cui_tabs_ex(cui_ctx *ui, const char *id, const char *const *items, int coun
     if (!pill) {
         cui_color *bc = cui__frame_alloc(ui, sizeof *bc);
         *bc = CUI_C(ui, BORDER);
+        if (cui__color_set(cset.track)) *bc = cset.track;
         ui->nodes[col].paint = cui__paint_tab_baseline;
         ui->nodes[col].paint_data = bc;
     }
-    bool r = cui__segments(ui, id, items, o->icons, count, index, pill ? 2 : 1, CUI_SIZE_MD, o->full_width);
+    bool r = cui__segments(ui, id, items, o->icons, count, index, pill ? 2 : 1, CUI_SIZE_MD, o->full_width, &cset);
     cui__scroll_end_ex(ui);
     return r;
 }
