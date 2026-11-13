@@ -199,6 +199,7 @@ ctx.font_add_fallback(latin, arabic)</code></pre></div>
 <div class="code-panel"><div class="code-header"><span>bash</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code>python -m nexa.build                      # shaping is on by default (+~24 KB)
 python -m nexa.build --no-rtl             # drop it (Persian/Arabic letters stay unjoined)</code></pre></div>
 <p>A library built without shaping is detected on import and recompiled once, so an old <code>_native/libnexa_cui.so</code> cannot silently render unjoined text.</p>
+<p>Two things &quot;on by default&quot; does <strong>not</strong> mean: your layout does not become right-to-left (containers stay LTR unless you pass <code>direction=</code>), and Latin text is not routed through the shaper — <code>cui__text_needs_shaping()</code> only diverts a run that contains Arabic/Hebrew/Arabic-presentation code points, ZWNJ/ZWJ or directional controls, so a Latin-only frame rasterises to the same pixels and costs the same per frame as a <code>--no-rtl</code> build. Only mixed or RTL text takes the extra pass, and only that text benefits.</p>
 <div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
 <span class="tok-kw">from</span> nexa <span class="tok-kw">import</span> fonts
 

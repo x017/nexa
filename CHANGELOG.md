@@ -61,6 +61,13 @@ release that picks it up. The published version of this page is
   Arabic-script OpenType shaping ship in the stock build (+24 KB, ≈ +2 % of the
   library). `--no-rtl` (or `NEXA_TEXT_SHAPING=0`) opts out; `--minimal` still
   omits it. `build.default_options()` exposes the option set a plain build uses.
+- **Latin text is untouched.** Layout direction still defaults to left-to-right
+  (`direction=` is opt-in), and `cui__text_needs_shaping()` diverts only runs
+  containing Arabic/Hebrew/Arabic-presentation code points, ZWNJ/ZWJ or
+  directional controls. A Latin-only frame rasterises to identical pixels
+  (A/B rendered: 0 of 540,000 differing pixels with the embedded font, 0 of
+  360,000 with DejaVu Sans; same measured widths) and the same frame time
+  (7.9 ms → 7.75 ms median at 1280×900 software, i.e. noise).
 - **The native library is self-healing.** Each build writes `<lib>.stamp` (CUI
   version, content fingerprint of every `csrc/` source, and the build options).
   `import nexa` compares it with the current tree and recompiles once — printing

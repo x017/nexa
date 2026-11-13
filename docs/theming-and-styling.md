@@ -249,6 +249,14 @@ python -m nexa.build --no-rtl             # drop it (Persian/Arabic letters stay
 A library built without shaping is detected on import and recompiled once, so an
 old `_native/libnexa_cui.so` cannot silently render unjoined text.
 
+Two things "on by default" does **not** mean: your layout does not become
+right-to-left (containers stay LTR unless you pass `direction=`), and Latin text
+is not routed through the shaper — `cui__text_needs_shaping()` only diverts a run
+that contains Arabic/Hebrew/Arabic-presentation code points, ZWNJ/ZWJ or
+directional controls, so a Latin-only frame rasterises to the same pixels and
+costs the same per frame as a `--no-rtl` build. Only mixed or RTL text takes the
+extra pass, and only that text benefits.
+
 ```python
 import nexa as ui
 from nexa import fonts
