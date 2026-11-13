@@ -25,7 +25,7 @@ pip install nexa-ui
 | **04** | **[Theming, Accents & Icons](Theming-Accents-and-Icons)** | Light/Dark modes, all 8 perceptual OKLCH accents, 9 semantic tones, 34 live tokens, `.ttf` fonts & 168 Lucide icons. |
 | **05** | **[Concurrency & Asyncio](Concurrency-and-Asyncio)** | GIL-free `BackgroundRunner` threads & token streams, `Channel[T]`, `LogBuffer`, cooperative `asyncio` & `AsyncBridge`. |
 | **06** | **[Canvas, GPU & Packaging](Canvas-GPU-and-Packaging)** | SDF vector `canvas`, headless `pytest` PNG verification, `CustomRenderer` GPU integration, `--rtl` shaping & PyInstaller/Nuitka. |
-| **API** | **[160+ Components Reference](Components-Reference)** | Complete Python signatures, enum values, result dataclasses, and scope rules across all 20 widget domains. |
+| **API** | **[190+ Components Reference](Components-Reference)** | Complete Python signatures, enum values, result dataclasses, and scope rules across all 20 widget domains. |
 
 ---
 
@@ -45,4 +45,7 @@ pip install nexa-ui
 | [`examples/mail.py`](https://github.com/x017/nexa/blob/main/examples/mail.py) | **Desktop Mail Client** | Three-pane resizable split layout, virtualized message list, search filter & rich thread preview. |
 | [`examples/music.py`](https://github.com/x017/nexa/blob/main/examples/music.py) | **Audio Deck** | Transport controls, waveform/equalizer visualization, playlists & smooth spring animations. |
 | [`examples/notes.py`](https://github.com/x017/nexa/blob/main/examples/notes.py) | **Markdown Notes** | Live CommonMark + GFM task list preview alongside multi-line editing and tag filtering. |
+| [`examples/instruments.py`](https://github.com/x017/nexa/blob/main/examples/instruments.py) | **Reactor Console (1.4 Instruments)** | Knob, fader, level meter, radial gauge, readout, dot display, dot chart & event track — every dial returns its value. |
+| [`examples/devtools.py`](https://github.com/x017/nexa/blob/main/examples/devtools.py) | **DevTools Studio (1.3 Tools)** | All 20 developer panels on four tabs: pipeline, problems, tests, coverage, trace, waterfall, API explorer, flags, cron, regex, blame, commit graph & more. |
+| [`examples/rtl.py`](https://github.com/x017/nexa/blob/main/examples/rtl.py) | **Studio فارسی (RTL & Fonts)** | Persian right-to-left studio: whole-UI system font, shaped text, localized calendar, terminal, file browser, candlestick, image viewer/cropper, emoji picker & tour. |
 | [`examples/hello.py`](https://github.com/x017/nexa/blob/main/examples/hello.py) | **Minimal Starter** | Smallest 15-line interactive native window using ui.run(draw). |

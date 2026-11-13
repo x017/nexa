@@ -2,11 +2,6 @@
  * card, table of contents, banner, countdown and onboarding checklist. */
 #include "cui_internal.h"
 
-#define cui__fs cui__fsz
-
-static cui_color cui__accent_or_fg(cui_ctx *ui) {
-    return ui->accent == CUI_ACCENT_NEUTRAL ? CUI_C(ui, FOREGROUND) : CUI_C(ui, ACCENT);
-}
 
 /* ------------------------------------------------------------------------ */
 /* Hover card                                                               */
@@ -355,7 +350,7 @@ int cui_toc(cui_ctx *ui, const char *scroll_id, const cui_toc_item *items, int c
     p->y = st->y.x; p->h = st->init ? st->h.x : 0; p->progress = st->progress;
     p->track = CUI_C(ui, BORDER);
     p->fill = CUI_C(ui, BORDER_STRONG);
-    p->mark = cui__accent_or_fg(ui);
+    p->mark = cui__emphasis(ui);
     ui->nodes[rail].paint = cui__paint_toc_rail;
     ui->nodes[rail].paint_data = p;
     if (clicked >= 0) {
@@ -418,11 +413,22 @@ bool cui_banner_ex(cui_ctx *ui, const char *text, bool *open, const cui_banner_o
     rn->paint = cui__paint_bottom_line;
     rn->paint_data = lp;
     cui__open(ui, row);
-    cui_spacer(ui);
+    /* on a narrow screen the message wraps; when that would leave it a sliver the
+       action moves under it and the banner reads left to right */
+    float fsm = cui__fs(ui, ui->theme.text_sm);
+    float aw = o->action ? cui__text_width(ui, CUI_FONT_MEDIUM, fsm, o->action, -1, false) + 40 : 0;
+    bool stack = o->action && ir.w > 0 && ir.w - 26 - 10 - aw - (o->icon ? 26 : 0) - (o->dismissible ? 34 : 0) < 170;
+    if (stack) rn->align = CUI_ALIGN_START;
+    else cui_spacer(ui);
     cui_color fg = cui_mix(CUI_C(ui, FOREGROUND), tc, ui->mode == CUI_THEME_DARK ? 0.25f : 0.35f);
     if (o->icon) cui__icon_node(ui, o->icon, 16, tc);
-    /* on a narrow screen the message wraps and the action keeps its label */
-    int tt = cui__text_node(ui, text, cui__display_len(text), CUI_FONT_MEDIUM, cui__fs(ui, ui->theme.text_sm), fg, true);
+    int body = -1;
+    if (stack) {
+        body = cui__node_new(ui, 0);
+        ui->nodes[body].w = CUI_FILL; ui->nodes[body].gap = 2; ui->nodes[body].align = CUI_ALIGN_START;
+        cui__open(ui, body);
+    }
+    int tt = cui__text_node(ui, text, cui__display_len(text), CUI_FONT_MEDIUM, fsm, fg, true);
     ui->nodes[tt].line_height = 1.35f;
     bool action = false;
     if (o->action) {
@@ -438,7 +444,8 @@ bool cui_banner_ex(cui_ctx *ui, const char *text, bool *open, const cui_banner_o
         cui_pop_id(ui);
         cui__close(ui);
     }
-    cui_spacer(ui);
+    if (stack) cui__close(ui);
+    else cui_spacer(ui);
     if (o->dismissible && open) {
         cui_push_id(ui, text);
         cui_button_opts xo;
@@ -489,7 +496,16 @@ static void cui__roll_tile(cui_ctx *ui, cui_id sid, int value, float w, float h,
     cui__close(ui);
 }
 
+static void cui__countdown_ex_body(cui_ctx *ui, const char *id_str, double seconds_left, const cui_countdown_opts *o);
+
+/* left to right in any interface: see cui__keep_ltr */
 void cui_countdown_ex(cui_ctx *ui, const char *id_str, double seconds_left, const cui_countdown_opts *o) {
+    int first = ui->node_count;
+    cui__countdown_ex_body(ui, id_str, seconds_left, o);
+    cui__keep_ltr(ui, first);
+}
+
+static void cui__countdown_ex_body(cui_ctx *ui, const char *id_str, double seconds_left, const cui_countdown_opts *o) {
     cui_countdown_opts d;
     memset(&d, 0, sizeof d);
     if (!o) o = &d;
@@ -499,10 +515,19 @@ void cui_countdown_ex(cui_ctx *ui, const char *id_str, double seconds_left, cons
     if (o->hide_days) v[1] += v[0] * 24;
     static const char *names[4] = { "Days", "Hours", "Minutes", "Seconds" };
     cui_id id = cui_make_id(ui, id_str);
-    float w = o->compact ? 44 : 68, h = o->compact ? 44 : 72, fs = cui__fs(ui, o->compact ? 20 : 32);
+    float w = o->compact ? 44 : 68, h = o->compact ? 44 : 72, fs = cui__fs(ui, o->compact ? 20 : 32), gap = o->compact ? 6 : 12;
+    int units = o->hide_days ? 3 : 4;
+    cui_rect pr = cui__prev_rect(ui, id);
+    if (!o->compact && pr.w > 0 && pr.w < units * w + (units - 1) * gap) {
+        /* a phone: tighter gaps, then smaller tiles */
+        gap = 8;
+        float k = CUI_CLAMP(floorf((pr.w - (units - 1) * gap) / units), 52.0f, 68.0f) / 68.0f;
+        w = floorf(68 * k); h = floorf(72 * k); fs = cui__fs(ui, floorf(32 * k));
+    }
     int row = cui__node_new(ui, id);
-    ui->nodes[row].dir = CUI_ROW; ui->nodes[row].gap = o->compact ? 6 : 12; ui->nodes[row].align = CUI_ALIGN_START;
+    ui->nodes[row].dir = CUI_ROW; ui->nodes[row].gap = gap; ui->nodes[row].align = CUI_ALIGN_START;
     ui->nodes[row].self_align = CUI__ALIGN_NOSTRETCH;
+    if (!o->compact) { ui->nodes[row].flags |= CUI_NF_ADAPTIVE; ui->nodes[row].min_w = units * 52 + (units - 1) * 8; }
     cui__open(ui, row);
     bool first = true;
     for (int k = o->hide_days ? 1 : 0; k < 4; k++) {

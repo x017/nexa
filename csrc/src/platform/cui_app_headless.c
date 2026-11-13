@@ -19,6 +19,12 @@ void cui__plat_shutdown(cui_app *app) { (void)app; }
 bool cui__plat_gl_create(cui_app *app, bool vsync) { (void)app; (void)vsync; return false; }
 void *cui__plat_gl_proc(const char *name) { (void)name; return NULL; }
 void cui__plat_gl_swap(cui_app *app) { (void)app; }
+double cui__plat_refresh_hz(cui_app *app) { (void)app; return 0.0; }
+void cui__plat_gl_release(cui_app *app) { (void)app; }
+bool cui__plat_present_part(cui_app *app, const void *bgra, int w, int h, int stride, int x, int y, int pw, int ph) {
+    (void)app; (void)bgra; (void)w; (void)h; (void)stride; (void)x; (void)y; (void)pw; (void)ph;
+    return false;
+}
 void cui__plat_present(cui_app *app, const void *bgra, int w, int h, int stride) {
     (void)app; (void)bgra; (void)w; (void)h; (void)stride;
 }

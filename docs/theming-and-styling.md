@@ -96,12 +96,75 @@ ctx.font_scale = 1.10            # 110% proportional DPI/typography scale
 ctx.set_reduced_motion(False)    # True snaps animations for accessibility
 ```
 
+### Coloring Text, Headings & Their Background
+
+`heading` and `text` take the same color forms as everything else — `color=` is a plain foreground, so it can be a hex string, an RGB(A) tuple, or a live token that follows the active accent and light/dark mode:
+
+```python
+# level 1..4 picks the size from ctx.theme.headings[level - 1]
+ctx.heading("Reactor Console", level=1, color="#7c5cff")          # hex
+ctx.heading("Reactor Console", level=1, color=ui.Color.ACCENT)    # live token
+ctx.heading("Reactor Console", level=2, color=(124, 92, 255))     # rgb tuple
+ctx.heading("Reactor Console", level=2, size=44)                  # custom scale
+
+# a background chip behind the title (pad/radius tune it)
+ctx.heading("LIVE", level=4, color=ui.Color.ACCENT_FOREGROUND,
+            bg=ui.Color.ACCENT_STRONG, pad=8, radius=10)
+
+# …or a full-width banner instead of a hugging chip
+ctx.heading("Section", level=3, color=ui.Color.ACCENT, bg=ui.Color.SURFACE_RAISED, width=ui.FILL)
+
+# body copy: same color forms, plus translucent text
+ctx.text("Body copy", size=14, color=ui.Color.TEXT_SECONDARY)
+ctx.text("faded live value", size=14, color=ui.with_alpha(ui.Color.hex("#22c55e"), 0.45))
+
+# a background for a paragraph: any container's bg= draws behind its children
+with ctx.box(bg=ui.Color.SURFACE_RAISED, pad=10, radius=12):
+    ctx.text("Text on its own surface", color=ui.Color.TEXT_SECONDARY)
+```
+
+> `ctx.heading(...)` with no `color`/`size`/`bg` is the plain CUI heading: theme heading size in `FOREGROUND`. The overrides above are resolved in Python from `ctx.theme.headings`, so they follow `ctx.theme.font_scale` and your own `ctx.theme.headings = (...)` edits.
+
 ### Perceptual Color Math (`oklch`, `mix_colors`, `with_alpha`)
 
 ```python
 brand = ui.oklch(0.68, 0.16, 172.0)              # Perceptually uniform Lightness, Chroma, Hue°
 soft = ui.mix_colors(brand, ui.Color.hex("#ffffff"), 0.25)  # Mixed in OKLab space (no muddy grays!)
 translucent = ui.with_alpha(brand, 0.20)         # Multiply alpha by 0.20
+```
+
+### Recoloring One Component (without touching the theme)
+
+Theme tokens restyle everything; these arguments restyle a single widget and leave the rest of the app alone — same `ColorLike` forms as above.
+
+| Component | Color arguments |
+|---|---|
+| `heading(...)` | `color=`, `bg=` (+ `pad`, `radius`, `width=ui.FILL` for a banner) |
+| `text(...)`, `markdown(...)`, `expandable_text(...)` | `color=` |
+| `input` / `textarea` / `search` / `number` | `bg=`, `color=` (alias `text_color=`), `placeholder_color=`, `border_color=`, `focus_color=` |
+| `card(...)` | `bg=`, `border_color=` (with `muted=`, `selected=`) |
+| `box(...)`, `row`, `column`, `grid`, `stack` | `bg=`, `border_color=`, `border=`, `radius=` |
+| `button` / `icon_button` | `color=` (label + glyph tint) |
+| `badge`, `progress`, `readout`, `status_bar_text`, `timeline_item` | `tone=` (semantic palette) |
+| `image(...)` | `tint=` |
+| `knob`, `dot_display`, `loader`, `voice_orb`, `dock_item`, `gradient_text`, `spotlight` | `color=` / `from_color=`, `to_color=` |
+| `line_chart`, `bar_chart`, `donut_chart`, `area`, `sparkline`, … and every `Series` | per-series `color=` |
+| everything else (selects, checkboxes, switches, sliders, tables, editors, docks…) | follows `ctx.theme[...]` — change a token, or wrap the region in `ctx.set_accent` |
+
+> Color arguments cost nothing when you don't use them: the default path skips the conversion entirely, and every `ColorLike` value is memoised by its input (a hex string parses once, then costs ~0.1 µs) — so restyling 60 inputs every frame adds ~0.2 ms to the frame.
+
+```python
+# a dark hero input on an otherwise light page
+ctx.input("email", value, bg="#101425", color="#e6e9ff",
+          placeholder_color="#6b7390", border_color="#2b3350", focus_color="#7c5cff")
+
+# a tinted panel that is not a card
+with ctx.card(bg=ui.with_alpha("#7c5cff", 0.12), border_color="#7c5cff", pad=18):
+    ctx.text("Notice", color="#c9b8ff")
+
+# brand-tinted button, one colour argument
+if ctx.button("Deploy", variant=ui.ButtonVariant.PRIMARY, color="#22d3ee"):
+    deploy()
 ```
 
 ### All 34 `ui.Token` Slots
@@ -123,17 +186,117 @@ Out of the box, `nexa` embeds:
 - **Geist Mono** (`FontRole.MONO`)
 - **Lucide** (`FontRole.ICONS` — `168` crisp vector icons)
 
-To load your own `.ttf` / `.otf` typeface or add CJK / Arabic / Persian / Emoji fallback chains:
+### Make the whole UI use your font
+
+`use_font()` loads a `.ttf`/`.otf` from a **file path**, from **raw bytes**, or by
+**system family name**, installs it into every text role (`BODY`, `MEDIUM`,
+`DISPLAY`) and returns its font id. Call it once, right after creating the UI:
 
 ```python
-# Load primary UI font from file or bytes:
-regular_id = ctx.font_load_file("assets/PlusJakartaSans-Regular.ttf")
-ctx.font_set_role(ui.FontRole.BODY, regular_id)
+import nexa as ui
+from nexa import fonts
 
-# Attach an international fallback font so missing glyphs fall through seamlessly:
-rtl_or_cjk_id = ctx.font_load_file("assets/Vazirmatn-Regular.ttf")
-ctx.font_add_fallback(regular_id, rtl_or_cjk_id)
+with ui.SoftwareRenderer() as sw, ui.UI(width=900, height=600, renderer=sw) as ctx:
+    # 1. a font that ships with your app
+    ctx.use_font("assets/PlusJakartaSans-Regular.ttf")
+
+    # 2. or a font installed on the machine, looked up by family name
+    ctx.use_font(family="Segoe UI")          # Windows
+    ctx.use_font(family="SF Pro Text")       # macOS
+    ctx.use_font(family="DejaVu Sans")       # Linux
+    ctx.use_system_font("Noto Sans")         # shorthand for the same thing
+
+    # 3. or raw bytes (a font embedded in your package / downloaded at runtime)
+    ctx.use_font(Path("assets/brand.ttf").read_bytes())
 ```
+
+`nexa.fonts` finds the files for you: `find_system_font("DejaVu Sans")`,
+`find_system_font("Inter", bold=True)`, `list_system_fonts()`, and
+`system_font_dirs()` (honours `NEXA_FONT_DIRS`). On Linux it also asks
+`fc-match`, so aliases and per-user installs resolve.
+
+### Fallback chains (missing glyphs)
+
+A font only covers the scripts it was designed for. `fallbacks=` attaches up to
+four faces that are consulted for any glyph the primary font lacks — the usual
+combination is a Latin UI font plus a Persian/Arabic or CJK one:
+
+```python
+ctx.use_font("assets/PlusJakartaSans-Regular.ttf",
+             fallbacks=["assets/Vazirmatn-Regular.ttf", "assets/NotoSansCJK-Regular.ttf"])
+
+# or reuse an id you already loaded (roles like ui.FontRole.MONO work as ids too)
+latin = ctx.font_load_file("assets/Inter-Regular.ttf")
+arabic = ctx.font_load_file("assets/Vazirmatn-Regular.ttf")
+ctx.font_set_role(ui.FontRole.BODY, latin)
+ctx.font_add_fallback(latin, arabic)
+```
+
+Low-level pieces, if you want them explicitly: `font_load_file(path)`,
+`font_load_memory(bytes)`, `font_set_role(role, id)`,
+`font_add_fallback(font_id, fallback_id)`.
+
+### Persian / Arabic / Hebrew (RTL)
+
+Right-to-left needs two things: a shaper (on by default since CUI 1.4) and a
+font with Arabic-script coverage.
+
+```bash
+python -m nexa.build                      # shaping is on by default (+~24 KB)
+python -m nexa.build --no-rtl             # drop it (Persian/Arabic letters stay unjoined)
+```
+
+A library built without shaping is detected on import and recompiled once, so an
+old `_native/libnexa_cui.so` cannot silently render unjoined text.
+
+Two things "on by default" does **not** mean: your layout does not become
+right-to-left (containers stay LTR unless you pass `direction=`), and Latin text
+is not routed through the shaper — `cui__text_needs_shaping()` only diverts a run
+that contains Arabic/Hebrew/Arabic-presentation code points, ZWNJ/ZWJ or
+directional controls, so a Latin-only frame rasterises to the same pixels and
+costs the same per frame as a `--no-rtl` build. Only mixed or RTL text takes the
+extra pass, and only that text benefits.
+
+```python
+import nexa as ui
+from nexa import fonts
+
+print(fonts.supports_text_shaping())      # True for a default build
+
+with ui.SoftwareRenderer() as sw, ui.UI(width=800, height=600, renderer=sw) as ctx:
+    ctx.use_rtl_font()                    # first installed of Vazirmatn, Vazir, Sahel,
+                                          # Noto Naskh Arabic, Tahoma, DejaVu Sans, …
+    # ctx.use_rtl_font("Vazirmatn")       # or name the family yourself
+    # ctx.use_font("assets/Vazirmatn-Regular.ttf")
+
+    with ctx.frame():
+        with ctx.column(pad=16, gap=8, direction=ui.TextDirection.RTL):
+            ctx.heading("سلام دنیا")
+            ctx.text("متن راست‌به‌چپ با شکل‌دهی صحیح حروف.")
+        ctx.text("Mixed LTR/RTL", direction=ui.TextDirection.AUTO)
+```
+
+What the engine implements (from CUI's `cui_bidi.c` / `cui_shape.c`): UAX #9
+paragraph resolution (P2/P3, W1–W7, N0–N2 bracket pairs, I1/I2, L1/L2/L4) plus a
+compact OpenType interpreter applying `rtla/rtlm`, `stch`, `ccmp`, `locl`,
+`isol/fina/medi/init`, `rlig`, `calt`, `rclt`, `liga`, `clig`, `mset` (GSUB) and
+`curs`, `kern`, `mark`, `mkmk`, `dist` (GPOS) with GDEF classes.
+
+Two limits worth knowing: **explicit directional formatting is not applied** —
+`LRE/RLE/PDF` and `LRI/RLI/FSI/PDI` are treated as boundary-neutral, so use
+`direction=ui.TextDirection.RTL/AUTO` on containers instead of control
+characters — and the shaper targets **Arabic-type joining**, not Indic-style
+cluster reordering.
+
+`direction=` works on `text`, `box`, `row`, `column`, `grid` and `stack`
+(`ui.TextDirection.INHERIT / LTR / RTL / AUTO`); `AUTO` lets the shaper pick the
+paragraph base from the first strong character. Calendar and picker names can be
+localized at the same time with `ctx.set_strings(months=[...], weekdays=[...],
+today="امروز")`.
+
+> **Emoji** are separate from text fonts: `ctx.load_emoji_font()` (system) or
+> `ctx.load_emoji_font("NotoColorEmoji.ttf")` enables `ui.emoji(...)` and
+> `ui.emoji_picker(...)`.
 
 ---
 

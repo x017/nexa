@@ -17,7 +17,7 @@ from .._cdefs import (
     to_c_size,
 )
 from ..scopes import BoxScope, CardScope, SimpleScope, SplitScope
-from ..types import Align, ColorLike, Direction, Elevation, Justify, Rect, SizeLike
+from ..types import Align, ColorLike, Direction, Elevation, Justify, Rect, SizeLike, TextDirection
 
 
 def _build_box_opts(
@@ -57,6 +57,7 @@ def _build_box_opts(
     scroll_y: bool = False,
     clip: bool = False,
     opacity: float = 0.0,
+    direction: TextDirection = TextDirection.INHERIT,
 ) -> CuiBox:
     opts = CuiBox()
     opts.id = encode_opt(id, keep)
@@ -93,6 +94,7 @@ def _build_box_opts(
     opts.scroll_y = bool(scroll_y)
     opts.clip = bool(clip)
     opts.opacity = float(opacity)
+    opts.direction = int(direction)
     keep.append(opts)
     return opts
 
@@ -147,6 +149,8 @@ class LayoutMixin:
         hoverable: bool = False,
         muted: bool = False,
         selected: bool = False,
+        bg: ColorLike = None,
+        border_color: ColorLike = None,
     ) -> CardScope:
         keep = self._frame_keepalive
         opts = CuiCardOpts()
@@ -165,6 +169,10 @@ class LayoutMixin:
         opts.hoverable = bool(hoverable)
         opts.muted = bool(muted)
         opts.selected = bool(selected)
+        if bg is not None:
+            opts.bg = to_c_color(bg)
+        if border_color is not None:
+            opts.border_color = to_c_color(border_color)
         keep.append(opts)
         clicked = bool(self._lib.cui_card_begin(self._ctx, ctypes.byref(opts)))
         return CardScope(self._ctx, self._lib.cui_card_end, clicked)

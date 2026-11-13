@@ -43,6 +43,42 @@ void *cui__frame_alloc(cui_ctx *ui, size_t size) {
     return p;
 }
 
+/* Per-frame buffers grow to the biggest frame. A page that needed a lot (a long
+ * table, a big chart) would otherwise keep them big after it is gone: every 600
+ * frames, a buffer more than four times what any of those frames used shrinks
+ * to twice that. Done at the start of a frame, when last frame's draw data has
+ * been rendered and nothing points into these buffers. */
+#define CUI__TRIM_FRAMES 600
+static void *cui__trim(cui_ctx *ui, void *p, int *cap, int peak, size_t elem) {
+    int want = CUI_MAX(peak * 2, (int)(16384 / elem));
+    if (*cap <= want * 2 || (size_t)*cap * elem < 65536) return p;
+    void *np = cui__realloc(ui, p, (size_t)want * elem);
+    *cap = want;
+    return np;
+}
+static void cui__trim_buffers(cui_ctx *ui) {
+    ui->peak_vtx = CUI_MAX(ui->peak_vtx, ui->dl.vtx_count);
+    ui->peak_idx = CUI_MAX(ui->peak_idx, ui->dl.idx_count);
+    ui->peak_cmd = CUI_MAX(ui->peak_cmd, ui->dl.cmd_count);
+    ui->peak_nodes = CUI_MAX(ui->peak_nodes, ui->node_count);
+    ui->peak_arena = CUI_MAX(ui->peak_arena, ui->arena_used);
+    if (ui->frame - ui->peak_since < CUI__TRIM_FRAMES) return;
+    ui->dl.vtx = cui__trim(ui, ui->dl.vtx, &ui->dl.vtx_cap, ui->peak_vtx, sizeof *ui->dl.vtx);
+    ui->dl.idx = cui__trim(ui, ui->dl.idx, &ui->dl.idx_cap, ui->peak_idx, sizeof *ui->dl.idx);
+    ui->dl.cmd = cui__trim(ui, ui->dl.cmd, &ui->dl.cmd_cap, ui->peak_cmd, sizeof *ui->dl.cmd);
+    ui->nodes = cui__trim(ui, ui->nodes, &ui->node_cap, ui->peak_nodes, sizeof *ui->nodes);
+    if (ui->arena_cap > 65536 && ui->arena_cap > ui->peak_arena * 4 && !ui->arena_overflow) {
+        size_t cap = 1 << 16;
+        while (cap < ui->peak_arena * 2) cap *= 2;
+        cui__free(ui, ui->arena);
+        ui->arena = cui__alloc(ui, cap);
+        ui->arena_cap = cap;
+    }
+    ui->peak_vtx = ui->peak_idx = ui->peak_cmd = ui->peak_nodes = 0;
+    ui->peak_arena = 0;
+    ui->peak_since = ui->frame;
+}
+
 static void cui__frame_arena_reset(cui_ctx *ui) {
     size_t demand = ui->arena_used;
     while (ui->arena_overflow) {
@@ -145,6 +181,17 @@ int cui__display_len(const char *label) {
     return p ? (int)(p - label) : (int)strlen(label);
 }
 
+bool cui__contains_ci(const char *hay, const char *needle) {
+    if (!needle || !*needle) return true;
+    size_t nl = strlen(needle);
+    for (; *hay; hay++) {
+        size_t k = 0;
+        while (k < nl && hay[k] && cui__ascii_lower((unsigned char)hay[k]) == cui__ascii_lower((unsigned char)needle[k])) k++;
+        if (k == nl) return true;
+    }
+    return false;
+}
+
 /* ------------------------------------------------------------------------ */
 /* Hashing (FNV-1a with a final avalanche)                                  */
 /* ------------------------------------------------------------------------ */
@@ -176,6 +223,7 @@ cui_ctx *cui_create(const cui_ctx_desc *desc) {
     memset(ui, 0, sizeof *ui);
     ui->alloc = a;
     ui->renderer = d.renderer;
+    ui->direction = d.direction;
     ui->vw = 800; ui->vh = 600; ui->scale = 1;
     ui->bucket_count = 1024;
     ui->state_buckets = cui__alloc(ui, sizeof(int) * (size_t)ui->bucket_count);
@@ -192,6 +240,7 @@ cui_ctx *cui_create(const cui_ctx_desc *desc) {
 
 void cui_destroy(cui_ctx *ui) {
     if (!ui) return;
+    if (ui->emoji_hook) ui->emoji_hook(ui, 2);
     cui__fonts_shutdown(ui);
     for (int i = 0; i < ui->state_count; i++) {
         if (ui->states[i].dtor && ui->states[i].data) ui->states[i].dtor(ui, ui->states[i].data);
@@ -219,6 +268,7 @@ void cui_destroy(cui_ctx *ui) {
 }
 
 void cui_set_renderer(cui_ctx *ui, const cui_renderer_iface *r) {
+    if (ui->emoji_hook) ui->emoji_hook(ui, 1);   /* its texture was made by the old renderer */
     if (ui->atlas_tex && ui->renderer.texture_destroy) ui->renderer.texture_destroy(ui->renderer.user, ui->atlas_tex);
     ui->atlas_tex = 0;
     if (r) ui->renderer = *r; else memset(&ui->renderer, 0, sizeof ui->renderer);
@@ -297,6 +347,24 @@ cui_state_entry *cui__state_entry(cui_ctx *ui, cui_id id) {
     return e;
 }
 
+/* The state of id when it has some or want is true, else NULL: for components
+ * whose state is all rest values until touched (a button in a long list). */
+void *cui__state_lazy(cui_ctx *ui, cui_id id, size_t size, bool want) {
+    cui_state_entry *e = cui__state_find(ui, id);
+    if (!want && (!e || !e->data || e->size < size)) return NULL;
+    return cui_state(ui, id, size);
+}
+
+/* A 0..1 fade toward on, kept in state only while it is above zero, so rows that
+ * scroll past without being hovered cost no allocation. */
+float cui__hover_fade(cui_ctx *ui, cui_id id, bool on, float duration) {
+    cui_state_entry *e = cui__state_find(ui, id);
+    if (!on && (!e || !e->data || e->size < sizeof(float) || *(float *)e->data <= 0.0f)) return 0.0f;
+    float *v = cui_state(ui, id, sizeof(float));
+    cui__tween(ui, v, on ? 1.0f : 0.0f, duration);
+    return *v;
+}
+
 void *cui_state(cui_ctx *ui, cui_id id, size_t size) {
     cui_state_entry *e = cui__state_entry(ui, id);
     if (e->size < size) {
@@ -310,6 +378,7 @@ void *cui_state(cui_ctx *ui, cui_id id, size_t size) {
 void cui__state_set_dtor(cui_ctx *ui, cui_id id, void (*dtor)(cui_ctx *ui, void *data)) {
     cui__state_entry(ui, id)->dtor = dtor;
 }
+void cui_state_on_free(cui_ctx *ui, cui_id id, void (*fn)(cui_ctx *ui, void *data)) { if (ui) cui__state_set_dtor(ui, id, fn); }
 
 cui_rect cui__prev_rect(cui_ctx *ui, cui_id id) {
     cui_state_entry *e = cui__state_find(ui, id);
@@ -328,7 +397,10 @@ static void cui__state_gc(cui_ctx *ui) {
     if (ui->frame % 60) return;
     for (int i = 0; i < ui->state_count; i++) {
         cui_state_entry *e = &ui->states[i];
-        if (!e->id || ui->frame - e->last_frame < 300) continue;
+        /* an entry with only last frame's rectangle is needed for a frame or two; state
+         * someone keeps (data) stays for about five seconds unused */
+        uint64_t keep = (e->data || e->dtor) ? 300 : 30;
+        if (!e->id || ui->frame - e->last_frame < keep) continue;
         int b = (int)(e->id & (uint32_t)(ui->bucket_count - 1));
         int *link = &ui->state_buckets[b];
         while (*link >= 0 && *link != i) link = &ui->states[*link].next;
@@ -338,6 +410,21 @@ static void cui__state_gc(cui_ctx *ui) {
         memset(e, 0, sizeof *e);
         e->next = ui->state_free;
         ui->state_free = i;
+    }
+    /* after a burst (a long list scrolled through) most slots are free: pack the
+     * live ones so the table shrinks back; their data does not move */
+    int live = 0;
+    for (int i = 0; i < ui->state_count; i++) live += ui->states[i].id != 0;
+    if (ui->state_count > 2048 && live * 4 < ui->state_count) {
+        int cap = CUI_MAX(live * 2, 256);
+        cui_state_entry *ns = cui__alloc(ui, sizeof *ns * (size_t)cap);
+        int n = 0;
+        for (int i = 0; i < ui->state_count; i++) if (ui->states[i].id) ns[n++] = ui->states[i];
+        cui__free(ui, ui->states);
+        ui->states = ns; ui->state_count = n; ui->state_cap = cap; ui->state_free = -1;
+        int nb = 1024;
+        while (nb < n) nb *= 2;
+        cui__state_rehash(ui, nb);
     }
 }
 
@@ -652,6 +739,7 @@ void cui_begin_frame(cui_ctx *ui, float dt) {
     ui->cursor = CUI_CURSOR_ARROW;
     if (ui->settle_frames > 0) ui->settle_frames--;
 
+    cui__trim_buffers(ui);   /* before anything of this frame is in them */
     cui__frame_arena_reset(ui);
 
     /* swap hit lists and focus order */
@@ -694,6 +782,7 @@ void cui_begin_frame(cui_ctx *ui, float dt) {
 
     cui__theme_update(ui);
     cui__fonts_begin_frame(ui);
+    if (ui->emoji_hook) ui->emoji_hook(ui, 0);
     cui__draw_reset(ui);
 
     ui->node_count = 0;
@@ -715,6 +804,7 @@ void cui_begin_frame(cui_ctx *ui, float dt) {
     r->w = CUI_PX(ui->vw);
     r->h = CUI_PX(ui->vh);
     r->dir = CUI_COLUMN;
+    r->direction = (uint8_t)ui->direction;
     r->flags |= CUI_NF_CLIP;
     cui__open(ui, root);
 
@@ -767,3 +857,4 @@ void cui_end_frame(cui_ctx *ui) {
 const cui_draw_data *cui_get_draw_data(cui_ctx *ui) { return &ui->draw_data; }
 
 void cui__wakeup_after(cui_ctx *ui, float seconds) { cui__wake_in(ui, seconds); }
+void cui_request_wakeup(cui_ctx *ui, float seconds) { if (ui) cui__wake_in(ui, seconds); }

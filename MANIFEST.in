@@ -1,6 +1,7 @@
 include LICENSE
 include THIRD_PARTY.md
 include README.md
+include CHANGELOG.md
 include RELEASING.md
 include pyproject.toml
 include setup.py

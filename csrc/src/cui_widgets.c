@@ -11,7 +11,6 @@ float cui__control_height(cui_ctx *ui, cui_control_size s) {
     return s == CUI_SIZE_SM ? t->control_sm : s == CUI_SIZE_LG ? t->control_lg : t->control_md;
 }
 
-static float cui__fs(cui_ctx *ui, float size) { return size * ui->theme.font_scale; }
 
 void cui__label_text(cui_ctx *ui, const char *label, cui_font font, float size, cui_color color) {
     int len = cui__display_len(label);
@@ -70,10 +69,11 @@ void cui_text_ex(cui_ctx *ui, const char *text, const cui_text_opts *o) {
     int i = cui__text_node(ui, text, -1, o->font, cui__fs(ui, size), c, !o->nowrap);
     cui_node *n = &ui->nodes[i];
     n->text_align = (uint8_t)o->align;
+    n->direction = (uint8_t)o->direction;
     if (o->tabular) n->flags |= CUI_NF_TABULAR;
     if (o->line_height > 0) n->line_height = o->line_height;
     if (o->width.kind != CUI_SIZE_FIT) n->w = o->width;
-    if (o->align != CUI_TEXT_LEFT && o->width.kind == CUI_SIZE_FIT) n->self_align = CUI_ALIGN_STRETCH;
+    if (o->align != CUI_TEXT_LEFT && o->align != CUI_TEXT_START && o->width.kind == CUI_SIZE_FIT) n->self_align = CUI_ALIGN_STRETCH;
     if (o->nowrap && text && text[0]) {
         /* a single line cut short by an ellipsis shows its whole text on hover. The
          * text stays non-interactive, so a row or card around it keeps its clicks. */
@@ -131,7 +131,16 @@ void cui_code(cui_ctx *ui, const char *text) {
     cui__close(ui);
 }
 
+static void cui__kbd_body(cui_ctx *ui, const char *keys);
+
+/* left to right in any interface: see cui__keep_ltr */
 void cui_kbd(cui_ctx *ui, const char *keys) {
+    int first = ui->node_count;
+    cui__kbd_body(ui, keys);
+    cui__keep_ltr(ui, first);
+}
+
+static void cui__kbd_body(cui_ctx *ui, const char *keys) {
     /* each space separated key becomes a keycap */
     int row = cui__node_new(ui, 0);
     cui_node *r = &ui->nodes[row];
@@ -173,7 +182,10 @@ static void cui__paint_underline(cui_ctx *ui, cui_node *n, void *data) {
 bool cui_link(cui_ctx *ui, const char *text) {
     cui_id id = cui_make_id(ui, text) ^ 0x11AC0009u;
     cui_interact r = cui__interact(ui, id, CUI_IF_FOCUSABLE);
-    cui__btn_state *st = cui_state(ui, id, sizeof *st);
+    cui__btn_state rest;
+    memset(&rest, 0, sizeof rest);
+    cui__btn_state *st = cui__state_lazy(ui, id, sizeof *st, r.hovered || r.focus_visible);
+    if (!st) st = &rest;
     cui__tween(ui, &st->hover, r.hovered ? 1.0f : 0.0f, CUI__T_HOVER);
     cui__tween(ui, &st->focus, r.focus_visible ? 1.0f : 0.0f, CUI__T_FOCUS);
     int i = cui__text_node(ui, text, cui__display_len(text), CUI_FONT_MEDIUM, cui__fs(ui, ui->theme.text_body),
@@ -327,17 +339,21 @@ cui_id cui__position_id(cui_ctx *ui, uint32_t salt) {
     return cui__hash(key, sizeof key, salt);
 }
 
-static bool cui__button_impl(cui_ctx *ui, const char *label, const char *icon_only, const cui_button_opts *o) {
+/** Use the caller's ID for both input and visual state. Draw icon-only glyphs
+ * directly so a confirmation check can replace the old glyph immediately. */
+static bool cui__button_impl(cui_ctx *ui, cui_id id, const char *label, const char *icon_only, const cui_button_opts *o) {
     cui_button_opts d;
     memset(&d, 0, sizeof d);
     if (!o) o = &d;
-    cui_id id = cui_make_id(ui, icon_only ? (o->tooltip ? o->tooltip : icon_only) : label);
-    if (icon_only && o->tooltip) id = cui__hash_str(icon_only, id);
     bool disabled = o->disabled || cui_is_disabled(ui);
     cui_push_disabled(ui, disabled);
     cui_interact r = cui__interact(ui, id, CUI_IF_FOCUSABLE);
     cui_pop_disabled(ui);
-    cui__btn_state *st = cui_state(ui, id, sizeof *st);
+    /* untouched buttons (most of a long list) keep no state */
+    cui__btn_state rest;
+    memset(&rest, 0, sizeof rest);
+    cui__btn_state *st = cui__state_lazy(ui, id, sizeof *st, r.hovered || r.pressed || r.focused || r.focus_visible);
+    if (!st) st = &rest;
     if (st->press.x == 0) st->press.x = 1;
     cui_button_variant v = o->variant;
     if (v == CUI_BUTTON_DEFAULT) v = (icon_only || ui->button_group_depth > 0) ? CUI_BUTTON_GHOST : CUI_BUTTON_SECONDARY;
@@ -353,7 +369,6 @@ static bool cui__button_impl(cui_ctx *ui, const char *label, const char *icon_on
     float pad = o->size == CUI_SIZE_SM ? 11 : o->size == CUI_SIZE_LG ? 18 : 14;
     if (v == CUI_BUTTON_LINK) pad = 2;
 
-    cui_id swap_id = id ^ 0x1C05A9u;   /* per button: positions repeat across unnamed containers */
     int i = cui__node_new(ui, id);
     cui_node *n = &ui->nodes[i];
     n->dir = CUI_ROW;
@@ -390,9 +405,9 @@ static bool cui__button_impl(cui_ctx *ui, const char *label, const char *icon_on
     if (r.hovered) cui__set_cursor(ui, CUI_CURSOR_HAND);
     if (disabled && ui->hot == id) cui__set_cursor(ui, CUI_CURSOR_NOT_ALLOWED);
     cui__open(ui, i);
-    const char *icon = icon_only ? icon_only : o->icon;
     if (o->loading) cui__spinner_node(ui, icon_size - 2, col.fg);
-    else if (icon) cui__icon_swap(ui, swap_id, icon, icon_size, col.fg);
+    else if (icon_only) cui__icon_node(ui, icon_only, icon_size, col.fg);
+    else if (o->icon) cui__icon_swap(ui, id ^ 0x1C05A9u, o->icon, icon_size, col.fg);
     if (!icon_only && label && cui__display_len(label) > 0) {
         cui__label_text(ui, label, CUI_FONT_MEDIUM, cui__fs(ui, fs), col.fg);
     }
@@ -417,11 +432,20 @@ static bool cui__button_impl(cui_ctx *ui, const char *label, const char *icon_on
 }
 
 bool cui_button_ex(cui_ctx *ui, const char *label, const cui_button_opts *o) {
-    return cui__button_impl(ui, label, NULL, o);
+    return cui__button_impl(ui, cui_make_id(ui, label), label, NULL, o);
 }
 
+bool cui__icon_button_id(cui_ctx *ui, cui_id id, const char *icon, const cui_button_opts *o) {
+    return cui__button_impl(ui, id, NULL, icon, o);
+}
+
+/** Include both the icon and tooltip in the ID so two buttons in the same
+ * scope can share either one and still be distinguishable. */
 bool cui_icon_button_ex(cui_ctx *ui, const char *icon, const cui_button_opts *o) {
-    return cui__button_impl(ui, NULL, icon, o);
+    const char *tooltip = icon && o ? o->tooltip : NULL;
+    cui_id id = cui_make_id(ui, tooltip ? tooltip : icon);
+    if (tooltip) id = cui__hash_str(icon, id);
+    return cui__icon_button_id(ui, id, icon, o);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -635,6 +659,8 @@ bool cui_card_begin(cui_ctx *ui, const cui_card_opts *o) {
         n->border = 1;
         n->border_color = o->selected ? CUI_C(ui, ACCENT) : cui_mix(CUI_C(ui, BORDER), CUI_C(ui, BORDER_STRONG), hover);
     }
+    if (cui__color_set(o->bg)) n->bg = o->bg;
+    if (cui__color_set(o->border_color)) n->border_color = o->border_color;
     if (o->hoverable) {
         n->elevation = CUI_ELEVATION_RAISED;
         n->elevation_alpha = hover;
@@ -669,12 +695,14 @@ static void cui__paint_progress(cui_ctx *ui, cui_node *n, void *data) {
         float w = r.w * 0.35f;
         float x = r.x - w + (r.w + w) * (t * t * (3 - 2 * t));
         cui_push_clip(ui, r);
+        if (n->rtl) x = r.x + r.w - (x - r.x) - w;
         cui_rect f = { x, r.y, w, r.h };
         cui_draw_rect(ui, f, CUI_CORNERS(rad), p->fill);
         cui_pop_clip(ui);
         ui->animating = true;
     } else if (p->value > 0) {
         cui_rect f = { r.x, r.y, CUI_MAX(r.h, r.w * cui__clampf(p->value, 0, 1)), r.h };
+        if (n->rtl) f.x = r.x + r.w - f.w;
         cui_draw_rect(ui, f, CUI_CORNERS(rad), p->fill);
     }
 }
@@ -880,6 +908,8 @@ void cui_metric_ex(cui_ctx *ui, const char *label, const char *value, const cui_
     cui__close(ui);
     int vr = cui__node_new(ui, 0);
     ui->nodes[vr].dir = CUI_ROW; ui->nodes[vr].align = CUI_ALIGN_END; ui->nodes[vr].gap = 10;
+    ui->nodes[vr].flags |= CUI_NF_ROW_WRAP;   /* on a narrow card the change goes under the value instead of both being cut */
+    ui->nodes[vr].w = CUI_FILL;
     cui__open(ui, vr);
     int vt = cui__text_node(ui, value, -1, CUI_FONT_DISPLAY, cui__fs(ui, 28), CUI_C(ui, FOREGROUND), false);
     ui->nodes[vt].line_height = 1.1f;
@@ -1091,7 +1121,7 @@ void cui__paint_scrollbars(cui_ctx *ui, cui_node *n, cui_rect clip) {
         float lt = fw > 0 ? cui__clampf(st->x / fw, 0, 1) : 0, rt = fw > 0 ? cui__clampf((max_x - st->x) / fw, 0, 1) : 0;
         cui_color clear = st->fade; clear.a = 0;
         for (int side = 0; side < 2; side++) {
-            float k = side ? rt : lt;
+            float k = (side != n->rtl) ? rt : lt;
             if (k <= 0) continue;
             enum { S = 6 };
             cui_cvert v[(S + 1) * 2];
@@ -1131,7 +1161,7 @@ void cui__paint_scrollbars(cui_ctx *ui, cui_node *n, cui_rect clip) {
     if ((n->flags & CUI_NF_SCROLL_X) && max_x > 0.5f && st->bar_t > 0.01f) {
         float thumb_w = CUI_MAX(28.0f, r.w * r.w / st->content_w);
         float track = r.w - thumb_w - 6;
-        float x = r.x + 3 + cui__clampf(st->x / max_x, 0, 1) * track;
+        float x = r.x + 3 + cui__clampf(n->rtl ? 1 - st->x / max_x : st->x / max_x, 0, 1) * track;
         cui_rect th = { x, r.y + r.h - 9, thumb_w, 6 };
         cui_draw_rect(ui, th, CUI_CORNERS(3), cui_alpha(CUI_C(ui, FOREGROUND), 0.26f * st->bar_t));
     }
@@ -1172,7 +1202,12 @@ void cui_scroll_to(cui_ctx *ui, const char *scroll_id, float y) {
 /* ------------------------------------------------------------------------ */
 
 struct cui_split_build { cui_id id; float *ratio; bool vertical; int container; float min1, min2; struct cui_split_build *prev; float hover; };
-typedef struct { float hover; bool drag; } cui__split_state;
+typedef struct { float hover; bool rtl; } cui__split_state;
+
+static void cui__paint_split(cui_ctx *ui, cui_node *n, void *data) {
+    /* Input on the next frame must use the direction that placed these panes. */
+    ((cui__split_state *)data)->rtl = n->rtl;
+}
 
 void cui_split_begin(cui_ctx *ui, const char *id_str, float *ratio, const cui_split_opts *o) {
     cui_split_opts d;
@@ -1183,15 +1218,15 @@ void cui_split_begin(cui_ctx *ui, const char *id_str, float *ratio, const cui_sp
     b->id = id; b->ratio = ratio; b->vertical = o->vertical;
     b->min1 = o->min_first > 0 ? o->min_first : 120;
     b->min2 = o->min_second > 0 ? o->min_second : 120;
-    b->prev = ui->split;
-    ui->split = b;
+    b->prev = ui->building.split;
+    ui->building.split = b;
     cui_rect pr = cui__prev_rect(ui, id);
     cui_id hid = id ^ 0x77u;
     cui_interact r = cui__interact(ui, hid, CUI_IF_DRAG);
     cui__split_state *st = cui_state(ui, hid, sizeof *st);
     float total = o->vertical ? pr.h : pr.w;
     if (r.active && ui->mdown[0] && total > 0) {
-        float pos = o->vertical ? ui->my - pr.y : ui->mx - pr.x;
+        float pos = o->vertical ? ui->my - pr.y : st->rtl ? pr.x + pr.w - ui->mx : ui->mx - pr.x;
         pos = cui__clampf(pos, b->min1, total - b->min2);
         *ratio = pos / total;
     }
@@ -1205,6 +1240,7 @@ void cui_split_begin(cui_ctx *ui, const char *id_str, float *ratio, const cui_sp
     n->h = o->height.kind ? o->height : CUI_FILL;
     n->self_align = CUI_ALIGN_STRETCH;
     b->container = i;
+    n->paint = cui__paint_split; n->paint_data = st;
     cui__open(ui, i);
     float rr = cui__clampf(*ratio, 0.02f, 0.98f);
     int p1 = cui__node_new(ui, 0);
@@ -1230,7 +1266,7 @@ static void cui__paint_split_handle(cui_ctx *ui, cui_node *n, void *data) {
 }
 
 void cui_split_next(cui_ctx *ui) {
-    struct cui_split_build *b = ui->split;
+    struct cui_split_build *b = ui->building.split;
     if (!b) return;
     cui__close(ui);
     /* the divider takes one point of layout, so panes with their own background meet at the line;
@@ -1259,9 +1295,9 @@ void cui_split_next(cui_ctx *ui) {
 }
 
 void cui_split_end(cui_ctx *ui) {
-    struct cui_split_build *b = ui->split;
+    struct cui_split_build *b = ui->building.split;
     if (!b) return;
     cui__close(ui);   /* second pane */
     cui__close(ui);   /* container */
-    ui->split = b->prev;
+    ui->building.split = b->prev;
 }

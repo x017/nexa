@@ -61,7 +61,7 @@
         <span class="search-kbd">Ctrl K</span>
       </div>
       <div class="search-results" id="docs-search-results"></div>
-      <nav id="docs-sidebar-nav"><div class="sidebar-group-title">Explore</div><a class="sidebar-link" href="wiki.html">Docs Wiki <span class="badge-new">WIKI</span></a><a class="sidebar-link" href="tutorials.html">All Tutorials Overview</a><a class="sidebar-link" href="components.html">Component Explorer <span class="badge-new">1.1</span></a><a class="sidebar-link" href="changelog.html">Changelog</a><div class="sidebar-group-title">Start Here</div><a class="sidebar-link" href="zero-to-hero.html">0 to Hero: Full Tutorial <span class="badge-new">FULL</span></a><a class="sidebar-link" href="getting-started.html">Getting Started</a><div class="sidebar-group-title">Tutorials</div><a class="sidebar-link" href="tutorial-functional.html">Functional &amp; Procedural</a><a class="sidebar-link" href="tutorial-oop.html">Object-Oriented (OOP)</a><a class="sidebar-link active" href="theming-and-styling.html">Theming, Accents &amp; Icons</a><div class="sidebar-sublinks"><a class="sidebar-sublink" href="#1-light-dark-theme-modes-ui-thememode" data-anchor="1-light-dark-theme-modes-ui-thememode">1. Light &amp; Dark Theme Modes (ui.ThemeMode)</a><a class="sidebar-sublink" href="#2-the-8-built-in-ui-accent-palettes" data-anchor="2-the-8-built-in-ui-accent-palettes">2. The 8 Built-In ui.Accent Palettes</a><a class="sidebar-sublink" href="#3-semantic-ui-tones-badges-alerts-toasts-kanban-gantt" data-anchor="3-semantic-ui-tones-badges-alerts-toasts-kanban-gantt">3. Semantic ui.Tones (Badges, Alerts, Toasts, Kanban, Gantt)</a><a class="sidebar-sublink" href="#4-custom-brand-colors-live-token-overrides-perceptual-oklch" data-anchor="4-custom-brand-colors-live-token-overrides-perceptual-oklch">4. Custom Brand Colors, Live Token Overrides &amp; Perceptual OKLCH</a><a class="sidebar-sublink" href="#5-typography-custom-ttf-fonts-international-fallback" data-anchor="5-typography-custom-ttf-fonts-international-fallback">5. Typography, Custom .ttf Fonts &amp; International Fallback</a><a class="sidebar-sublink" href="#6-icons-ui-icon" data-anchor="6-icons-ui-icon">6. Icons (ui.Icon)</a></div><a class="sidebar-link" href="concurrency-and-async.html">Concurrency &amp; Asyncio</a><a class="sidebar-link" href="advanced-rendering-and-packaging.html">Canvas, GPU &amp; Packaging</a><div class="sidebar-group-title">API Reference</div><a class="sidebar-link" href="components-reference.html">160+ Components Reference</a></nav>
+      <nav id="docs-sidebar-nav"><div class="sidebar-group-title">Explore</div><a class="sidebar-link" href="wiki.html">Docs Wiki <span class="badge-new">WIKI</span></a><a class="sidebar-link" href="tutorials.html">All Tutorials Overview</a><a class="sidebar-link" href="components.html">Component Explorer <span class="badge-new">1.4</span></a><a class="sidebar-link" href="changelog.html">Changelog</a><div class="sidebar-group-title">Start Here</div><a class="sidebar-link" href="zero-to-hero.html">0 to Hero: Full Tutorial <span class="badge-new">FULL</span></a><a class="sidebar-link" href="getting-started.html">Getting Started</a><div class="sidebar-group-title">Tutorials</div><a class="sidebar-link" href="tutorial-functional.html">Functional &amp; Procedural</a><a class="sidebar-link" href="tutorial-oop.html">Object-Oriented (OOP)</a><a class="sidebar-link active" href="theming-and-styling.html">Theming, Accents &amp; Icons</a><div class="sidebar-sublinks"><a class="sidebar-sublink" href="#1-light-dark-theme-modes-ui-thememode" data-anchor="1-light-dark-theme-modes-ui-thememode">1. Light &amp; Dark Theme Modes (ui.ThemeMode)</a><a class="sidebar-sublink" href="#2-the-8-built-in-ui-accent-palettes" data-anchor="2-the-8-built-in-ui-accent-palettes">2. The 8 Built-In ui.Accent Palettes</a><a class="sidebar-sublink" href="#3-semantic-ui-tones-badges-alerts-toasts-kanban-gantt" data-anchor="3-semantic-ui-tones-badges-alerts-toasts-kanban-gantt">3. Semantic ui.Tones (Badges, Alerts, Toasts, Kanban, Gantt)</a><a class="sidebar-sublink" href="#4-custom-brand-colors-live-token-overrides-perceptual-oklch" data-anchor="4-custom-brand-colors-live-token-overrides-perceptual-oklch">4. Custom Brand Colors, Live Token Overrides &amp; Perceptual OKLCH</a><a class="sidebar-sublink" href="#5-typography-custom-ttf-fonts-international-fallback" data-anchor="5-typography-custom-ttf-fonts-international-fallback">5. Typography, Custom .ttf Fonts &amp; International Fallback</a><a class="sidebar-sublink" href="#6-icons-ui-icon" data-anchor="6-icons-ui-icon">6. Icons (ui.Icon)</a></div><a class="sidebar-link" href="concurrency-and-async.html">Concurrency &amp; Asyncio</a><a class="sidebar-link" href="advanced-rendering-and-packaging.html">Canvas, GPU &amp; Packaging</a><div class="sidebar-group-title">API Reference</div><a class="sidebar-link" href="components-reference.html">190+ Components Reference</a></nav>
     </aside>
 
     <!-- Main Content Area with Procedural Topographic Backdrop -->
@@ -117,24 +117,109 @@ ctx.theme.radius_surface = <span class="tok-num">14.0</span>  <span class="tok-c
 ctx.theme.radius_panel = <span class="tok-num">16.0</span>    <span class="tok-com"># Dialogs, popovers, sheets</span>
 ctx.font_scale = <span class="tok-num">1.10</span>            <span class="tok-com"># 110% proportional DPI/typography scale</span>
 ctx.set_reduced_motion(<span class="tok-kw">False</span>)    <span class="tok-com"># True snaps animations for accessibility</span></code></pre></div>
+<h3 id="coloring-text-headings-their-background">Coloring Text, Headings &amp; Their Background</h3>
+<p><code>heading</code> and <code>text</code> take the same color forms as everything else — <code>color=</code> is a plain foreground, so it can be a hex string, an RGB(A) tuple, or a live token that follows the active accent and light/dark mode:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-com"># level 1..4 picks the size from ctx.theme.headings[level - 1]</span>
+ctx.heading(<span class="tok-str">&quot;Reactor Console&quot;</span>, level=<span class="tok-num">1</span>, color=<span class="tok-str">&quot;#7c5cff&quot;</span>)          <span class="tok-com"># hex</span>
+ctx.heading(<span class="tok-str">&quot;Reactor Console&quot;</span>, level=<span class="tok-num">1</span>, color=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">ACCENT</span>)    <span class="tok-com"># live token</span>
+ctx.heading(<span class="tok-str">&quot;Reactor Console&quot;</span>, level=<span class="tok-num">2</span>, color=(<span class="tok-num">124</span>, <span class="tok-num">92</span>, <span class="tok-num">255</span>))     <span class="tok-com"># rgb tuple</span>
+ctx.heading(<span class="tok-str">&quot;Reactor Console&quot;</span>, level=<span class="tok-num">2</span>, size=<span class="tok-num">44</span>)                  <span class="tok-com"># custom scale</span>
+
+<span class="tok-com"># a background chip behind the title (pad/radius tune it)</span>
+ctx.heading(<span class="tok-str">&quot;LIVE&quot;</span>, level=<span class="tok-num">4</span>, color=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">ACCENT_FOREGROUND</span>,
+            bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">ACCENT_STRONG</span>, pad=<span class="tok-num">8</span>, radius=<span class="tok-num">10</span>)
+
+<span class="tok-com"># …or a full-width banner instead of a hugging chip</span>
+ctx.heading(<span class="tok-str">&quot;Section&quot;</span>, level=<span class="tok-num">3</span>, color=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">ACCENT</span>, bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">SURFACE_RAISED</span>, width=ui.<span class="tok-cls">FILL</span>)
+
+<span class="tok-com"># body copy: same color forms, plus translucent text</span>
+ctx.text(<span class="tok-str">&quot;Body copy&quot;</span>, size=<span class="tok-num">14</span>, color=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">TEXT_SECONDARY</span>)
+ctx.text(<span class="tok-str">&quot;faded live value&quot;</span>, size=<span class="tok-num">14</span>, color=ui.with_alpha(ui.<span class="tok-cls">Color</span>.hex(<span class="tok-str">&quot;#22c55e&quot;</span>), <span class="tok-num">0.45</span>))
+
+<span class="tok-com"># a background for a paragraph: any container&#x27;s bg= draws behind its children</span>
+<span class="tok-kw">with</span> ctx.box(bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">SURFACE_RAISED</span>, pad=<span class="tok-num">10</span>, radius=<span class="tok-num">12</span>):
+    ctx.text(<span class="tok-str">&quot;Text on its own surface&quot;</span>, color=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">TEXT_SECONDARY</span>)</code></pre></div>
+<blockquote><p><code>ctx.heading(...)</code> with no <code>color</code>/<code>size</code>/<code>bg</code> is the plain CUI heading: theme heading size in <code>FOREGROUND</code>. The overrides above are resolved in Python from <code>ctx.theme.headings</code>, so they follow <code>ctx.theme.font_scale</code> and your own <code>ctx.theme.headings = (...)</code> edits.</p></blockquote>
 <h3 id="perceptual-color-math-oklch-mix-colors-with-alpha">Perceptual Color Math (<code>oklch</code>, <code>mix_colors</code>, <code>with_alpha</code>)</h3>
 <div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code>brand = ui.oklch(<span class="tok-num">0.68</span>, <span class="tok-num">0.16</span>, <span class="tok-num">172.0</span>)              <span class="tok-com"># Perceptually uniform Lightness, Chroma, Hue°</span>
 soft = ui.mix_colors(brand, ui.<span class="tok-cls">Color</span>.hex(<span class="tok-str">&quot;#ffffff&quot;</span>), <span class="tok-num">0.25</span>)  <span class="tok-com"># Mixed in OKLab space (no muddy grays!)</span>
 translucent = ui.with_alpha(brand, <span class="tok-num">0.20</span>)         <span class="tok-com"># Multiply alpha by 0.20</span></code></pre></div>
+<h3 id="recoloring-one-component-without-touching-the-theme">Recoloring One Component (without touching the theme)</h3>
+<p>Theme tokens restyle everything; these arguments restyle a single widget and leave the rest of the app alone — same <code>ColorLike</code> forms as above.</p>
+<table><thead><tr><th>Component</th><th>Color arguments</th></tr></thead><tbody><tr><td><code>heading(...)</code></td><td><code>color=</code>, <code>bg=</code> (+ <code>pad</code>, <code>radius</code>, <code>width=ui.FILL</code> for a banner)</td></tr><tr><td><code>text(...)</code>, <code>markdown(...)</code>, <code>expandable_text(...)</code></td><td><code>color=</code></td></tr><tr><td><code>input</code> / <code>textarea</code> / <code>search</code> / <code>number</code></td><td><code>bg=</code>, <code>color=</code> (alias <code>text_color=</code>), <code>placeholder_color=</code>, <code>border_color=</code>, <code>focus_color=</code></td></tr><tr><td><code>card(...)</code></td><td><code>bg=</code>, <code>border_color=</code> (with <code>muted=</code>, <code>selected=</code>)</td></tr><tr><td><code>box(...)</code>, <code>row</code>, <code>column</code>, <code>grid</code>, <code>stack</code></td><td><code>bg=</code>, <code>border_color=</code>, <code>border=</code>, <code>radius=</code></td></tr><tr><td><code>button</code> / <code>icon_button</code></td><td><code>color=</code> (label + glyph tint)</td></tr><tr><td><code>badge</code>, <code>progress</code>, <code>readout</code>, <code>status_bar_text</code>, <code>timeline_item</code></td><td><code>tone=</code> (semantic palette)</td></tr><tr><td><code>image(...)</code></td><td><code>tint=</code></td></tr><tr><td><code>knob</code>, <code>dot_display</code>, <code>loader</code>, <code>voice_orb</code>, <code>dock_item</code>, <code>gradient_text</code>, <code>spotlight</code></td><td><code>color=</code> / <code>from_color=</code>, <code>to_color=</code></td></tr><tr><td><code>line_chart</code>, <code>bar_chart</code>, <code>donut_chart</code>, <code>area</code>, <code>sparkline</code>, … and every <code>Series</code></td><td>per-series <code>color=</code></td></tr><tr><td>everything else (selects, checkboxes, switches, sliders, tables, editors, docks…)</td><td>follows <code>ctx.theme[...]</code> — change a token, or wrap the region in <code>ctx.set_accent</code></td></tr></tbody></table>
+<blockquote><p>Color arguments cost nothing when you don&#x27;t use them: the default path skips the conversion entirely, and every <code>ColorLike</code> value is memoised by its input (a hex string parses once, then costs ~0.1 µs) — so restyling 60 inputs every frame adds ~0.2 ms to the frame.</p></blockquote>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-com"># a dark hero input on an otherwise light page</span>
+ctx.input(<span class="tok-str">&quot;email&quot;</span>, value, bg=<span class="tok-str">&quot;#101425&quot;</span>, color=<span class="tok-str">&quot;#e6e9ff&quot;</span>,
+          placeholder_color=<span class="tok-str">&quot;#6b7390&quot;</span>, border_color=<span class="tok-str">&quot;#2b3350&quot;</span>, focus_color=<span class="tok-str">&quot;#7c5cff&quot;</span>)
+
+<span class="tok-com"># a tinted panel that is not a card</span>
+<span class="tok-kw">with</span> ctx.card(bg=ui.with_alpha(<span class="tok-str">&quot;#7c5cff&quot;</span>, <span class="tok-num">0.12</span>), border_color=<span class="tok-str">&quot;#7c5cff&quot;</span>, pad=<span class="tok-num">18</span>):
+    ctx.text(<span class="tok-str">&quot;Notice&quot;</span>, color=<span class="tok-str">&quot;#c9b8ff&quot;</span>)
+
+<span class="tok-com"># brand-tinted button, one colour argument</span>
+<span class="tok-kw">if</span> ctx.button(<span class="tok-str">&quot;Deploy&quot;</span>, variant=ui.<span class="tok-cls">ButtonVariant</span>.<span class="tok-cls">PRIMARY</span>, color=<span class="tok-str">&quot;#22d3ee&quot;</span>):
+    deploy()</code></pre></div>
 <h3 id="all-34-ui-token-slots">All 34 <code>ui.Token</code> Slots</h3>
 <ul><li><strong>Surfaces</strong>: <code>BACKGROUND</code>, <code>SURFACE</code>, <code>SURFACE_RAISED</code>, <code>SURFACE_MUTED</code></li><li><strong>Text</strong>: <code>FOREGROUND</code>, <code>TEXT_SECONDARY</code>, <code>TEXT_MUTED</code></li><li><strong>Borders</strong>: <code>BORDER</code>, <code>BORDER_SUBTLE</code>, <code>BORDER_STRONG</code></li><li><strong>Accent</strong>: <code>ACCENT</code>, <code>ACCENT_STRONG</code>, <code>ACCENT_SUBTLE</code>, <code>ACCENT_FOREGROUND</code></li><li><strong>Semantic</strong>: <code>SUCCESS</code>, <code>WARNING</code>, <code>DANGER</code>, <code>INFO</code></li><li><strong>Controls</strong>: <code>CONTROL_ON</code>, <code>CONTROL_GLYPH</code>, <code>CONTROL_TRACK</code>, <code>CONTROL_TRACK_HOVER</code>, <code>CONTROL_THUMB</code>, <code>CONTROL_THUMB_ON</code></li><li><strong>States</strong>: <code>HOVER</code>, <code>ACTIVE</code>, <code>SCRIM</code>, <code>FOCUS_RING</code></li><li><strong>Data Viz</strong>: <code>SERIES_1</code>, <code>SERIES_2</code>, <code>SERIES_3</code>, <code>SERIES_4</code>, <code>SERIES_5</code>, <code>SERIES_6</code></li></ul>
 <hr />
 <h2 id="5-typography-custom-ttf-fonts-international-fallback">5. Typography, Custom <code>.ttf</code> Fonts &amp; International Fallback</h2>
 <p>Out of the box, <code>nexa</code> embeds:</p>
 <ul><li><strong>Inter</strong> (<code>FontRole.BODY</code>, <code>FontRole.MEDIUM</code>, <code>FontRole.DISPLAY</code>)</li><li><strong>Geist Mono</strong> (<code>FontRole.MONO</code>)</li><li><strong>Lucide</strong> (<code>FontRole.ICONS</code> — <code>168</code> crisp vector icons)</li></ul>
-<p>To load your own <code>.ttf</code> / <code>.otf</code> typeface or add CJK / Arabic / Persian / Emoji fallback chains:</p>
-<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-com"># Load primary UI font from file or bytes:</span>
-regular_id = ctx.font_load_file(<span class="tok-str">&quot;assets/PlusJakartaSans-Regular.ttf&quot;</span>)
-ctx.font_set_role(ui.<span class="tok-cls">FontRole</span>.<span class="tok-cls">BODY</span>, regular_id)
+<h3 id="make-the-whole-ui-use-your-font">Make the whole UI use your font</h3>
+<p><code>use_font()</code> loads a <code>.ttf</code>/<code>.otf</code> from a <strong>file path</strong>, from <strong>raw bytes</strong>, or by <strong>system family name</strong>, installs it into every text role (<code>BODY</code>, <code>MEDIUM</code>, <code>DISPLAY</code>) and returns its font id. Call it once, right after creating the UI:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
+<span class="tok-kw">from</span> nexa <span class="tok-kw">import</span> fonts
 
-<span class="tok-com"># Attach an international fallback font so missing glyphs fall through seamlessly:</span>
-rtl_or_cjk_id = ctx.font_load_file(<span class="tok-str">&quot;assets/Vazirmatn-Regular.ttf&quot;</span>)
-ctx.font_add_fallback(regular_id, rtl_or_cjk_id)</code></pre></div>
+<span class="tok-kw">with</span> ui.<span class="tok-cls">SoftwareRenderer</span>() <span class="tok-kw">as</span> sw, ui.<span class="tok-cls">UI</span>(width=<span class="tok-num">900</span>, height=<span class="tok-num">600</span>, renderer=sw) <span class="tok-kw">as</span> ctx:
+    <span class="tok-com"># 1. a font that ships with your app</span>
+    ctx.use_font(<span class="tok-str">&quot;assets/PlusJakartaSans-Regular.ttf&quot;</span>)
+
+    <span class="tok-com"># 2. or a font installed on the machine, looked up by family name</span>
+    ctx.use_font(family=<span class="tok-str">&quot;Segoe UI&quot;</span>)          <span class="tok-com"># Windows</span>
+    ctx.use_font(family=<span class="tok-str">&quot;SF Pro Text&quot;</span>)       <span class="tok-com"># macOS</span>
+    ctx.use_font(family=<span class="tok-str">&quot;DejaVu Sans&quot;</span>)       <span class="tok-com"># Linux</span>
+    ctx.use_system_font(<span class="tok-str">&quot;Noto Sans&quot;</span>)         <span class="tok-com"># shorthand for the same thing</span>
+
+    <span class="tok-com"># 3. or raw bytes (a font embedded in your package / downloaded at runtime)</span>
+    ctx.use_font(<span class="tok-cls">Path</span>(<span class="tok-str">&quot;assets/brand.ttf&quot;</span>).read_bytes())</code></pre></div>
+<p><code>nexa.fonts</code> finds the files for you: <code>find_system_font(&quot;DejaVu Sans&quot;)</code>, <code>find_system_font(&quot;Inter&quot;, bold=True)</code>, <code>list_system_fonts()</code>, and <code>system_font_dirs()</code> (honours <code>NEXA_FONT_DIRS</code>). On Linux it also asks <code>fc-match</code>, so aliases and per-user installs resolve.</p>
+<h3 id="fallback-chains-missing-glyphs">Fallback chains (missing glyphs)</h3>
+<p>A font only covers the scripts it was designed for. <code>fallbacks=</code> attaches up to four faces that are consulted for any glyph the primary font lacks — the usual combination is a Latin UI font plus a Persian/Arabic or CJK one:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code>ctx.use_font(<span class="tok-str">&quot;assets/PlusJakartaSans-Regular.ttf&quot;</span>,
+             fallbacks=[<span class="tok-str">&quot;assets/Vazirmatn-Regular.ttf&quot;</span>, <span class="tok-str">&quot;assets/NotoSansCJK-Regular.ttf&quot;</span>])
+
+<span class="tok-com"># or reuse an id you already loaded (roles like ui.FontRole.MONO work as ids too)</span>
+latin = ctx.font_load_file(<span class="tok-str">&quot;assets/Inter-Regular.ttf&quot;</span>)
+arabic = ctx.font_load_file(<span class="tok-str">&quot;assets/Vazirmatn-Regular.ttf&quot;</span>)
+ctx.font_set_role(ui.<span class="tok-cls">FontRole</span>.<span class="tok-cls">BODY</span>, latin)
+ctx.font_add_fallback(latin, arabic)</code></pre></div>
+<p>Low-level pieces, if you want them explicitly: <code>font_load_file(path)</code>, <code>font_load_memory(bytes)</code>, <code>font_set_role(role, id)</code>, <code>font_add_fallback(font_id, fallback_id)</code>.</p>
+<h3 id="persian-arabic-hebrew-rtl">Persian / Arabic / Hebrew (RTL)</h3>
+<p>Right-to-left needs two things: a shaper (on by default since CUI 1.4) and a font with Arabic-script coverage.</p>
+<div class="code-panel"><div class="code-header"><span>bash</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code>python -m nexa.build                      # shaping is on by default (+~24 KB)
+python -m nexa.build --no-rtl             # drop it (Persian/Arabic letters stay unjoined)</code></pre></div>
+<p>A library built without shaping is detected on import and recompiled once, so an old <code>_native/libnexa_cui.so</code> cannot silently render unjoined text.</p>
+<p>Two things &quot;on by default&quot; does <strong>not</strong> mean: your layout does not become right-to-left (containers stay LTR unless you pass <code>direction=</code>), and Latin text is not routed through the shaper — <code>cui__text_needs_shaping()</code> only diverts a run that contains Arabic/Hebrew/Arabic-presentation code points, ZWNJ/ZWJ or directional controls, so a Latin-only frame rasterises to the same pixels and costs the same per frame as a <code>--no-rtl</code> build. Only mixed or RTL text takes the extra pass, and only that text benefits.</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
+<span class="tok-kw">from</span> nexa <span class="tok-kw">import</span> fonts
+
+print(fonts.supports_text_shaping())      <span class="tok-com"># True for a default build</span>
+
+<span class="tok-kw">with</span> ui.<span class="tok-cls">SoftwareRenderer</span>() <span class="tok-kw">as</span> sw, ui.<span class="tok-cls">UI</span>(width=<span class="tok-num">800</span>, height=<span class="tok-num">600</span>, renderer=sw) <span class="tok-kw">as</span> ctx:
+    ctx.use_rtl_font()                    <span class="tok-com"># first installed of Vazirmatn, Vazir, Sahel,</span>
+                                          <span class="tok-com"># Noto Naskh Arabic, Tahoma, DejaVu Sans, …</span>
+    <span class="tok-com"># ctx.use_rtl_font(&quot;Vazirmatn&quot;)       # or name the family yourself</span>
+    <span class="tok-com"># ctx.use_font(&quot;assets/Vazirmatn-Regular.ttf&quot;)</span>
+
+    <span class="tok-kw">with</span> ctx.frame():
+        <span class="tok-kw">with</span> ctx.column(pad=<span class="tok-num">16</span>, gap=<span class="tok-num">8</span>, direction=ui.<span class="tok-cls">TextDirection</span>.<span class="tok-cls">RTL</span>):
+            ctx.heading(<span class="tok-str">&quot;سلام دنیا&quot;</span>)
+            ctx.text(<span class="tok-str">&quot;متن راست‌به‌چپ با شکل‌دهی صحیح حروف.&quot;</span>)
+        ctx.text(<span class="tok-str">&quot;Mixed LTR/RTL&quot;</span>, direction=ui.<span class="tok-cls">TextDirection</span>.<span class="tok-cls">AUTO</span>)</code></pre></div>
+<p>What the engine implements (from CUI&#x27;s <code>cui_bidi.c</code> / <code>cui_shape.c</code>): UAX #9 paragraph resolution (P2/P3, W1–W7, N0–N2 bracket pairs, I1/I2, L1/L2/L4) plus a compact OpenType interpreter applying <code>rtla/rtlm</code>, <code>stch</code>, <code>ccmp</code>, <code>locl</code>, <code>isol/fina/medi/init</code>, <code>rlig</code>, <code>calt</code>, <code>rclt</code>, <code>liga</code>, <code>clig</code>, <code>mset</code> (GSUB) and <code>curs</code>, <code>kern</code>, <code>mark</code>, <code>mkmk</code>, <code>dist</code> (GPOS) with GDEF classes.</p>
+<p>Two limits worth knowing: <strong>explicit directional formatting is not applied</strong> — <code>LRE/RLE/PDF</code> and <code>LRI/RLI/FSI/PDI</code> are treated as boundary-neutral, so use <code>direction=ui.TextDirection.RTL/AUTO</code> on containers instead of control characters — and the shaper targets <strong>Arabic-type joining</strong>, not Indic-style cluster reordering.</p>
+<p><code>direction=</code> works on <code>text</code>, <code>box</code>, <code>row</code>, <code>column</code>, <code>grid</code> and <code>stack</code> (<code>ui.TextDirection.INHERIT / LTR / RTL / AUTO</code>); <code>AUTO</code> lets the shaper pick the paragraph base from the first strong character. Calendar and picker names can be localized at the same time with <code>ctx.set_strings(months=[...], weekdays=[...], today=&quot;امروز&quot;)</code>.</p>
+<blockquote><p><strong>Emoji</strong> are separate from text fonts: <code>ctx.load_emoji_font()</code> (system) or <code>ctx.load_emoji_font(&quot;NotoColorEmoji.ttf&quot;)</code> enables <code>ui.emoji(...)</code> and <code>ui.emoji_picker(...)</code>.</p></blockquote>
 <hr />
 <h2 id="6-icons-ui-icon">6. Icons (<code>ui.Icon</code>)</h2>
 <p>All <strong>168 bundled Lucide icons</strong> are UTF-8 string constants on <code>ui.Icon</code> and can be passed to <code>icon=</code>, <code>ui.icon(...)</code>, <code>ui.icon_button(...)</code>, <code>ui.nav_item(...)</code>, or looked up dynamically by name:</p>
@@ -150,7 +235,7 @@ glyph = ui.<span class="tok-cls">Icon</span>.get(<span class="tok-str">&quot;arr
           <!-- Subtle Closing Procedural Topographic Band -->
           <section class="home-cta compact" id="docs-cta-band">
             <div class="home-cta-body">
-              <h2>Explore the 13 runnable examples</h2>
+              <h2>Explore the 16 runnable examples</h2>
               <p>Every tutorial &amp; 1.1 studio pattern—including the complete <code>zero_to_hero.py</code> Pulse Studio capstone—is ready to run inside <code>examples/</code>.</p>
               <div class="hero-actions">
                 <a class="btn btn-primary" href="https://github.com/x017/nexa/tree/main/examples" target="_blank" rel="noopener">Browse examples/ →</a>

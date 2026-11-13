@@ -23,6 +23,8 @@ from ctypes import (
 )
 from typing import Any, List, Optional, Sequence, Tuple
 
+from functools import lru_cache
+
 from .types import Color, ColorLike, Corners, CornersLike, Size, SizeKind, SizeLike, Token
 
 c_texture = c_size_t  # uintptr_t
@@ -100,6 +102,7 @@ class CuiAppDesc(Structure):
         ("theme", c_int),
         ("accent", c_int),
         ("follow_system_theme", c_bool),
+        ("app_id", c_char_p),
     ]
 
 
@@ -192,6 +195,7 @@ class CuiBox(Structure):
         ("scroll_y", c_bool),
         ("clip", c_bool),
         ("opacity", c_float),
+        ("direction", c_int),
     ]
 
 
@@ -213,6 +217,8 @@ class CuiCardOpts(Structure):
         ("hoverable", c_bool),
         ("muted", c_bool),
         ("selected", c_bool),
+        ("bg", CuiColor),
+        ("border_color", CuiColor),
     ]
 
 
@@ -253,6 +259,7 @@ class CuiTextOpts(Structure):
         ("selectable", c_bool),
         ("width", CuiSize),
         ("line_height", c_float),
+        ("direction", c_int),
     ]
 
 
@@ -325,6 +332,11 @@ class CuiInputOpts(Structure):
         ("height", c_float),
         ("prefix", c_char_p),
         ("suffix", c_char_p),
+        ("bg", CuiColor),
+        ("text_color", CuiColor),
+        ("placeholder_color", CuiColor),
+        ("border_color", CuiColor),
+        ("focus_color", CuiColor),
     ]
 
 
@@ -512,6 +524,21 @@ class CuiSeries(Structure):
     _fields_ = [("name", c_char_p), ("values", POINTER(c_float)), ("count", c_int), ("color", CuiColor)]
 
 
+class CuiChartAnnotation(Structure):
+    _fields_ = [
+        ("kind", c_int),
+        ("x", c_double),
+        ("y", c_double),
+        ("label", c_char_p),
+        ("detail", c_char_p),
+        ("accent", c_bool),
+    ]
+
+
+class CuiTextMark(Structure):
+    _fields_ = [("start", c_int), ("end", c_int), ("color", c_int)]
+
+
 class CuiChartOpts(Structure):
     _fields_ = [
         ("_", c_int),
@@ -527,6 +554,8 @@ class CuiChartOpts(Structure):
         ("format", c_char_p),
         ("min", c_float),
         ("max", c_float),
+        ("annotations", POINTER(CuiChartAnnotation)),
+        ("annotation_count", c_int),
     ]
 
 
@@ -1460,6 +1489,8 @@ class CuiCodeEditorOpts(Structure):
         ("no_line_numbers", c_bool),
         ("autofocus", c_bool),
         ("placeholder", c_char_p),
+        ("marks", POINTER(CuiTextMark)),
+        ("mark_count", c_int),
     ]
 
 
@@ -1784,23 +1815,51 @@ class CuiTimelineEditorResult(Structure):
 # Fast Conversion Helpers (used by widget modules)
 # ---------------------------------------------------------------------------
 
-def to_c_color(c: ColorLike) -> CuiColor:
+_EMPTY_COLOR = CuiColor(0, 0, 0, 0)
+
+
+@lru_cache(maxsize=1024)
+def _cui_color(r: int, g: int, b: int, a: int) -> CuiColor:
+    """Memoised ``CuiColor``; callers copy it into an opts field, so sharing is safe."""
+    return CuiColor(r, g, b, a)
+
+
+@lru_cache(maxsize=512)
+def _parse_color(c) -> CuiColor:
+    """Memoised ``to_c_color`` body for hashable inputs (hex strings, enums, tuples)."""
     if c is None:
-        return CuiColor(0, 0, 0, 0)
+        return _EMPTY_COLOR
     if isinstance(c, Color):
-        return CuiColor(c.r, c.g, c.b, c.a)
+        return _cui_color(c.r, c.g, c.b, c.a)
     if isinstance(c, Token):
-        return CuiColor(int(c), 0xC5, 0x1D, 0)
+        return _cui_color(int(c), 0xC5, 0x1D, 0)
     if isinstance(c, int):
-        return CuiColor((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF, 255)
+        return _cui_color((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF, 255)
     if isinstance(c, str):
         col = Color.hex(c)
-        return CuiColor(col.r, col.g, col.b, col.a)
+        return _cui_color(col.r, col.g, col.b, col.a)
     if isinstance(c, tuple):
         if len(c) == 3:
-            return CuiColor(int(c[0]) & 0xFF, int(c[1]) & 0xFF, int(c[2]) & 0xFF, 255)
+            return _cui_color(int(c[0]) & 0xFF, int(c[1]) & 0xFF, int(c[2]) & 0xFF, 255)
         if len(c) == 4:
-            return CuiColor(int(c[0]) & 0xFF, int(c[1]) & 0xFF, int(c[2]) & 0xFF, int(c[3]) & 0xFF)
+            return _cui_color(int(c[0]) & 0xFF, int(c[1]) & 0xFF, int(c[2]) & 0xFF, int(c[3]) & 0xFF)
+    raise TypeError(f"Unsupported color value: {c!r}")
+
+
+def to_c_color(c: ColorLike) -> CuiColor:
+    """Convert any ``ColorLike`` to a ``CuiColor``.
+
+    Parsing is memoised per input value: a hex string costs ~1.3 µs to parse but
+    ~0.1 µs when cached, which matters for widgets restyled every frame (a form
+    with 60 coloured inputs converts 300 colours per frame). ``Color`` instances
+    are unhashable, so they take the RGBA-keyed cache instead.
+    """
+    if c is None:
+        return _EMPTY_COLOR
+    if isinstance(c, Color):
+        return _cui_color(c.r, c.g, c.b, c.a)
+    if isinstance(c, (Token, int, str, tuple)):
+        return _parse_color(c)
     raise TypeError(f"Unsupported color value: {c!r}")
 
 
@@ -1857,6 +1916,27 @@ def to_c_date_range(dr: DateRange) -> CuiDateRange:
     return CuiDateRange(to_c_date(dr.start), to_c_date(dr.end))
 
 
+def chart_annotations(items) -> Tuple[Any, int, Any]:
+    """Build a ``cui_chart_annotation`` array from :class:`ChartAnnotation` objects."""
+    if not items:
+        return None, 0, None
+    n = len(items)
+    arr = (CuiChartAnnotation * n)()
+    strings = (c_char_p * (2 * n))()
+    for i, ann in enumerate(items):
+        arr[i].kind = int(ann.kind)
+        arr[i].x = float(ann.x)
+        arr[i].y = float(ann.y)
+        if ann.label is not None:
+            strings[2 * i] = ann.label.encode("utf-8")
+            arr[i].label = strings[2 * i]
+        if ann.detail is not None:
+            strings[2 * i + 1] = ann.detail.encode("utf-8")
+            arr[i].detail = strings[2 * i + 1]
+        arr[i].accent = bool(ann.accent)
+    return arr, n, (arr, strings)
+
+
 def encode_opt(s: Optional[str], keep: List[Any]) -> Optional[bytes]:
     if s is None:
         return None
@@ -1898,8 +1978,81 @@ def make_text_buffer(value: str, min_cap: int = 256) -> Tuple[Any, int]:
 # Prototype Binding Table
 # ---------------------------------------------------------------------------
 
-def bind_prototypes(lib: ctypes.CDLL) -> None:
-    """Bind argtypes & restypes once when ``libnexa_cui`` is loaded."""
+CUI_REGEX_GROUPS = 10  # capture groups per regex match
+CUI_FLAG_ENVS = 8  # environments per feature flag
+CUI_LOG_LEVEL_COUNT = 6  # log levels
+
+
+# ---------------------------------------------------------------------------
+# CUI 1.3/1.4 additions that need fixed-size arrays (written by hand)
+# ---------------------------------------------------------------------------
+
+class CuiStrings(Structure):
+    """Localized month/weekday names consumed by calendars, dates and pickers."""
+
+    _fields_ = [
+        ("month", c_char_p * 12),
+        ("month_short", c_char_p * 12),
+        ("weekday", c_char_p * 7),
+        ("weekday_short", c_char_p * 7),
+        ("weekday_min", c_char_p * 7),
+        ("today", c_char_p),
+    ]
+
+
+class CuiRegexMatch(Structure):
+    """One ``cui_regex_search`` result: the match, its groups and group names."""
+
+    _fields_ = [
+        ("start", c_int),
+        ("end", c_int),
+        ("groups", c_int),
+        ("group_start", c_int * CUI_REGEX_GROUPS),
+        ("group_end", c_int * CUI_REGEX_GROUPS),
+        ("group_name", (c_char * 24) * CUI_REGEX_GROUPS),
+    ]
+
+
+class CuiFeatureFlag(Structure):
+    """A flag and its per-environment switch and rollout percentage."""
+
+    _fields_ = [
+        ("key", c_char_p),
+        ("description", c_char_p),
+        ("on", c_bool * CUI_FLAG_ENVS),
+        ("rollout", c_int * CUI_FLAG_ENVS),
+    ]
+
+
+CUI_REGEX_GROUPS = 10
+CUI_FLAG_ENVS = 8
+CUI_LOG_LEVEL_COUNT = 6
+
+
+class CuiLogBuffer(Structure):
+    """App-owned ring buffer of log lines (initialize with ``cui_log_init``)."""
+
+    _fields_ = [
+        ("now", c_double),
+        ("lines", c_void_p),  # CuiLogLine record array, owned by the app
+        ("line_cap", c_int),
+        ("text", c_char_p),
+        ("text_cap", c_uint32),
+        ("first", c_int),
+        ("count", c_int),
+        ("text_end", c_uint32),
+        ("total", c_uint64),
+        ("level_count", c_int * CUI_LOG_LEVEL_COUNT),
+    ]
+
+
+def bind_prototypes(lib: ctypes.CDLL) -> list:
+    """Bind argtypes & restypes once when ``libnexa_cui`` is loaded.
+
+    Returns the names absent from this build: optional parts (the OpenGL
+    renderer, the app/windowing layer, the image decoders) are compiled out by
+    minimal builds, and calling one of those raises ``AttributeError``.
+    """
     P = POINTER
 
     sigs = [
@@ -2386,6 +2539,91 @@ def bind_prototypes(lib: ctypes.CDLL) -> None:
         ("cui_flame_sort", [P(CuiFlameSpan), c_int], None),
         ("cui_curve_eval", [P(CuiCurveKey), c_int, c_float], c_float),
 
+        # ---- CUI 1.2/1.3/1.4 additions ----
+        ("cui_request_wakeup", [c_void_p, c_float], None),
+        ("cui_state_on_free", [c_void_p, c_uint32, c_void_p], None),
+        ("cui_set_strings", [c_void_p, P(CuiStrings)], None),
+        ("cui_get_strings", [c_void_p], P(CuiStrings)),
+        ("cui_gl_is_software", [c_void_p], c_bool),
+        ("cui_sw_set_incremental", [c_void_p, c_bool], None),
+        ("cui_sw_last_damage", [c_void_p, P(c_int), P(c_int), P(c_int), P(c_int)], c_bool),
+        # regex, cron, urls & http
+        ("cui_regex_search", [c_char_p, c_int, c_char_p, c_int, c_int, P(CuiRegexMatch), P(c_char_p)], c_int),
+        ("cui_cron_next", [c_char_p, c_int64, c_int, POINTER(c_int64)], c_bool),
+        ("cui_cron_describe", [c_void_p, c_char_p], c_char_p),
+        ("cui_url_params", [c_char_p, P(CuiKvPair), c_int], c_int),
+        ("cui_url_set_params", [c_char_p, c_size_t, P(CuiKvPair), c_int], c_bool),
+        ("cui_response_status", [c_void_p, c_int, c_double, c_double], None),
+        ("cui_http_reason", [c_int], c_char_p),
+        ("cui_http_method_name", [c_int], c_char_p),
+        # files
+        ("cui_fs_list", [c_void_p, c_char_p, P(CuiFileEntry), c_int, c_char_p, c_size_t, c_bool], c_int),
+        ("nexa_file_browser_ex", [c_void_p, c_char_p, c_char_p, c_size_t, P(CuiFileBrowserOpts), P(CuiFileBrowserResult)], None),
+        ("cui_file_picker_ex", [c_void_p, c_char_p, P(c_bool), c_char_p, c_size_t, P(CuiFilePickerOpts)], c_bool),
+        # media
+        ("cui_image_viewer_ex", [c_void_p, c_char_p, c_size_t, c_int, c_int, P(CuiImageView), P(CuiImageViewerOpts)], c_bool),
+        ("cui_cropper_ex", [c_void_p, c_char_p, c_size_t, c_int, c_int, P(CuiRect), P(CuiCropperOpts)], c_bool),
+        # instruments
+        ("cui_knob_ex", [c_void_p, c_char_p, P(c_float), c_float, c_float, P(CuiKnobOpts)], c_bool),
+        ("cui_fader_ex", [c_void_p, c_char_p, P(c_float), c_float, c_float, P(CuiFaderOpts)], c_bool),
+        ("cui_level_meter_ex", [c_void_p, c_char_p, P(c_float), c_int, P(CuiLevelMeterOpts)], c_bool),
+        ("cui_radial_gauge_ex", [c_void_p, c_char_p, c_float, c_float, c_float, P(CuiRadialGaugeOpts)], None),
+        ("cui_readout_ex", [c_void_p, c_char_p, c_char_p, P(CuiReadoutOpts)], None),
+        ("cui_dot_display_ex", [c_void_p, c_char_p, P(CuiDotDisplayOpts)], None),
+        ("nexa_dot_chart_ex", [c_void_p, c_char_p, P(CuiDotSeries), c_int, c_int, P(CuiDotChartOpts), P(CuiDotChartResult)], None),
+        ("nexa_event_track_ex", [c_void_p, c_char_p, P(c_double), P(c_int), c_int, c_double, c_double, P(CuiEventTrackOpts), P(CuiEventTrackResult)], None),
+        ("cui_candlestick_ex", [c_void_p, c_char_p, P(CuiCandle), c_int, P(CuiCandlestickOpts)], c_int),
+        # calendar, tour, terminal & emoji
+        ("nexa_month_calendar_ex", [c_void_p, c_char_p, P(CuiDate), P(CuiMonthEvent), c_int, P(CuiMonthOpts), P(CuiMonthResult)], None),
+        ("cui_tour_ex", [c_void_p, c_char_p, P(CuiTourStep), c_int, P(c_int), P(CuiTourOpts)], c_int),
+        ("cui_terminal_init", [P(CuiTerminalBuffer), c_char_p, c_size_t, P(CuiTerminalLine), c_int], None),
+        ("cui_terminal_write", [P(CuiTerminalBuffer), c_char_p, c_int], None),
+        ("cui_terminal_clear", [P(CuiTerminalBuffer)], None),
+        ("nexa_terminal_print", [P(CuiTerminalBuffer), c_char_p], None),
+        ("nexa_terminal_ex", [c_void_p, c_char_p, P(CuiTerminalBuffer), P(CuiTerminalOpts), P(CuiTerminalResult)], None),
+        ("cui_emoji", [c_void_p, c_char_p, c_float], None),
+        ("cui_draw_emoji", [c_void_p, c_char_p, c_int, CuiRect], None),
+        ("cui_emoji_supported", [c_void_p, c_char_p, c_int], c_bool),
+        ("cui_emoji_font_load_system", [c_void_p], c_bool),
+        ("cui_emoji_font_load_file", [c_void_p, c_char_p], c_bool),
+        ("cui_emoji_picker_ex", [c_void_p, c_char_p, P(CuiEmojiPickerOpts)], c_char_p),
+
+        # ---- CUI 1.3 developer tools ----
+        ("nexa_problems_ex", [c_void_p, c_char_p, P(CuiDiagnostic), c_int, P(CuiProblemsOpts), P(CuiProblemsResult)], None),
+        ("nexa_pipeline_ex", [c_void_p, c_char_p, P(c_char_p), c_int, P(CuiPipelineJob), c_int, P(CuiPipelineOpts), P(CuiPipelineResult)], None),
+        ("nexa_schedule_picker_ex", [c_void_p, c_char_p, c_char_p, c_size_t, P(CuiScheduleOpts), P(CuiScheduleResult)], None),
+        ("nexa_keymap_ex", [c_void_p, c_char_p, P(CuiKeymapBinding), c_int, P(CuiKeymapOpts), P(CuiKeymapResult)], None),
+        ("nexa_commit_graph_ex", [c_void_p, c_char_p, P(CuiCommit), c_int, P(CuiCommitGraphOpts), P(CuiCommitGraphResult)], None),
+        ("nexa_graph_view_ex", [c_void_p, c_char_p, P(CuiGraphNode), c_int, P(CuiGraphEdge), c_int, P(CuiGraphOpts), P(CuiGraphResult)], None),
+        ("nexa_waterfall_ex", [c_void_p, c_char_p, P(CuiNetRequest), c_int, P(CuiWaterfallOpts), P(CuiWaterfallResult)], None),
+        ("nexa_trace_view_ex", [c_void_p, c_char_p, P(CuiTraceTrack), c_int, P(CuiTraceSpan), c_int, P(CuiTraceView), P(c_int), P(CuiTraceOpts), P(CuiTraceResult)], None),
+        ("nexa_regex_tester_ex", [c_void_p, c_char_p, c_char_p, c_size_t, c_char_p, c_size_t, P(CuiRegexTesterOpts), P(CuiRegexTesterResult)], None),
+        ("nexa_test_explorer_ex", [c_void_p, c_char_p, P(CuiTestItem), c_int, P(CuiTestExplorerOpts), P(CuiTestExplorerResult)], None),
+        ("nexa_stack_trace_ex", [c_void_p, c_char_p, P(CuiStackFrame), c_int, P(CuiStackTraceOpts), P(CuiStackTraceResult)], None),
+        ("nexa_request_bar_ex", [c_void_p, c_char_p, P(c_int), c_char_p, c_size_t, P(CuiRequestBarOpts), P(CuiRequestBarResult)], None),
+        ("nexa_uptime_ex", [c_void_p, c_char_p, P(CuiUptimeService), c_int, P(CuiUptimeOpts), P(CuiUptimeResult)], None),
+        ("nexa_time_histogram_ex", [c_void_p, c_char_p, c_double, c_double, c_int, P(CuiHistogramSeries), c_int, P(c_double), P(c_double), P(CuiTimeHistogramOpts), P(CuiTimeHistogramResult)], None),
+        ("nexa_coverage_ex", [c_void_p, c_char_p, P(CuiCoverageFile), c_int, P(CuiCoverageOpts), P(CuiCoverageResult)], None),
+        ("nexa_blame_ex", [c_void_p, c_char_p, P(c_char_p), P(c_int), c_int, P(CuiBlameCommit), c_int, P(CuiBlameOpts), P(CuiBlameResult)], None),
+        ("nexa_feature_flags_ex", [c_void_p, c_char_p, P(CuiFeatureFlag), c_int, P(c_char_p), c_int, P(CuiFeatureFlagsOpts), P(CuiFeatureFlagsResult)], None),
+        ("nexa_api_explorer_ex", [c_void_p, c_char_p, P(CuiApiEndpoint), c_int, P(CuiApiExplorerOpts), P(CuiApiExplorerResult)], None),
+        ("cui_kv_editor_ex", [c_void_p, c_char_p, P(CuiKvPair), P(c_int), c_int, P(CuiKvEditorOpts)], c_bool),
+        ("cui_query_builder_ex", [c_void_p, c_char_p, P(CuiQueryField), c_int, P(CuiQueryNode), P(c_int), c_int, P(CuiQueryOpts)], c_bool),
+        ("cui_query_text", [P(CuiQueryField), c_int, P(CuiQueryNode), c_int, c_char_p, c_size_t], c_size_t),
+        ("cui_query_match", [P(CuiQueryField), c_int, P(CuiQueryNode), c_int, P(c_char_p)], c_bool),
+        ("cui_query_op_name", [c_void_p, c_int], c_char_p),
+        ("cui_trace_sort", [P(CuiTraceSpan), c_int], None),
+        ("cui_date_to_days", [c_void_p], c_int),
+        ("cui_date_from_days", [c_int], c_void_p),
+        ("cui_emoji_font_load_memory", [c_void_p, c_void_p, c_size_t, c_bool], c_bool),
+        ("cui_log_init", [P(CuiLogBuffer), P(CuiLogLine), c_int, c_char_p, c_size_t], None),
+        ("cui_log_appendv", [P(CuiLogBuffer), c_void_p, c_char_p, c_void_p], None),
+        ("cui_log_get", [P(CuiLogBuffer), c_int, P(c_char_p)], P(CuiLogLine)),
+        ("cui_shortcut_label", [c_void_p, c_void_p], c_char_p),
+        ("cui_flame_span_rect", [c_void_p, c_uint32, P(CuiFlameSpan)], c_void_p),
+        ("cui_gradient_eval", [P(CuiGradientStop), c_int, c_float], c_void_p),
+
+
         # Clip, state & spring animations
         ("cui_pop_clip", [c_void_p], None),
         ("cui_state", [c_void_p, c_uint32, c_size_t], c_void_p),
@@ -2393,7 +2631,17 @@ def bind_prototypes(lib: ctypes.CDLL) -> None:
         ("cui_animate_spring", [c_void_p, c_uint32, c_float, c_float, c_float], c_float),
     ]
 
+    missing: list = []
     for name, argtypes, restype in sigs:
-        fn = getattr(lib, name)
+        try:
+            fn = getattr(lib, name)
+        except AttributeError:
+            missing.append(name)
+            continue
         fn.argtypes = argtypes
         fn.restype = restype
+    return missing
+
+
+# Struct mirrors generated from csrc/include/cui by tools/gen_abi.py
+from ._abi14 import *  # noqa: E402,F401,F403

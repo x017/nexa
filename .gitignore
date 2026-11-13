@@ -25,6 +25,10 @@ dist/
 .coverage
 htmlcov/
 
+# uv: the lockfile is a local dev convenience (regenerate with `make sync`);
+# nexa-ui is a library, so its transitive dev pins are not shipped
+uv.lock
+
 # Virtual environments
 .venv/
 venv/

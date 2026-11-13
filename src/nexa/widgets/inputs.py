@@ -57,6 +57,12 @@ def _build_input_opts(
     height: float = 0.0,
     prefix: Optional[str] = None,
     suffix: Optional[str] = None,
+    bg: ColorLike = None,
+    color: ColorLike = None,
+    text_color: ColorLike = None,
+    placeholder_color: ColorLike = None,
+    border_color: ColorLike = None,
+    focus_color: ColorLike = None,
 ) -> CuiInputOpts:
     opts = CuiInputOpts()
     opts.label = encode_opt(label, keep)
@@ -77,6 +83,17 @@ def _build_input_opts(
         opts.height = float(height)
     opts.prefix = encode_opt(prefix, keep)
     opts.suffix = encode_opt(suffix, keep)
+    # convert lazily: the default path must not pay for ctypes field writes
+    if bg is not None:
+        opts.bg = to_c_color(bg)
+    if text_color is not None or color is not None:
+        opts.text_color = to_c_color(text_color if text_color is not None else color)
+    if placeholder_color is not None:
+        opts.placeholder_color = to_c_color(placeholder_color)
+    if border_color is not None:
+        opts.border_color = to_c_color(border_color)
+    if focus_color is not None:
+        opts.focus_color = to_c_color(focus_color)
     keep.append(opts)
     return opts
 

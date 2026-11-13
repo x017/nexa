@@ -7,15 +7,21 @@ from typing import List, Sequence, Tuple
 
 from .._cdefs import (
     CuiCalEvent,
+    CuiDate,
     CuiGanttOpts,
     CuiGanttTask,
+    CuiMonthEvent,
+    CuiMonthOpts,
+    CuiMonthResult,
     CuiWeekOpts,
     encode_opt,
     encode_str,
+    encode_str_array,
+    to_c_date,
     to_c_size,
 )
 from ..scopes import KanbanScope
-from ..types import CalEvent, Date, GanttTask, SizeLike
+from ..types import CalEvent, Date, GanttTask, MonthEvent, MonthResult, SizeLike, Tone
 
 
 class PlanningMixin:
@@ -122,3 +128,58 @@ class PlanningMixin:
         moved = any((updated[i].start != tasks[i].start or updated[i].end != tasks[i].end) for i in range(n))
         self._record_change(clicked >= 0 or moved)
         return updated, clicked
+
+    def month_calendar(
+        self,
+        id: str,
+        month: Date,
+        events: Sequence[MonthEvent] = (),
+        *,
+        selected: Optional[Date] = None,
+        first_weekday: int = 0,
+        cell_height: float = 104.0,
+        month_names: Sequence[str] = (),
+        day_names: Sequence[str] = (),
+        hour12: bool = False,
+    ) -> MonthResult:
+        """Month grid with day cells holding events; arrows and Today move ``month``.
+
+        The month actually shown comes back on ``result.month`` — keep it.
+        """
+        keep = self._frame_keepalive
+        c_month = to_c_date(month)
+        c_sel = to_c_date(selected if selected is not None else month)
+        n = len(events)
+        arr = (CuiMonthEvent * n)()
+        for i, ev in enumerate(events):
+            arr[i].title = encode_str(ev.title, keep)
+            arr[i].start = to_c_date(ev.start)
+            arr[i].end = to_c_date(ev.end)
+            arr[i].time = float(ev.time)
+            arr[i].all_day = bool(ev.all_day)
+            arr[i].tone = int(ev.tone)
+        opts = CuiMonthOpts()
+        opts.selected = ctypes.cast(ctypes.byref(c_sel), ctypes.POINTER(CuiDate))
+        opts.first_weekday = int(first_weekday)
+        opts.cell_height = float(cell_height)
+        if month_names:
+            m_arr, _ = encode_str_array(month_names, keep)
+            opts.month_names = m_arr
+        if day_names:
+            d_arr, _ = encode_str_array(day_names, keep)
+            opts.day_names = d_arr
+        opts.hour12 = bool(hour12)
+        out = CuiMonthResult()
+        keep.extend((arr, opts, out))
+        self._lib.nexa_month_calendar_ex(
+            self._ctx, encode_str(id, keep), ctypes.byref(c_month), arr, n,
+            ctypes.byref(opts), ctypes.byref(out),
+        )
+        res = MonthResult(
+            event=int(out.event),
+            day_clicked=0 if out.day_clicked else -1,
+            month_changed=bool(out.month_changed),
+            month=Date(c_month.year, c_month.month, c_month.day),
+        )
+        self._record_change(bool(res))
+        return res

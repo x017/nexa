@@ -1,4 +1,4 @@
-"""End-to-end rendering, interaction, and pure-C99 utility tests for CUI v1.1.0 components."""
+"""End-to-end rendering, interaction, and pure-C99 utility tests for the CUI 1.1 component set."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ import nexa as ui
 
 
 def test_version_and_pure_c99_utilities() -> None:
-    assert ui.__version__ == "1.1.0"
-    assert ui.native_version() == "1.1.0"
+    assert ui.__version__ == "1.4.0"
+    assert ui.native_version() == "1.4.0"
 
     # Headless Myers diff & word diff
     old_src = "alpha\nbeta\ngamma\ndelta\n"

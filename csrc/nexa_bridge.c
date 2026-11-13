@@ -644,3 +644,44 @@ CUI_API bool cui_app_screenshot(cui_app *app, void *rgba, int width, int height)
 }
 #endif
 
+
+/* ------------------------------------------------------------------------ */
+/* CUI 1.3/1.4 components that return a struct by value                     */
+/* ------------------------------------------------------------------------ */
+
+CUI_API void nexa_dot_chart_ex(cui_ctx *ui, const char *id, const cui_dot_series *series, int series_count,
+                               int count, const cui_dot_chart_opts *opts, cui_dot_chart_result *out) {
+    cui_dot_chart_result r = cui_dot_chart_ex(ui, id, series, series_count, count, opts);
+    if (out) *out = r;
+}
+
+CUI_API void nexa_event_track_ex(cui_ctx *ui, const char *id, double *times, int *count, int capacity,
+                                 double min, double max, const cui_event_track_opts *opts,
+                                 cui_event_track_result *out) {
+    cui_event_track_result r = cui_event_track_ex(ui, id, times, count, capacity, min, max, opts);
+    if (out) *out = r;
+}
+
+CUI_API void nexa_month_calendar_ex(cui_ctx *ui, const char *id, cui_date *month, const cui_month_event *events,
+                                    int count, const cui_month_opts *opts, cui_month_result *out) {
+    cui_month_result r = cui_month_calendar_ex(ui, id, month, events, count, opts);
+    if (out) *out = r;
+}
+
+CUI_API void nexa_terminal_ex(cui_ctx *ui, const char *id, cui_terminal_buffer *t, const cui_terminal_opts *opts,
+                              cui_terminal_result *out) {
+    cui_terminal_result r = cui_terminal_ex(ui, id, t, opts);
+    if (out) *out = r;
+}
+
+CUI_API void nexa_file_browser_ex(cui_ctx *ui, const char *id, char *path, size_t path_cap,
+                                  const cui_file_browser_opts *opts, cui_file_browser_result *out) {
+    cui_file_browser_result r = cui_file_browser_ex(ui, id, path, path_cap, opts);
+    if (out) *out = r;
+}
+
+/* cui_terminal_printf takes varargs; Python formats first and writes the result. */
+CUI_API void nexa_terminal_print(cui_terminal_buffer *t, const char *text) {
+    if (!t || !text) return;
+    cui_terminal_write(t, text, -1);
+}

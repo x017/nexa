@@ -2,11 +2,12 @@
 
 **nexa** (`pip install nexa-ui`) is a Python port of [CUI](https://github.com/yappologistic/CUI)—a lightweight, zero-dependency C99 immediate-mode desktop UI library with spring motion, Flexbox/Grid layout, and crisp SDF rendering.
 
-![nexa 1.1 Workbench Studio — Dockspace, TreeTable, CodeEditor, FlameGraph & Timeline](https://raw.githubusercontent.com/x017/nexa/main/docs/assets/screenshots/workbench.png)
+![nexa Workbench Studio — Dockspace, TreeTable, CodeEditor, FlameGraph & Timeline](https://raw.githubusercontent.com/x017/nexa/main/docs/assets/screenshots/workbench.png)
 
-- **Sub-megabyte native core**: **820 KB** stripped shared library (`libnexa_cui`) including embedded **Inter**, **Geist Mono**, **168 Lucide icons**, OpenGL 3.3 + multi-threaded CPU software rasterizer, PNG/JPEG loader, optional **BiDi & Arabic OpenType text shaping** (`--rtl`), and OS windowing (**660 KB** in minimal LTO builds).
+- **Just over a megabyte native core**: **1.1 MB** stripped shared library (`libnexa_cui`) including embedded **Inter**, **Geist Mono**, **168 Lucide icons**, a color **emoji font** path, OpenGL 3.3 + multi-threaded CPU software rasterizer, PNG/JPEG loader, **BiDi & Arabic OpenType text shaping** on by default (`--no-rtl` drops it), and OS windowing (**956 KB** in minimal LTO builds).
 - **Zero runtime Python dependencies**: Pure Python standard library (`ctypes` ABI releasing the GIL on every native call, `__slots__` value types, ~48 ms warm import).
-- **160+ components across 20 domains (synced with CUI v1.1)**: Flexbox & grid layouts, multi-split **docking workspaces** (`dockspace`), hierarchical **`tree_table`** & **`path_bar`**, rich CommonMark/GFM **`markdown`**, multi-line **`code_editor`**, side-by-side **`diff_view`**, **`hex_view`**, profiler **`flame_graph`**, **`curve_editor`**, OKLab **`gradient_editor`**, NLE **`timeline_editor`**, virtualized 1M-row lists & editable data grids, 16 chart types, Kanban/Gantt/week calendars, AI agent/chat widgets, media, motion text, property inspector, Bezier node editor, and custom vector canvas.
+- **190+ components across 22 domains (synced with CUI v1.4.0)**: Flexbox & grid layouts, multi-split **docking workspaces** (`dockspace`), hierarchical **`tree_table`** & **`path_bar`**, rich CommonMark/GFM **`markdown`**, multi-line **`code_editor`**, side-by-side **`diff_view`**, **`hex_view`**, profiler **`flame_graph`**, **`curve_editor`**, OKLab **`gradient_editor`**, NLE **`timeline_editor`**, virtualized 1M-row lists & editable data grids, 16 chart types, Kanban/Gantt/week calendars, AI agent/chat widgets, media, motion text, property inspector, Bezier node editor, and custom vector canvas.
+- **CUI 1.2–1.4 additions, all exposed to Python**: right-to-left layout (`direction=`), **terminal** with a real scrollback buffer, **emoji** + color-emoji font and an emoji picker, **file browser**/**file picker**, **image viewer**, **cropper**, **candlestick** charts with **chart annotations**, **month calendar**, app **tour**, and the **instrument cluster** — `knob`, `fader`, `level_meter`, `radial_gauge`, `readout`, `dot_display`, `dot_chart`, `event_track`. CUI 1.3's **developer tools** ride along: `problems`, `pipeline`, `trace_view`, `waterfall`, `graph_view`, `commit_graph`, `keymap`, `test_explorer`, `stack_trace`, `blame`, `coverage`, `regex_tester`, `request_bar`, `api_explorer`, `feature_flags`, `uptime_bars`, `time_histogram`, `kv_editor`, `query_builder`, and `schedule_picker`. Context-free helpers (`regex_search`, `cron_next`/`cron_describe`, `url_params`/`url_set_params`, `http_reason`) come from the same C core.
 - **Value-returning Pythonic API with full control**: Widgets accept and return plain Python values (`str`, `bool`, `int`, `float`, `Color`, `Date`) while exposing transition flags (`changed`, `submitted`, `focused`, `blurred`), hit rects, persistent `state_buffer`, custom `Platform` hooks, and `CustomRenderer` GPU callbacks.
 - **Functional, Procedural, and OOP styles**: Write concise scripts with `import nexa as ui`, modular procedural apps with `ctx: ui.UI`, or multi-screen architectures with `Application`, `Router`, `View`, `Component`, and `Store`.
 - **First-class Concurrency, `asyncio`, & Networking**: 0%-CPU idle sleep with OS-level cross-thread `app.wake()`, `BackgroundRunner` (`submit`, `stream`, `fetch_json`, `fetch_bytes`), MPSC `Channel`, cooperative `await app.run_async(...)`, and threaded `AsyncBridge`.
@@ -45,6 +46,8 @@ pip install -e .
 ```
 
 Only a C99 compiler (`gcc`, `clang`, or MSVC `cl`) is required when building from source—**no `python3-dev` headers, CMake, or `libx11-dev` packages are needed** (`libX11.so.6` is loaded dynamically via `dlopen` on Linux, with automatic headless `SoftwareRenderer` fallback on CI/servers without a display).
+
+> **Upgrading a dev checkout?** `src/nexa/_native/` is git-ignored, so a library built by the previous version survives a `git pull`/`git switch`. It is detected automatically: every build writes a `libnexa_cui.so.stamp` (CUI version + source fingerprint), and on import a mismatched stamp — or a library that lacks the current sentinel symbols — triggers a one-time recompile (about 20 s). You can also force one with `python -m nexa.build`. If you point `NEXA_LIB_PATH` at a stale library yourself, nexa raises a clear error instead of the raw `undefined symbol: cui_…_ex` from `ctypes`.
 
 ---
 
@@ -217,7 +220,7 @@ if __name__ == "__main__":
 
 ## Examples & Tests
 
-Run any of the **13 complete example apps** in [`examples/`](https://github.com/x017/nexa/tree/main/examples):
+Run any of the **16 complete example apps** in [`examples/`](https://github.com/x017/nexa/tree/main/examples):
 
 | Example | Highlights |
 |---|---|
@@ -234,6 +237,17 @@ Run any of the **13 complete example apps** in [`examples/`](https://github.com/
 | [`examples/music.py`](https://github.com/x017/nexa/blob/main/examples/music.py) | `carousel`, `now_playing` transport, scrubbable `waveform`, `reorder` queue |
 | [`examples/gallery.py`](https://github.com/x017/nexa/blob/main/examples/gallery.py) | IDE `menu_bar`/`toolbar`/`doc_tabs`, Bezier `node_editor`, `canvas`, `inspector`, `LogBuffer` |
 | [`examples/async_network.py`](https://github.com/x017/nexa/blob/main/examples/async_network.py) | Cooperative `await app.run_async` + loopback HTTP server + `Channel` |
+| [`examples/instruments.py`](https://github.com/x017/nexa/blob/main/examples/instruments.py) | **New in 1.4**: `knob`, `fader`, `level_meter`, `radial_gauge`, `readout`, `dot_display`, `dot_chart` & `event_track` — a live reactor console |
+| [`examples/devtools.py`](https://github.com/x017/nexa/blob/main/examples/devtools.py) | **New in 1.4**: all 20 CUI 1.3 dev tools — `pipeline`, `problems`, `test_explorer`, `coverage`, `trace_view`, `waterfall`, `api_explorer`, `feature_flags`, `schedule_picker`, `blame`, `commit_graph`… |
+| [`examples/rtl.py`](https://github.com/x017/nexa/blob/main/examples/rtl.py) | **New in 1.4**: Persian RTL studio — system font install, shaped text, `month_calendar`, `terminal`, `file_browser`, `candlestick`, `image_viewer`/`cropper`, `emoji_picker`, `tour` |
+
+<p align="center">
+  <img src="docs/assets/screenshots/instruments.png" width="49%" alt="Reactor Console — knobs, faders, meters, dot chart" />
+  <img src="docs/assets/screenshots/devtools.png" width="49%" alt="DevTools Studio — pipeline, problems, coverage, traces" />
+</p>
+<p align="center">
+  <img src="docs/assets/screenshots/rtl.png" width="66%" alt="Studio فارسی — right-to-left Persian UI with a system font" />
+</p>
 
 Render headless screenshots on any machine or CI runner:
 
@@ -249,6 +263,50 @@ pytest -v
 
 ---
 
+## Changelog
+
+Release notes for every version — components, engine changes, fixes and
+measurements — live in [CHANGELOG.md](CHANGELOG.md), and on the site at
+[guide.html#changelog](http://parsa.x017.ir/nexa/guide.html#changelog).
+
+## Development
+
+```bash
+git clone https://github.com/x017/nexa && cd nexa
+
+# with uv — no pip in the environment, the Makefile uses `uv pip` / `uv venv`
+uv sync --extra dev                    # or: make sync
+# …or with pip
+python3 -m pip install -e ".[dev]"
+
+make test                              # builds the native library on first run, then pytest
+make examples                          # headless screenshots of all 16 examples → build/screenshots/
+```
+
+The installer is picked automatically: if `uv` is on `PATH` the Makefile uses
+`uv venv` + `uv pip install --python <interpreter>` (uv virtualenvs ship without
+pip), otherwise `python -m venv` + `python -m pip`. Force one explicitly with
+`make INSTALLER=pip …` or `make INSTALLER=uv …`; `make help` prints which
+installer and interpreter are in effect. `uv run make test` works too, since
+`uv` keeps the project environment in sync.
+
+`make` on its own lists every task:
+
+| Task | What it does |
+|---|---|
+| `make native` | compile the C99 engine (`RTL=0`, `LTO=1`, `MINIMAL=1`, `DEBUG=1`, `OUT=…`; a shapeless build at the default path is replaced on next import, so pair `RTL=0` with `OUT=` + `NEXA_LIB_PATH`) |
+| `make native-info` | which library is loaded, its build stamp and whether shaping is on |
+| `make test` / `make test-quick` | full pytest suite / everything but the slow example + packaging tests |
+| `make examples` / `make example EXAMPLE=rtl` | render every example headless / run one |
+| `make docs` | rebuild the HTML + wiki bundle from `README.md` and `docs/*.md` |
+| `make bridge-check` / `make abi` | verify or regenerate the generated ctypes/C bridge code |
+| `make dist` / `make check` | sdist + wheel into `dist/`, then `twine check --strict` |
+| `make testpypi` / `make publish PUBLISH=yes` | upload to TestPyPI / PyPI |
+| `make ci` | build + test + docs + generated-code check |
+
 ## License
 
 MIT License. Bundled fonts (Inter, Geist Mono, Lucide) and single-header libraries (`stb_*`) are permissive open-source; see [`LICENSE`](https://github.com/x017/nexa/blob/main/LICENSE), [`THIRD_PARTY.md`](https://github.com/x017/nexa/blob/main/THIRD_PARTY.md), and [`RELEASING.md`](https://github.com/x017/nexa/blob/main/RELEASING.md).
+
+> `uv sync` writes a local `uv.lock`; it is intentionally *not* tracked, since
+> nexa-ui is a library and those are dev-only pins.

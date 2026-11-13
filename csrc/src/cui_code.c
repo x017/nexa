@@ -1,7 +1,6 @@
 /* Code block with syntax highlighting, and a JSON viewer. */
 #include "cui_internal.h"
 
-#define cui__fs cui__fsz
 
 /* ------------------------------------------------------------------------ */
 /* Tokenizer                                                                */
@@ -54,6 +53,8 @@ cui__lang cui__lang_for(const char *lang) {
         l.kw = kw_go; l.types = ty_go; l.line_comment = "//"; l.block_comments = true; l.backtick = true;
     } else if (!strcmp(lang, "shell") || !strcmp(lang, "sh") || !strcmp(lang, "bash")) {
         l.kw = kw_sh; l.line_comment = "#"; l.no_caps_types = true;
+    } else if (!strcmp(lang, "text") || !strcmp(lang, "plain")) {
+        l.plain = true;
     }
     return l;
 }
@@ -69,6 +70,7 @@ static bool cui__ident_char(char c) { return cui__ident_start(c) || (c >= '0' &&
 int cui__tokenize(const cui__lang *L, bool json, const char *s, int n, bool *in_block, cui__tok *out, int cap) {
     int count = 0, i = 0;
 #define EMIT(st, ln, k) do { if (count < cap) { out[count].start = (st); out[count].len = (ln); out[count].kind = (uint8_t)(k); count++; } } while (0)
+    if (L->plain) { if (n > 0) EMIT(0, n, TK_TEXT); return count; }
     while (i < n) {
         if (*in_block) {
             int st = i;
@@ -147,18 +149,28 @@ void cui__syntax_colors(cui_ctx *ui, cui_color *c) {
     c[TK_CONST] = dark ? cui_oklch(0.80f, 0.13f, 60, 1) : cui_oklch(0.58f, 0.16f, 50, 1);
 }
 
-/* The highlighter for other components (the diff viewer): one line at a time,
- * the token kinds index the colors from cui__code_colors. */
-typedef char cui__code_kinds_match[TK_COUNT == CUI__CODE_KINDS ? 1 : -1];
-int cui__code_tokens(const char *lang, const char *s, int n, bool *in_block, cui__code_tok *out, int cap) {
+/* the highlighter by language name, for other components (the diff viewer) */
+int cui__tokenize_lang(const char *lang, const char *s, int n, bool *in_block, cui__tok *out, int cap) {
     bool json = lang && !strcmp(lang, "json");
     cui__lang L = cui__lang_for(json ? NULL : lang);
-    cui__tok toks[256];
-    int count = cui__tokenize(&L, json, s, n, in_block, toks, cap < 256 ? cap : 256);
-    for (int k = 0; k < count; k++) { out[k].start = toks[k].start; out[k].len = toks[k].len; out[k].kind = toks[k].kind; }
-    return count;
+    return cui__tokenize(&L, json, s, n, in_block, out, cap < 256 ? cap : 256);
 }
-void cui__code_colors(cui_ctx *ui, cui_color *colors) { cui__syntax_colors(ui, colors); }
+
+float cui__draw_code_line(cui_ctx *ui, const char *lang, const char *s, int n, bool *in_block, float x, float y, float size, const cui_color *colors, float max_x) {
+    if (!lang) {
+        cui__draw_text_line(ui, CUI_FONT_MONO, size, x, y, colors[TK_TEXT], s, n, true);
+        return x + cui__text_width(ui, CUI_FONT_MONO, size, s, n, true);
+    }
+    cui__tok tk[256];
+    int nt = cui__tokenize_lang(lang, s, n, in_block, tk, 256), pos = 0;
+    for (int t = 0; t < nt && x <= max_x; t++) {
+        if (tk[t].start > pos) x += cui__text_width(ui, CUI_FONT_MONO, size, s + pos, tk[t].start - pos, true);
+        cui__draw_text_line(ui, CUI_FONT_MONO, size, x, y, colors[tk[t].kind], s + tk[t].start, tk[t].len, true);
+        x += cui__text_width(ui, CUI_FONT_MONO, size, s + tk[t].start, tk[t].len, true);
+        pos = tk[t].start + tk[t].len;
+    }
+    return x;
+}
 
 /* ------------------------------------------------------------------------ */
 /* Code block                                                               */
@@ -213,7 +225,16 @@ static void cui__paint_code(cui_ctx *ui, cui_node *n, void *data) {
     }
 }
 
+static void cui__code_block_ex_body(cui_ctx *ui, const char *id_str, const char *code, const cui_code_opts *o);
+
+/* left to right in any interface: see cui__keep_ltr */
 void cui_code_block_ex(cui_ctx *ui, const char *id_str, const char *code, const cui_code_opts *o) {
+    int first = ui->node_count;
+    cui__code_block_ex_body(ui, id_str, code, o);
+    cui__keep_ltr(ui, first);
+}
+
+static void cui__code_block_ex_body(cui_ctx *ui, const char *id_str, const char *code, const cui_code_opts *o) {
     cui_code_opts d;
     memset(&d, 0, sizeof d);
     if (!o) o = &d;
@@ -297,7 +318,7 @@ void cui_code_block_ex(cui_ctx *ui, const char *id_str, const char *code, const 
     p->size = size; p->lh = lh; p->gutter = gutter; p->pad = pad;
     cui__syntax_colors(ui, p->colors);
     p->gutter_c = cui_alpha(CUI_C(ui, TEXT_MUTED), 0.7f);
-    p->hl_c = cui_alpha(ui->accent == CUI_ACCENT_NEUTRAL ? CUI_C(ui, FOREGROUND) : CUI_C(ui, ACCENT), ui->mode == CUI_THEME_DARK ? 0.12f : 0.08f);
+    p->hl_c = cui_alpha(cui__emphasis(ui), ui->mode == CUI_THEME_DARK ? 0.12f : 0.08f);
     cn->paint = cui__paint_code;
     cn->paint_data = p;
     cui__scroll_end_ex(ui);
@@ -414,8 +435,7 @@ static void cui__json_rows(cui_ctx *ui, cui_id id, cui__jparse *p, cui__json_sta
     cui_id rid = cui__hash(&node, sizeof node, id);
     cui_interact r = cui__interact(ui, rid, 0);
     if (r.clicked && container && node < 4096) { st->collapsed[node >> 3] ^= (uint8_t)(1 << (node & 7)); collapsed = !collapsed; }
-    float *hv = cui_state(ui, rid, sizeof(float));
-    cui__tween(ui, hv, (r.hovered && container) ? 1.0f : 0.0f, CUI__T_HIGHLIGHT);
+    float hv_v = cui__hover_fade(ui, rid, (r.hovered && container), CUI__T_HIGHLIGHT), *hv = &hv_v;
     float fs = cui__fs(ui, 13);
     int row = cui__node_new(ui, rid);
     cui_node *rn = &ui->nodes[row];
@@ -463,7 +483,17 @@ static void cui__json_rows(cui_ctx *ui, cui_id id, cui__jparse *p, cui__json_sta
     }
 }
 
+static bool cui__json_view_ex_body(cui_ctx *ui, const char *id_str, const char *json, const cui_json_opts *o);
+
+/* left to right in any interface: see cui__keep_ltr */
 bool cui_json_view_ex(cui_ctx *ui, const char *id_str, const char *json, const cui_json_opts *o) {
+    int first = ui->node_count;
+    bool r = cui__json_view_ex_body(ui, id_str, json, o);
+    cui__keep_ltr(ui, first);
+    return r;
+}
+
+static bool cui__json_view_ex_body(cui_ctx *ui, const char *id_str, const char *json, const cui_json_opts *o) {
     cui_json_opts d;
     memset(&d, 0, sizeof d);
     if (!o) o = &d;

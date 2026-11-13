@@ -2,7 +2,6 @@
  * ticker. */
 #include "cui_internal.h"
 
-#define cui__fs cui__fsz
 
 /* ------------------------------------------------------------------------ */
 /* Carousel                                                                 */
@@ -27,7 +26,7 @@ struct cui_carousel_build {
     struct cui_carousel_build *prev;
 };
 
-static struct cui_carousel_build *cui__car_top(cui_ctx *ui) { return (struct cui_carousel_build *)ui->carousel; }
+static struct cui_carousel_build *cui__car_top(cui_ctx *ui) { return (struct cui_carousel_build *)ui->building.carousel; }
 
 bool cui_carousel_begin(cui_ctx *ui, const char *id_str, int count, int *index, const cui_carousel_opts *o) {
     cui_carousel_opts d;
@@ -40,8 +39,8 @@ bool cui_carousel_begin(cui_ctx *ui, const char *id_str, int count, int *index, 
     b->count = count < 0 ? 0 : count;
     b->index = index;
     b->o = *o;
-    b->prev = (struct cui_carousel_build *)ui->carousel;
-    ui->carousel = b;
+    b->prev = (struct cui_carousel_build *)ui->building.carousel;
+    ui->building.carousel = b;
     cui__car_state *st = cui_state(ui, b->id, sizeof *st);
     b->st = st;
     if (*index < 0) *index = 0;
@@ -103,10 +102,11 @@ bool cui_carousel_begin(cui_ctx *ui, const char *id_str, int count, int *index, 
     cui__mark_interactive(ui, view, CUI_IF_FOCUSABLE | CUI_IF_DRAG);
     if (r.hovered) cui__set_cursor(ui, st->dragging ? CUI_CURSOR_MOVE : CUI_CURSOR_ARROW);
     cui__open(ui, view);
-    int row = cui__node_new(ui, 0);
+    /* the track of slides is a layer inside the clipped view: it never sets the view's minimum
+       width, so the carousel fits a phone and every slide takes the width the view has */
+    int row = cui__absolute(ui, 0, 0, 0, b->count * stride, h);
     cui_node *rn = &ui->nodes[row];
-    rn->dir = CUI_ROW; rn->gap = gap; rn->h = CUI_FILL;
-    rn->w = CUI_PX(b->count * stride);
+    rn->dir = CUI_ROW; rn->gap = gap;
     rn->tx = -st->pos.x * stride;
     cui__open(ui, row);
     b->row = row;
@@ -183,7 +183,7 @@ void cui_carousel_end(cui_ctx *ui) {
         cui__close(ui);
     }
     cui__close(ui);   /* column */
-    ui->carousel = b->prev;
+    ui->building.carousel = b->prev;
     ui->last_id = b->id;
 }
 
@@ -299,8 +299,8 @@ void cui_card_stack_begin(cui_ctx *ui, const char *id_str, int count, const cui_
     b->count = count;
     b->visible = o->visible > 0 ? o->visible : 3;
     b->h = o->height > 0 ? o->height : 320;
-    b->prev = (struct cui_stack_build *)ui->card_stack;
-    ui->card_stack = b;
+    b->prev = (struct cui_stack_build *)ui->building.card_stack;
+    ui->building.card_stack = b;
     cui__stack_state *st = cui_state(ui, b->id, sizeof *st);
     b->st = st;
     cui_id top_id = b->id ^ 0x70Bu;
@@ -353,7 +353,7 @@ void cui_card_stack_begin(cui_ctx *ui, const char *id_str, int count, const cui_
 }
 
 void cui_card_stack_item_begin(cui_ctx *ui, int depth) {
-    struct cui_stack_build *b = (struct cui_stack_build *)ui->card_stack;
+    struct cui_stack_build *b = (struct cui_stack_build *)ui->building.card_stack;
     if (!b) { int n = cui__node_new(ui, 0); cui__open(ui, n); return; }
     cui__stack_state *st = b->st;
     bool top = depth == 0;
@@ -389,7 +389,7 @@ void cui_card_stack_item_end(cui_ctx *ui) {
 }
 
 int cui_card_stack_end(cui_ctx *ui) {
-    struct cui_stack_build *b = (struct cui_stack_build *)ui->card_stack;
+    struct cui_stack_build *b = (struct cui_stack_build *)ui->building.card_stack;
     if (!b) return 0;
     /* paint deeper cards first: reverse the children so the top card is last */
     cui__close(ui);
@@ -402,7 +402,7 @@ int cui_card_stack_end(cui_ctx *ui) {
         while (c >= 0) { int nx = ui->nodes[c].next; ui->nodes[c].next = prev; prev = c; c = nx; }
         bn->first = prev;
     }
-    ui->card_stack = b->prev;
+    ui->building.card_stack = b->prev;
     ui->last_id = b->id;
     return b->result;
 }
@@ -433,7 +433,16 @@ static void cui__paint_digit(cui_ctx *ui, cui_node *n, void *data) {
     cui_pop_clip(ui);
 }
 
+static void cui__counter_ex_body(cui_ctx *ui, const char *id_str, double value, const cui_counter_opts *o);
+
+/* left to right in any interface: see cui__keep_ltr */
 void cui_counter_ex(cui_ctx *ui, const char *id_str, double value, const cui_counter_opts *o) {
+    int first = ui->node_count;
+    cui__counter_ex_body(ui, id_str, value, o);
+    cui__keep_ltr(ui, first);
+}
+
+static void cui__counter_ex_body(cui_ctx *ui, const char *id_str, double value, const cui_counter_opts *o) {
     cui_counter_opts d;
     memset(&d, 0, sizeof d);
     if (!o) o = &d;
@@ -582,12 +591,11 @@ void cui_ticker_ex(cui_ctx *ui, const char *id_str, const cui_ticker_item *items
     bn->paint_data = ep;
     cui__mark_interactive(ui, box, 0);
     cui__open(ui, box);
-    int strip = cui__node_new(ui, 0);
+    /* a layer wider than the view, so items keep their natural width; as a layer it does not
+       set the ticker's minimum width, which stays narrow enough for a phone */
+    int strip = cui__absolute(ui, 0, 0, 0, st->set_w > 0 ? st->set_w * 3 + 16 : 6000, h);
     ui->nodes[strip].dir = CUI_ROW; ui->nodes[strip].align = CUI_ALIGN_CENTER;
     ui->nodes[strip].tx = -st->off;
-    /* wider than the view so items keep their natural width instead of shrinking */
-    ui->nodes[strip].w = CUI_PX(st->set_w > 0 ? st->set_w * 3 + 16 : 6000);
-    ui->nodes[strip].self_align = CUI__ALIGN_NOSTRETCH;
     cui__open(ui, strip);
     /* enough copies to cover the width while one scrolls off */
     cui__ticker_set(ui, set_id, items, count);

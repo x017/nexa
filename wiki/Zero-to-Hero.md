@@ -1,6 +1,6 @@
 # Zero to Hero: The Complete `nexa` Full Tutorial
 
-Welcome to the complete, end-to-end **Zero to Hero** course for **`nexa`** (`v1.1.0`)—a zero-dependency Python port of [CUI](https://github.com/yappologistic/CUI) for building fast, native immediate-mode desktop UIs.
+Welcome to the complete, end-to-end **Zero to Hero** course for **`nexa`** (`v1.4.0`)—a zero-dependency Python port of [CUI](https://github.com/yappologistic/CUI) for building fast, native immediate-mode desktop UIs.
 
 By the end of this single comprehensive tutorial, you will go from **opening your very first 15-line native window** all the way to **architecting, testing, and packaging a multi-pane desktop IDE & telemetry studio** (*Pulse Studio*) with interactive docking, virtualized tree & data grids, syntax-highlighted code and Myers diff editors, CommonMark/GFM checklists, live charts, flame profilers, background worker streams, and headless `pytest` verification.
 
@@ -1001,7 +1001,7 @@ if __name__ == "__main__":
 
 ## Module 5: Studio & Creative Tools — Dockspace, Node Graphs, Curves, Timelines & Custom SDF Canvas
 
-With CUI v1.1 synced into `nexa`, you can build full **game-engine, audio/video NLE, debugger, and hardware instrumentation studios**:
+With CUI v1.1–1.4 synced into `nexa`, you can build full **game-engine, audio/video NLE, debugger, and hardware instrumentation studios**:
 
 1. **`dockspace` & `dock_panel`**: Multi-split tabbed workspaces! Pass a compact layout string like `"h0.32([*Graph,Hex],v0.55([*Canvas],[*Timeline,Flame]))"`:
    - `h<ratio>(A,B)` splits horizontally (`left`, `right`); `v<ratio>(A,B)` splits vertically (`top`, `bottom`).

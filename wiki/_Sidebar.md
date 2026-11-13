@@ -15,4 +15,4 @@
 - **[Canvas, GPU & Packaging](Canvas-GPU-and-Packaging)**
 
 #### API Reference
-- **[160+ Components Reference](Components-Reference)**
+- **[190+ Components Reference](Components-Reference)**

@@ -3,7 +3,6 @@
  * inline edit, scrub field, money field and shortcut recorder. */
 #include "cui_internal.h"
 
-#define cui__fs cui__fsz
 
 
 static int cui__find_node(cui_ctx *ui, cui_id id) {
@@ -80,7 +79,8 @@ int cui_split_button_ex(cui_ctx *ui, const char *label, const char *const *items
     cui_id chev_id = ui->last_id;
     cui_pop_id(ui);
     cui__close(ui);
-    if (chev && p) cui__popup_set(ui, pid, !p->open);
+    bool key_activate = ui->focus == chev_id && ui->focus_visible && (cui_key_pressed(ui, CUI_KEY_ENTER) || cui_key_pressed(ui, CUI_KEY_SPACE));
+    if (chev && p && !(p->open && key_activate)) cui__popup_set(ui, pid, !p->open);   /* Enter picks the highlighted item. */
     if (p && !p->open && ui->focus == chev_id && ui->focus_visible && cui_key_pressed(ui, CUI_KEY_DOWN)) cui__popup_set(ui, pid, true);
     int result = main ? 0 : -1;
     if (cui__popup_begin(ui, pid, gid, CUI_PLACE_BOTTOM_END, 0, 6, 0, true)) {
@@ -385,7 +385,7 @@ int cui_reactions(cui_ctx *ui, const char *id_str, cui_reaction *items, int coun
         cui__tween(ui, &st->t, 1.0f, 0.2f);
         cui__tween(ui, &st->on, it->active ? 1.0f : 0.0f, CUI__T_STATE);
         cui__spring(ui, &st->pop, 1.0f, 0.35f, 0.35f);
-        cui_color accent = ui->accent == CUI_ACCENT_NEUTRAL ? CUI_C(ui, FOREGROUND) : CUI_C(ui, ACCENT);
+        cui_color accent = cui__emphasis(ui);
         int pill = cui__node_new(ui, iid);
         cui_node *pn = &ui->nodes[pill];
         pn->dir = CUI_ROW; pn->align = CUI_ALIGN_CENTER; pn->gap = 6;
@@ -714,8 +714,8 @@ void cui_swipe_item_begin(cui_ctx *ui, const char *id_str, const cui_swipe_actio
                           const cui_swipe_action *right, int right_count) {
     struct cui_swipe_build *b = cui__frame_alloc(ui, sizeof *b);
     b->result = -1;
-    b->prev = ui->swipe;
-    ui->swipe = b;
+    b->prev = ui->building.swipe;
+    ui->building.swipe = b;
     cui_id id = cui_make_id(ui, id_str);
     cui_id fid = id ^ 0x5F1Fu;
     cui__swipe_state *st = cui_state(ui, id, sizeof *st);
@@ -801,12 +801,12 @@ void cui_swipe_item_begin(cui_ctx *ui, const char *id_str, const cui_swipe_actio
 }
 
 int cui_swipe_item_end(cui_ctx *ui) {
-    struct cui_swipe_build *b = ui->swipe;
+    struct cui_swipe_build *b = ui->building.swipe;
     if (!b) return -1;
     cui_pop_id(ui);
     cui__close(ui);   /* foreground row */
     cui__close(ui);   /* stack */
-    ui->swipe = b->prev;
+    ui->building.swipe = b->prev;
     return b->result;
 }
 
@@ -1139,7 +1139,17 @@ static void cui__paint_rec_dot(cui_ctx *ui, cui_node *n, void *data) {
     cui_draw_circle(ui, c, 3.5f, cui_alpha(p->c, p->t));
 }
 
+static bool cui__shortcut_recorder_ex_body(cui_ctx *ui, const char *id_str, cui_key_combo *combo, const cui_shortcut_recorder_opts *o);
+
+/* left to right in any interface: see cui__keep_ltr */
 bool cui_shortcut_recorder_ex(cui_ctx *ui, const char *id_str, cui_key_combo *combo, const cui_shortcut_recorder_opts *o) {
+    int first = ui->node_count;
+    bool r = cui__shortcut_recorder_ex_body(ui, id_str, combo, o);
+    cui__keep_ltr(ui, first);
+    return r;
+}
+
+static bool cui__shortcut_recorder_ex_body(cui_ctx *ui, const char *id_str, cui_key_combo *combo, const cui_shortcut_recorder_opts *o) {
     cui_shortcut_recorder_opts d;
     memset(&d, 0, sizeof d);
     if (!o) o = &d;
@@ -1181,7 +1191,7 @@ bool cui_shortcut_recorder_ex(cui_ctx *ui, const char *id_str, cui_key_combo *co
     cui__tween(ui, &st->hover, r.hovered ? 1.0f : 0.0f, CUI__T_HOVER);
     cui__tween(ui, &st->rec, st->recording ? 1.0f : 0.0f, CUI__T_STATE);
     float h = cui__control_height(ui, CUI_SIZE_MD);
-    cui_color accent = ui->accent == CUI_ACCENT_NEUTRAL ? CUI_C(ui, FOREGROUND) : CUI_C(ui, ACCENT);
+    cui_color accent = cui__emphasis(ui);
     int box = cui__node_new(ui, id);
     cui_node *bn = &ui->nodes[box];
     bn->dir = CUI_ROW; bn->align = CUI_ALIGN_CENTER; bn->gap = 8;

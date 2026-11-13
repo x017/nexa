@@ -8,6 +8,7 @@ from typing import List, Optional, Sequence, Tuple
 
 from .._cdefs import (
     CuiColor,
+    CuiEmojiPickerOpts,
     CuiDate,
     CuiDateOpts,
     CuiDateRange,
@@ -26,7 +27,7 @@ from .._cdefs import (
     to_c_date_range,
     to_c_size,
 )
-from ..types import Color, ColorLike, Date, DateRange, SizeLike
+from ..types import Color, ColorLike, Date, DateRange, SizeLike, Tone
 
 
 class PickersMixin:
@@ -302,3 +303,70 @@ class PickersMixin:
         ))
         self._record_change(changed)
         return Color._from_packed(int(c_col.value))
+
+    # ---- Emoji (CUI 1.2) ----
+
+    def load_emoji_font(self, path: Optional[str] = None) -> bool:
+        """Load a color emoji font: the system's when ``path`` is None, else that file."""
+        if path is None:
+            return bool(self._lib.cui_emoji_font_load_system(self._ctx))
+        return bool(self._lib.cui_emoji_font_load_file(self._ctx, path.encode("utf-8")))
+
+    def emoji_supported(self, text: str) -> bool:
+        """Whether the loaded font (or platform) can draw ``text`` as an emoji."""
+        raw = text.encode("utf-8")
+        return bool(self._lib.cui_emoji_supported(self._ctx, raw, len(raw)))
+
+    def emoji(self, text: str, *, size: float = 16.0) -> None:
+        """Draw one emoji (any grapheme cluster) at ``size`` points."""
+        self._lib.cui_emoji(self._ctx, encode_str(text, self._frame_keepalive), float(size))
+
+    def emoji_picker(
+        self,
+        id: str,
+        *,
+        width: SizeLike = None,
+        height: float = 280.0,
+        size: float = 26.0,
+        recent: str = "",
+        tone: int = 0,
+        placeholder: Optional[str] = None,
+        empty_text: Optional[str] = None,
+        hint: Optional[str] = None,
+        group_names: Sequence[str] = (),
+        no_search: bool = False,
+        no_preview: bool = False,
+        no_tone: bool = False,
+    ) -> Optional[str]:
+        """The 1,914-emoji picker with search, groups and recent emoji.
+
+        Returns the emoji chosen this frame (or None).  ``recent`` is a
+        space-separated list the picker keeps up to date, so pass it back and
+        save it; ``tone`` is the 0-5 skin tone.
+        """
+        keep = self._frame_keepalive
+        opts = CuiEmojiPickerOpts()
+        opts.width = to_c_size(width)
+        opts.height = float(height)
+        opts.size = float(size)
+        recent_buf = ctypes.create_string_buffer(recent.encode("utf-8"), 2048)
+        opts.recent = ctypes.cast(recent_buf, ctypes.c_char_p)
+        opts.recent_cap = ctypes.c_size_t(len(recent_buf))
+        c_tone = c_int(int(tone))
+        opts.tone = ctypes.cast(ctypes.byref(c_tone), ctypes.POINTER(c_int))
+        opts.placeholder = encode_opt(placeholder, keep)
+        opts.empty_text = encode_opt(empty_text, keep)
+        opts.hint = encode_opt(hint, keep)
+        if group_names:
+            arr, n = encode_str_array(group_names, keep)
+            opts.group_names = arr
+            del n
+        opts.no_search = bool(no_search)
+        opts.no_preview = bool(no_preview)
+        opts.no_tone = bool(no_tone)
+        keep.extend((opts, recent_buf, c_tone))
+        picked = self._lib.cui_emoji_picker_ex(self._ctx, encode_str(id, keep), ctypes.byref(opts))
+        self._record_change(picked is not None)
+        if not picked:
+            return None
+        return picked.decode("utf-8", errors="replace")

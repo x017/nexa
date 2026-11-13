@@ -46,8 +46,41 @@ from .scopes import (
     VirtualListScope,
 )
 from .theme import ThemeProxy, accent_name, mix_colors, oklch, with_alpha
+from . import fonts
+from .util import (
+    REGEX_DOTALL,
+    REGEX_IGNORECASE,
+    REGEX_MULTILINE,
+    RegexMatch,
+    cron_describe,
+    cron_next,
+    http_method_name,
+    http_reason,
+    regex_search,
+    url_params,
+    url_set_params,
+)
 from .types import (
     FILL,
+    AnnotationKind,
+    Candle,
+    ChartAnnotation,
+    DotChartResult,
+    DotSeries,
+    EventTrackResult,
+    FileBrowserResult,
+    FileEntry,
+    FilePickerResult,
+    ImageView,
+    MonthEvent,
+    MonthResult,
+    TerminalBuffer,
+    JobStatus,
+    QueryType,
+    Severity,
+    TerminalResult,
+    TextDirection,
+    TourStep,
     FIT,
     GROW,
     PCT,
@@ -171,7 +204,7 @@ from .ui import Context, UI
 from .widgets.data import diff_compute, diff_words, markdown_apply_task, tree_sort
 from .widgets.tools import LogBuffer, curve_eval, flame_sort, gradient_eval
 
-__version__ = "1.1.0"
+__version__ = "1.4.0"
 
 # Populate functional top-level API (`nexa.row(...)`, `nexa.button(...)`, `nexa.run(...)`, etc.)
 globals().update(FUNCTIONAL_EXPORTS)

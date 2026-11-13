@@ -39,6 +39,13 @@ CUI_API void cui_sw_render(cui_sw_renderer *r, const cui_draw_data *dd, void *pi
                            int width, int height, int stride, cui_sw_format format);
 /* Number of worker threads (1 = single threaded, default: number of cores up to 8). */
 CUI_API void cui_sw_set_threads(cui_sw_renderer *r, int threads);
+/* Incremental rendering: when the same buffer is passed again, with what the last
+ * call drew still in it, only the parts that changed are drawn again. A frame
+ * where only a button's hover changed costs that button. Off by default.
+ * cui_sw_last_damage gives the rectangle the last call drew (in pixels), so only
+ * that part needs copying to the screen; it returns false when nothing changed. */
+CUI_API void cui_sw_set_incremental(cui_sw_renderer *r, bool on);
+CUI_API bool cui_sw_last_damage(const cui_sw_renderer *r, int *x, int *y, int *w, int *h);
 
 /* Writes a PNG file (RGBA pixels). Returns false on failure. */
 CUI_API bool cui_write_png(const char *path, const void *rgba, int width, int height, int stride);
@@ -59,6 +66,10 @@ CUI_API cui_renderer_iface cui_gl_iface(cui_gl_renderer *r);
 CUI_API void cui_gl_render(cui_gl_renderer *r, const cui_draw_data *dd, bool clear);
 /* Reads the bound framebuffer into a top-down RGBA buffer. */
 CUI_API void cui_gl_read_pixels(cui_gl_renderer *r, int width, int height, void *rgba);
+/* True when the OpenGL driver draws on the CPU (Mesa llvmpipe, SwiftShader and the
+ * like, as in virtual machines and remote sessions). CUI's own software renderer,
+ * which redraws only what changed, is then much cheaper. */
+CUI_API bool cui_gl_is_software(const cui_gl_renderer *r);
 
 #ifdef __cplusplus
 }

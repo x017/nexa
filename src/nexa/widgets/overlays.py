@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import ctypes
-from ctypes import c_bool
-from typing import Optional
+from ctypes import c_bool, c_int
+from typing import Optional, Sequence, Tuple
 
 from .._cdefs import (
     CuiConfirmPopoverOpts,
+    CuiTourOpts,
+    CuiTourStep,
     CuiDialogOpts,
     CuiExpandableCardOpts,
     CuiExpandableTextOpts,
@@ -22,7 +24,7 @@ from .._cdefs import (
     to_c_color,
 )
 from ..scopes import ConditionalScope, OpenStateScope, SimpleScope
-from ..types import ButtonVariant, ColorLike, Placement, Side, Tone
+from ..types import ButtonVariant, ColorLike, Placement, Side, Tone, TourStep
 
 
 class OverlaysMixin:
@@ -311,3 +313,48 @@ class OverlaysMixin:
         return bool(self._lib.cui_expandable_text_ex(
             self._ctx, encode_str(id, keep), encode_str(text, keep), ctypes.byref(opts)
         ))
+
+    # ---- Onboarding tour (CUI 1.4) ----
+
+    def tour(
+        self,
+        id: str,
+        steps: Sequence[TourStep],
+        step: int,
+        *,
+        width: float = 300.0,
+        padding: float = 6.0,
+        block_target: bool = False,
+        next_label: Optional[str] = None,
+        back_label: Optional[str] = None,
+        done_label: Optional[str] = None,
+        count_format: Optional[str] = None,
+    ) -> Tuple[int, str]:
+        """Spotlight tour over ``steps``; returns ``(step, action)``.
+
+        ``action`` is one of ``"none"``, ``"next"``, ``"back"``, ``"done"`` or
+        ``"skipped"``.  Targets are component ids (``ctx.last_id``).
+        """
+        keep = self._frame_keepalive
+        n = len(steps)
+        arr = (CuiTourStep * max(1, n))()
+        for i, item in enumerate(steps):
+            arr[i].target = int(item.target)
+            arr[i].title = encode_str(item.title, keep)
+            arr[i].body = encode_opt(item.body, keep)
+            arr[i].placement = int(item.placement)
+        opts = CuiTourOpts()
+        opts.width = float(width)
+        opts.padding = float(padding)
+        opts.block_target = bool(block_target)
+        opts.next_label = encode_opt(next_label, keep)
+        opts.back_label = encode_opt(back_label, keep)
+        opts.done_label = encode_opt(done_label, keep)
+        opts.count_format = encode_opt(count_format, keep)
+        c_step = c_int(int(step))
+        keep.extend((arr, opts, c_step))
+        action = int(self._lib.cui_tour_ex(
+            self._ctx, encode_str(id, keep), arr, n, ctypes.byref(c_step), ctypes.byref(opts)
+        ))
+        names = {0: "none", 1: "next", 2: "back", 3: "done", 4: "skipped"}
+        return int(c_step.value), names.get(action, "none")

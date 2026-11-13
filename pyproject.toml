@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nexa-ui"
-version = "1.1.0"
+version = "1.4.0"
 description = "Fast, tiny, zero-dependency immediate-mode desktop UI for Python — a Python port of CUI"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "MIT"
@@ -71,6 +71,13 @@ nexa-build = "nexa.build:main"
 
 [project.entry-points.pyinstaller40]
 hook-dirs = "nexa._pyinstaller:get_hook_dirs"
+
+[tool.pytest.ini_options]
+# plain `pytest` works from a fresh clone; the Python side builds the native
+# library on first import, so there is nothing to compile before `make test`
+testpaths = ["tests"]
+addopts = "-ra"
+norecursedirs = ["build", "dist", "docs", "wiki", "examples", "csrc", ".venv"]
 
 [tool.cibuildwheel]
 # nexa binds via ctypes (`py3-none-<plat>`) without linking libpython, so one build per OS/arch

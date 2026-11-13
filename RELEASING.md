@@ -37,17 +37,19 @@ Pushing a `v*.*.*` git tag triggers [`.github/workflows/release.yml`](.github/wo
 
 ```bash
 # 1. Update version in BOTH files so they match:
-#    - pyproject.toml        -> version = "1.1.0"
-#    - src/nexa/__init__.py  -> __version__ = "1.1.0"
+#    - pyproject.toml        -> version = "1.4.0"
+#    - src/nexa/__init__.py  -> __version__ = "1.4.0"
+#    ...and move the CHANGELOG.md "unreleased" section under that number
+#    (plus the matching entry in docs/build_docs_bundle.py, then `make docs`)"
 
 # 2. Run the full verification suite locally:
 pytest -v -W error
 
 # 3. Commit, tag, and push:
-git commit -am "Release v1.1.0"
+git commit -am "Release v1.4.0"
 git push origin main
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.4.0
+git push origin v1.4.0
 ```
 
 > **Tip — Dry-Run Before Tagging:** Open **Actions → Release nexa-ui → Run workflow** on GitHub with `publish_to_pypi` unchecked (`false`) to build and download all Linux, macOS, and Windows wheels without publishing to PyPI.
@@ -56,18 +58,21 @@ git push origin v1.1.0
 
 ## 3. Building & Publishing Locally (Manual `build` + `twine`)
 
-Install packaging tools:
+Install the release tools (`pytest`, `build`, `twine` come from the `dev` extra):
 
 ```bash
-python3 -m pip install --upgrade build twine auditwheel
+uv sync --extra dev            # uv (venvs without pip)
+python3 -m pip install -e ".[dev]"   # pip
+# or the raw commands below need: python3 -m pip install --upgrade build twine auditwheel
 ```
 
 Build both `sdist` (`.tar.gz`) and a platform wheel (`.whl`) into `dist/`:
 
 ```bash
-rm -rf dist build
-NEXA_LTO=1 python3 -m build
+make dist                     # rm -rf dist build && NEXA_LTO=1 python3 -m build
 ```
+
+`make help` lists every task; the rest of this section is the manual equivalent.
 
 > **Linux note:** Raw local Linux wheels carry the `linux_x86_64` / `linux_aarch64` tag, which PyPI rejects until repaired to a `manylinux` tag:
 > ```bash
@@ -78,15 +83,15 @@ NEXA_LTO=1 python3 -m build
 Validate PyPI metadata and `README.md` rendering:
 
 ```bash
-twine check --strict dist/*
+make check                    # twine check --strict dist/*
 ```
 
 Upload to **TestPyPI** (optional rehearsal) or **PyPI**:
 
 ```bash
 # TestPyPI:
-twine upload --repository testpypi dist/*
+make testpypi                 # twine upload --repository testpypi dist/*
 
-# Production PyPI:
-twine upload dist/*
+# Production PyPI (asks for confirmation first):
+make publish PUBLISH=yes      # twine upload dist/*
 ```

@@ -2010,3 +2010,396 @@ class TimelineEditorResult:
             f"TimelineEditorResult(time={self.time:g}, changed={self.changed}, "
             f"play_toggled={self.play_toggled}, current_track={self.current_track})"
         )
+
+
+# ---------------------------------------------------------------------------
+# CUI 1.2–1.4 Models (direction, instruments, files, terminal, tour, month)
+# ---------------------------------------------------------------------------
+
+class TextDirection(IntEnum):
+    """Reading direction (``cui_direction``), inherited by boxes, text and components.
+
+    ``INHERIT`` follows the parent (LTR at the context root), ``AUTO`` picks the
+    direction from the first strong character, which is what mixed-script text
+    wants.  With RTL, rows, padding, grids, scrolling and directional icons mirror.
+    """
+
+    INHERIT = 0
+    LTR = 1
+    RTL = 2
+    AUTO = 3
+
+
+class Severity(IntEnum):
+    """How bad a diagnostic is — the tint of a problems-panel row."""
+
+    ERROR = 0
+    WARNING = 1
+    INFO = 2
+    HINT = 3
+
+
+class JobStatus(IntEnum):
+    """The state of a CI job or pipeline stage."""
+
+    PENDING = 0
+    RUNNING = 1
+    PASSED = 2
+    FAILED = 3
+    SKIPPED = 4
+    CANCELED = 5
+
+    #: aliases matching the test explorer's vocabulary
+    SUCCESS = 2
+    ERROR = 3
+
+
+class QueryType(IntEnum):
+    """What values a rule-builder field holds."""
+
+    TEXT = 0
+    NUMBER = 1
+    CHOICE = 2
+    BOOL = 3
+
+
+class AnnotationKind(IntEnum):
+    """Where a :class:`ChartAnnotation` sits on its chart."""
+
+    X = 0
+    Y = 1
+    POINT = 2
+
+
+class ChartAnnotation:
+    """A vertical line, a dashed threshold or a labelled point over a chart."""
+
+    __slots__ = ("kind", "x", "y", "label", "detail", "accent")
+
+    def __init__(
+        self,
+        kind: Union[AnnotationKind, int] = AnnotationKind.X,
+        x: float = 0.0,
+        y: float = 0.0,
+        label: Optional[str] = None,
+        detail: Optional[str] = None,
+        accent: bool = False,
+    ) -> None:
+        self.kind = AnnotationKind(int(kind))
+        self.x = float(x)
+        self.y = float(y)
+        self.label = label
+        self.detail = detail
+        self.accent = bool(accent)
+
+    def __repr__(self) -> str:
+        return f"ChartAnnotation({self.kind.name}, x={self.x:g}, y={self.y:g}, label={self.label!r})"
+
+
+class DotSeries:
+    """One series of a ``dot_chart``: values plus an optional name and accent flag."""
+
+    __slots__ = ("values", "name", "accent")
+
+    def __init__(self, values: Sequence[float], name: Optional[str] = None, accent: bool = False) -> None:
+        self.values = [float(v) for v in values]
+        self.name = name
+        self.accent = bool(accent)
+
+    def __len__(self) -> int:
+        return len(self.values)
+
+    def __repr__(self) -> str:
+        return f"DotSeries(name={self.name!r}, values={len(self.values)})"
+
+
+class DotChartResult:
+    """Returned by ``dot_chart``; unpacks as ``(hovered, x, value)``."""
+
+    __slots__ = ("hovered", "x", "value", "clicked")
+
+    def __init__(self, hovered: int = -1, x: float = 0.0, value: float = 0.0, clicked: bool = False) -> None:
+        self.hovered = int(hovered)
+        self.x = float(x)
+        self.value = float(value)
+        self.clicked = bool(clicked)
+
+    def __bool__(self) -> bool:
+        return self.clicked
+
+    def __iter__(self):
+        yield self.hovered
+        yield self.x
+        yield self.value
+
+    def __repr__(self) -> str:
+        return f"DotChartResult(hovered={self.hovered}, x={self.x:g}, value={self.value:g}, clicked={self.clicked})"
+
+
+class EventTrackResult:
+    """Returned by ``event_track``; the caller's ``times`` list holds the edits."""
+
+    __slots__ = ("changed", "added", "removed", "selected", "dragging")
+
+    def __init__(self, changed: bool = False, added: int = -1, removed: int = -1,
+                 selected: int = -1, dragging: bool = False) -> None:
+        self.changed = bool(changed)
+        self.added = int(added)
+        self.removed = int(removed)
+        self.selected = int(selected)
+        self.dragging = bool(dragging)
+
+    def __bool__(self) -> bool:
+        return self.changed
+
+    def __repr__(self) -> str:
+        return (
+            f"EventTrackResult(changed={self.changed}, added={self.added}, "
+            f"removed={self.removed}, selected={self.selected})"
+        )
+
+
+class MonthEvent:
+    """One event of ``month_calendar``, spanning whole days."""
+
+    __slots__ = ("title", "start", "end", "time", "all_day", "tone")
+
+    def __init__(
+        self,
+        title: str,
+        start: Date,
+        end: Optional[Date] = None,
+        *,
+        time: float = 0.0,
+        all_day: bool = True,
+        tone: Tone = Tone.ACCENT,
+    ) -> None:
+        self.title = title
+        self.start = start
+        self.end = end if end is not None else start
+        self.time = time
+        self.all_day = bool(all_day)
+        self.tone = tone
+
+    def __repr__(self) -> str:
+        return f"MonthEvent({self.title!r}, {self.start}..{self.end})"
+
+
+class MonthResult:
+    """Returned by ``month_calendar``; unpacks as ``(event, day_clicked)``."""
+
+    __slots__ = ("event", "day_clicked", "day_activated", "month_changed", "month")
+
+    def __init__(self, event: int = -1, day_clicked: int = -1, day_activated: int = -1,
+                 month_changed: bool = False, month: Optional["Date"] = None) -> None:
+        self.event = int(event)
+        self.day_clicked = int(day_clicked)
+        self.day_activated = int(day_activated)
+        self.month_changed = bool(month_changed)
+        self.month = month
+
+    def __bool__(self) -> bool:
+        return self.event >= 0 or self.day_clicked >= 0 or self.day_activated >= 0 or self.month_changed
+
+    def __iter__(self):
+        yield self.day_clicked
+        yield self.event
+
+    def __repr__(self) -> str:
+        return (
+            f"MonthResult(event={self.event}, day_clicked={self.day_clicked}, "
+            f"day_activated={self.day_activated}, month_changed={self.month_changed})"
+        )
+
+
+class TerminalResult:
+    """Returned by ``terminal``: a submitted command line, or an interrupt."""
+
+    __slots__ = ("command", "interrupt")
+
+    def __init__(self, command: Optional[str] = None, interrupt: bool = False) -> None:
+        self.command = command
+        self.interrupt = bool(interrupt)
+
+    def __bool__(self) -> bool:
+        return self.command is not None or self.interrupt
+
+    def __iter__(self):
+        yield self.command
+        yield self.interrupt
+
+    def __repr__(self) -> str:
+        return f"TerminalResult(command={self.command!r}, interrupt={self.interrupt})"
+
+
+class FileBrowserResult:
+    """Returned by ``file_browser``: the folder shown plus what was picked or selected."""
+
+    __slots__ = ("path", "picked", "selected", "navigated", "error")
+
+    def __init__(self, path: str = "", picked: Optional[str] = None, selected: Optional[str] = None,
+                 navigated: bool = False, error: bool = False) -> None:
+        self.path = path
+        self.picked = picked
+        self.selected = selected
+        self.navigated = bool(navigated)
+        self.error = bool(error)
+
+    def __bool__(self) -> bool:
+        return self.picked is not None
+
+    def __iter__(self):
+        yield self.picked
+        yield self.selected
+
+    def __repr__(self) -> str:
+        return (
+            f"FileBrowserResult(path={self.path!r}, picked={self.picked!r}, "
+            f"selected={self.selected!r}, navigated={self.navigated}, error={self.error})"
+        )
+
+
+class ImageView:
+    """Zoom and pan of an ``image_viewer``; pass it back each frame to keep the view."""
+
+    __slots__ = ("zoom", "cx", "cy")
+
+    def __init__(self, zoom: float = 1.0, cx: float = 0.5, cy: float = 0.5) -> None:
+        self.zoom = float(zoom)
+        self.cx = float(cx)
+        self.cy = float(cy)
+
+    def __repr__(self) -> str:
+        return f"ImageView(zoom={self.zoom:g}, cx={self.cx:g}, cy={self.cy:g})"
+
+
+class TourStep:
+    """One step of an onboarding ``tour``: the component it points at and what it says.
+
+    ``target`` is a component id (``ctx.last_id`` of the control it spotlights);
+    0 draws the card in the middle of the window instead.
+    """
+
+    __slots__ = ("target", "title", "body", "placement")
+
+    def __init__(self, target: int, title: str, body: Optional[str] = None,
+                 placement: Placement = Placement.BOTTOM) -> None:
+        self.target = int(target)
+        self.title = title
+        self.body = body
+        self.placement = placement
+
+    def __repr__(self) -> str:
+        return f"TourStep(target={self.target!r}, title={self.title!r})"
+
+
+class FileEntry:
+    """One item of a folder listing (``fs_list``)."""
+
+    __slots__ = ("name", "is_dir", "size", "modified")
+
+    def __init__(self, name: str, is_dir: bool = False, size: int = 0, modified: int = 0) -> None:
+        self.name = name
+        self.is_dir = bool(is_dir)
+        self.size = int(size)
+        self.modified = int(modified)
+
+    def __repr__(self) -> str:
+        kind = "dir" if self.is_dir else "file"
+        return f"FileEntry({self.name!r}, {kind}, {self.size} bytes)"
+
+
+class FilePickerResult:
+    """Returned by ``file_picker``: the chosen path and whether the dialog is still open."""
+
+    __slots__ = ("path", "open", "confirmed")
+
+    def __init__(self, path: str = "", open: bool = False, confirmed: bool = False) -> None:
+        self.path = path
+        self.open = bool(open)
+        self.confirmed = bool(confirmed)
+
+    def __bool__(self) -> bool:
+        return self.confirmed
+
+    def __repr__(self) -> str:
+        return f"FilePickerResult(path={self.path!r}, open={self.open}, confirmed={self.confirmed})"
+
+
+class Candle:
+    """One period of a ``candlestick`` chart: open, high, low, close and volume."""
+
+    __slots__ = ("open", "high", "low", "close", "volume")
+
+    def __init__(self, open: float, high: float, low: float, close: float, volume: float = 0.0) -> None:
+        self.open = float(open)
+        self.high = float(high)
+        self.low = float(low)
+        self.close = float(close)
+        self.volume = float(volume)
+
+    def __iter__(self):
+        yield self.open
+        yield self.high
+        yield self.low
+        yield self.close
+
+    def __repr__(self) -> str:
+        return f"Candle(o={self.open:g}, h={self.high:g}, l={self.low:g}, c={self.close:g})"
+
+
+class TerminalBuffer:
+    """App-owned ring buffer for ``terminal``: lines are appended, never allocated.
+
+    ``text_capacity`` bytes hold the whole scrollback and ``line_capacity``
+    records index it, exactly like CUI's ``cui_terminal_buffer``.
+    """
+
+    __slots__ = ("_buf", "_text", "_lines", "_text_cap", "_line_cap")
+
+    def __init__(self, text_capacity: int = 256 * 1024, line_capacity: int = 2048) -> None:
+        import ctypes
+
+        from ._cdefs import CuiTerminalBuffer, CuiTerminalLine
+        from ._lib import get_cdll
+
+        self._text_cap = max(4096, int(text_capacity))
+        self._line_cap = max(16, int(line_capacity))
+        self._text = ctypes.create_string_buffer(self._text_cap)
+        self._lines = (CuiTerminalLine * self._line_cap)()
+        self._buf = CuiTerminalBuffer()
+        get_cdll().cui_terminal_init(
+            ctypes.byref(self._buf),
+            ctypes.cast(self._text, ctypes.c_char_p),
+            ctypes.c_size_t(self._text_cap),
+            self._lines,
+            self._line_cap,
+        )
+
+    def write(self, data: str) -> None:
+        """Append text; ANSI colors, ``\r`` progress bars and tabs are honored."""
+        import ctypes
+
+        from ._lib import get_cdll
+
+        raw = data.encode("utf-8")
+        get_cdll().cui_terminal_write(ctypes.byref(self._buf), raw, -1)
+
+    def printf(self, fmt: str, *args: Any) -> None:
+        """``printf``-style convenience: the text is formatted in Python, then written."""
+        self.write(fmt % args if args else fmt)
+
+    def clear(self) -> None:
+        """Drop the scrollback."""
+        import ctypes
+
+        from ._lib import get_cdll
+
+        get_cdll().cui_terminal_clear(ctypes.byref(self._buf))
+
+    @property
+    def line_count(self) -> int:
+        return int(self._buf.count)
+
+    def __repr__(self) -> str:
+        return f"TerminalBuffer(lines={self.line_count}, text_cap={self._text_cap})"
