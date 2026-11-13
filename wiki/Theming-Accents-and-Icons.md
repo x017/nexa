@@ -268,6 +268,18 @@ with ui.SoftwareRenderer() as sw, ui.UI(width=800, height=600, renderer=sw) as c
         ctx.text("Mixed LTR/RTL", direction=ui.TextDirection.AUTO)
 ```
 
+What the engine implements (from CUI's `cui_bidi.c` / `cui_shape.c`): UAX #9
+paragraph resolution (P2/P3, W1–W7, N0–N2 bracket pairs, I1/I2, L1/L2/L4) plus a
+compact OpenType interpreter applying `rtla/rtlm`, `stch`, `ccmp`, `locl`,
+`isol/fina/medi/init`, `rlig`, `calt`, `rclt`, `liga`, `clig`, `mset` (GSUB) and
+`curs`, `kern`, `mark`, `mkmk`, `dist` (GPOS) with GDEF classes.
+
+Two limits worth knowing: **explicit directional formatting is not applied** —
+`LRE/RLE/PDF` and `LRI/RLI/FSI/PDI` are treated as boundary-neutral, so use
+`direction=ui.TextDirection.RTL/AUTO` on containers instead of control
+characters — and the shaper targets **Arabic-type joining**, not Indic-style
+cluster reordering.
+
 `direction=` works on `text`, `box`, `row`, `column`, `grid` and `stack`
 (`ui.TextDirection.INHERIT / LTR / RTL / AUTO`); `AUTO` lets the shaper pick the
 paragraph base from the first strong character. Calendar and picker names can be

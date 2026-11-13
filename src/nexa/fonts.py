@@ -180,7 +180,11 @@ def find_rtl_font(
 
 
 def supports_text_shaping() -> bool:
-    """Whether this build shapes Arabic/Persian/Indic scripts (the default build does)."""
+    """Whether this build joins Arabic-script text (Persian, Arabic, Urdu…).
+
+    The default build enables CUI's OpenType path; a library built with
+    ``--no-rtl`` reports ``False`` and draws isolated letter forms.
+    """
     from .render import build_features
     from .types import BuildFeatures
 
