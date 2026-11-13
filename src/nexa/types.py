@@ -227,6 +227,55 @@ class VoiceState(IntEnum):
     SPEAKING = 3
 
 
+class SpinnerStyle(IntEnum):
+    """Dither spinner styles for ``spinner(style=...)`` (CUI post-1.4)."""
+
+    ARC = 0
+    COMET = 1
+    DOT_MATRIX = 2
+    FILL_DRAIN = 3
+    RADAR = 4
+    RIPPLE = 5
+    UPLOAD = 6
+    DOWNLOAD = 7
+    TRANSFER = 8
+    ORBIT = 9
+    BOUNCE = 10
+    SCAN = 11
+    PULSE = 12
+    SPIRAL = 13
+    PLASMA = 14
+
+
+class TagStatus(IntEnum):
+    """States for ``status_tag`` (CUI post-1.4)."""
+
+    PENDING = 0
+    IN_PROGRESS = 1
+    SUBMITTED = 2
+    IN_REVIEW = 3
+    SUCCESS = 4
+    FAILED = 5
+    EXPIRED = 6
+    CUSTOM = 7
+
+
+class GradientTrack(IntEnum):
+    """Track kinds for ``gradient_slider`` (CUI post-1.4)."""
+
+    HUE = 0
+    TEMPERATURE = 1
+    OPACITY = 2
+
+
+class ToolbarStyle(IntEnum):
+    """Styles for ``toolbar(style=...)`` (CUI post-1.4)."""
+
+    PLAIN = 0
+    GROUPED = 1
+    FLOATING = 2
+
+
 class LogLevel(IntEnum):
     TRACE = 0
     DEBUG = 1
@@ -345,6 +394,9 @@ class ComposerFlags(IntFlag):
     ATTACH = 4
     REMOVE = 8
     MODEL = 16
+    RECORD = 32
+    CANCEL = 64
+    VOICE = 128
 
 
 class BuildFeatures(IntFlag):
@@ -2403,3 +2455,170 @@ class TerminalBuffer:
 
     def __repr__(self) -> str:
         return f"TerminalBuffer(lines={self.line_count}, text_cap={self._text_cap})"
+
+
+# ---------------------------------------------------------------------------
+# CUI post-1.4 components (dither, creative controls, canvas & bars, voice)
+# ---------------------------------------------------------------------------
+
+
+class MeterPart:
+    """One segment of ``pattern_meter``: a name, a value and optional colour/density."""
+
+    __slots__ = ("name", "value", "color", "density")
+
+    def __init__(self, name: str, value: float, color: ColorLike = None, density: float = 0.0) -> None:
+        self.name = str(name)
+        self.value = float(value)
+        self.color = color
+        self.density = float(density)
+
+
+class LiveUser:
+    """A collaborator pointer for ``live_cursors`` / ``presence_pill``."""
+
+    __slots__ = ("name", "x", "y", "color", "tone", "says", "speaking", "away", "avatar")
+
+    def __init__(
+        self,
+        name: str,
+        x: float,
+        y: float,
+        *,
+        color: ColorLike = None,
+        tone: Tone = Tone.NEUTRAL,
+        says: Optional[str] = None,
+        speaking: bool = False,
+        away: bool = False,
+        avatar: int = 0,
+    ) -> None:
+        self.name = str(name)
+        self.x = float(x)
+        self.y = float(y)
+        self.color = color
+        self.tone = tone
+        self.says = says
+        self.speaking = bool(speaking)
+        self.away = bool(away)
+        self.avatar = int(avatar)
+
+
+class SelectionAction:
+    """One labelled action for ``selection_bar``."""
+
+    __slots__ = ("icon", "label", "tone")
+
+    def __init__(self, label: str, icon: Optional[str] = None, tone: Tone = Tone.NEUTRAL) -> None:
+        self.label = str(label)
+        self.icon = icon
+        self.tone = tone
+
+
+class WellResult:
+    """Returned by the creative well widgets: the updated value plus ``CUI_WELL_*`` flags.
+
+    ``value`` is the new value of the in/out parameter (float or int depending on
+    the widget), ``changed`` means the user edited it and ``action`` means the
+    well's tool/action button was clicked.
+    """
+
+    __slots__ = ("value", "changed", "action")
+
+    def __init__(self, value: Union[int, float], changed: bool = False, action: bool = False) -> None:
+        self.value = value
+        self.changed = bool(changed)
+        self.action = bool(action)
+
+    def __iter__(self):
+        return iter((self.value, self.changed, self.action))
+
+
+class SeedResult:
+    """Returned by ``seed_field``: the (possibly rolled) seed, its lock, and whether it changed."""
+
+    __slots__ = ("seed", "locked", "changed")
+
+    def __init__(self, seed: int, locked: bool = False, changed: bool = False) -> None:
+        self.seed = int(seed) & 0xFFFFFFFF
+        self.locked = bool(locked)
+        self.changed = bool(changed)
+
+
+class VoiceNoteResult:
+    """State written back by ``voice_note``: playback position, speed and play flag."""
+
+    __slots__ = ("position", "speed", "playing", "flags")
+
+    def __init__(self, position: float, speed: float, playing: bool, flags: int = 0) -> None:
+        self.position = float(position)
+        self.speed = float(speed)
+        self.playing = bool(playing)
+        self.flags = int(flags)
+
+
+class CanvasControlsResult:
+    """Flags returned by ``canvas_controls``."""
+
+    __slots__ = ("zoomed", "fit", "toggled")
+
+    def __init__(self, flags: int = 0) -> None:
+        flags = int(flags)
+        self.zoomed = bool(flags & 1)
+        self.fit = bool(flags & 2)
+        self.toggled = bool(flags & 4)
+
+
+class FormatBarResult:
+    """Flags returned by ``format_bar``."""
+
+    __slots__ = ("changed", "link", "delete", "more")
+
+    def __init__(self, flags: int = 0) -> None:
+        flags = int(flags)
+        self.changed = bool(flags & 1)
+        self.link = bool(flags & 2)
+        self.delete = bool(flags & 4)
+        self.more = bool(flags & 8)
+
+
+class TextFormat:
+    """Editable text format for ``format_bar``; keep one instance across frames.
+
+    ``color`` is a :class:`Tone` index (the swatch grid picks tones), ``style``
+    is an index into the bar's style menu, ``align``/``list`` are
+    ``CUI_FORMAT_ALIGN_*``/``CUI_FORMAT_LIST_*`` values (0 = left / none).
+    """
+
+    __slots__ = ("color", "bold", "underline", "link", "style", "size", "align", "list")
+
+    def __init__(
+        self,
+        *,
+        color: int = 0,
+        bold: bool = False,
+        underline: bool = False,
+        link: bool = False,
+        style: int = 0,
+        size: float = 0.0,
+        align: int = 0,
+        list: int = 0,
+    ) -> None:
+        self.color = int(color)
+        self.bold = bool(bold)
+        self.underline = bool(underline)
+        self.link = bool(link)
+        self.style = int(style)
+        self.size = float(size)
+        self.align = int(align)
+        self.list = int(list)
+
+
+class CanvasToggle:
+    """One toggle of ``canvas_controls``; ``on`` is read and updated in place."""
+
+    __slots__ = ("icon", "label", "on")
+
+    def __init__(self, icon: str, label: Optional[str] = None, on: bool = False) -> None:
+        self.icon = str(icon)
+        self.label = label
+        self.on = bool(on)

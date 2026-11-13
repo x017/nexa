@@ -97,7 +97,9 @@ def test_minimal_stripped_builds_and_size(tmp_path: pathlib.Path) -> None:
     min_so = build_native(output_path=tmp_path / f"min_{fname}", minimal=True)
     assert min_so.is_file()
     size_kb = min_so.stat().st_size / 1024.0
-    assert size_kb < 1000.0, f"Expected minimal shared library < 1000 KB, got {size_kb:.1f} KB"
+    # 1000 KB before the post-1.4 CUI sync; the dither, creative, canvas and
+    # voice components add ~60 KB even in a minimal build.
+    assert size_kb < 1150.0, f"Expected minimal shared library < 1150 KB, got {size_kb:.1f} KB"
 
     lib = ctypes.CDLL(str(min_so))
     _cdefs.bind_prototypes(lib)

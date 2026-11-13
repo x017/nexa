@@ -17,13 +17,15 @@ from .._cdefs import (
     CuiStatusItemOpts,
     CuiStatusProgressOpts,
     CuiToolbarOpts,
+    CuiToolbarRadioOpts,
     CuiToolOpts,
     encode_opt,
     encode_str,
+    encode_str_array,
     to_c_size,
 )
 from ..scopes import ConditionalScope, OpenStateScope, SimpleScope
-from ..types import DocTab, DocTabsResult, SizeLike, Tone
+from ..types import DocTab, DocTabsResult, SizeLike, Tone, ToolbarStyle
 
 
 class ChromeMixin:
@@ -57,9 +59,21 @@ class ChromeMixin:
 
     # ---- Toolbar ----
 
-    def toolbar(self, id: str = "toolbar", *, no_border: bool = False) -> SimpleScope:
+    def toolbar(
+        self,
+        id: str = "toolbar",
+        *,
+        no_border: bool = False,
+        style: ToolbarStyle = ToolbarStyle.PLAIN,
+    ) -> SimpleScope:
+        """Toolbar strip. ``GROUPED`` puts items in raised groups inside one
+        pill (CUI post-1.4), ``FLOATING`` is one bordered pill for bars over
+        content; both keep the keys and overflow menu.
+        """
         keep = self._frame_keepalive
-        opts = CuiToolbarOpts(0, bool(no_border))
+        opts = CuiToolbarOpts()
+        opts.no_border = bool(no_border)
+        opts.style = int(style)
         keep.append(opts)
         self._lib.cui_toolbar_begin(self._ctx, encode_str(id, keep), ctypes.byref(opts))
         return SimpleScope(self._ctx, self._lib.cui_toolbar_end)
@@ -72,6 +86,8 @@ class ChromeMixin:
         tooltip: Optional[str] = None,
         shortcut: Optional[str] = None,
         disabled: bool = False,
+        tone: Tone = Tone.NEUTRAL,
+        flyout: bool = False,
     ) -> bool:
         keep = self._frame_keepalive
         opts = CuiToolOpts()
@@ -79,6 +95,8 @@ class ChromeMixin:
         opts.tooltip = encode_opt(tooltip, keep)
         opts.shortcut = encode_opt(shortcut, keep)
         opts.disabled = bool(disabled)
+        opts.tone = int(tone)
+        opts.flyout = bool(flyout)
         keep.append(opts)
         clicked = bool(self._lib.cui_toolbar_button_ex(
             self._ctx, encode_opt(icon, keep), ctypes.byref(opts)
@@ -95,6 +113,8 @@ class ChromeMixin:
         tooltip: Optional[str] = None,
         shortcut: Optional[str] = None,
         disabled: bool = False,
+        tone: Tone = Tone.NEUTRAL,
+        flyout: bool = False,
     ) -> bool:
         keep = self._frame_keepalive
         c_val = c_bool(bool(value))
@@ -104,6 +124,8 @@ class ChromeMixin:
         opts.shortcut = encode_opt(shortcut, keep)
         opts.toggle = ctypes.pointer(c_val)
         opts.disabled = bool(disabled)
+        opts.tone = int(tone)
+        opts.flyout = bool(flyout)
         keep.extend((c_val, opts))
         clicked = bool(self._lib.cui_toolbar_button_ex(
             self._ctx, encode_opt(icon, keep), ctypes.byref(opts)
@@ -116,6 +138,101 @@ class ChromeMixin:
 
     def toolbar_spacer(self) -> None:
         self._lib.cui_toolbar_spacer(self._ctx)
+
+    def toolbar_group(self) -> SimpleScope:
+        """Raised group of items inside a ``GROUPED`` toolbar (CUI post-1.4)."""
+        self._lib.cui_toolbar_group_begin(self._ctx)
+        return SimpleScope(self._ctx, self._lib.cui_toolbar_group_end)
+
+    def toolbar_radio(
+        self,
+        id: str,
+        icons: Sequence[str],
+        index: int,
+        *,
+        labels: Optional[Sequence[str]] = None,
+    ) -> int:
+        """Inset radio set inside a toolbar group (CUI post-1.4); ``labels``
+        name the icons for the overflow menu. Returns the chosen index.
+        """
+        keep = self._frame_keepalive
+        icon_arr, n = encode_str_array(list(icons), keep)
+        c_idx = c_int(int(index))
+        opts = CuiToolbarRadioOpts()
+        if labels:
+            lab_arr, _ = encode_str_array(list(labels), keep)
+            opts.labels = lab_arr
+        keep.extend((c_idx, opts))
+        changed = bool(self._lib.cui_toolbar_radio_ex(
+            self._ctx, encode_str(id, keep), icon_arr, n, ctypes.byref(c_idx), ctypes.byref(opts)
+        ))
+        self._record_change(changed)
+        return int(c_idx.value)
+
+    def toolbar_primary(
+        self,
+        icon: Optional[str] = None,
+        *,
+        label: Optional[str] = None,
+        tooltip: Optional[str] = None,
+        shortcut: Optional[str] = None,
+        disabled: bool = False,
+        tone: Tone = Tone.ACCENT,
+        flyout: bool = False,
+    ) -> bool:
+        """Filled primary action in a toolbar group (CUI post-1.4)."""
+        keep = self._frame_keepalive
+        opts = CuiToolOpts()
+        opts.label = encode_opt(label, keep)
+        opts.tooltip = encode_opt(tooltip, keep)
+        opts.shortcut = encode_opt(shortcut, keep)
+        opts.disabled = bool(disabled)
+        opts.tone = int(tone)
+        opts.flyout = bool(flyout)
+        keep.append(opts)
+        clicked = bool(self._lib.cui_toolbar_primary_ex(
+            self._ctx, encode_opt(icon, keep), ctypes.byref(opts)
+        ))
+        self._record_change(clicked)
+        return clicked
+
+    def toolbar_cycle(
+        self,
+        id: str,
+        items: Sequence[str],
+        index: int,
+        *,
+        label: Optional[str] = None,
+        tooltip: Optional[str] = None,
+        shortcut: Optional[str] = None,
+        disabled: bool = False,
+        tone: Tone = Tone.NEUTRAL,
+        flyout: bool = False,
+    ) -> int:
+        """Small picker that steps through its choices on each click
+        (CUI post-1.4), e.g. ``["1x", "2x", "4x"]``. Returns the new index.
+        """
+        keep = self._frame_keepalive
+        arr, n = encode_str_array(list(items), keep)
+        c_idx = c_int(int(index))
+        opts = CuiToolOpts()
+        opts.label = encode_opt(label, keep)
+        opts.tooltip = encode_opt(tooltip, keep)
+        opts.shortcut = encode_opt(shortcut, keep)
+        opts.disabled = bool(disabled)
+        opts.tone = int(tone)
+        opts.flyout = bool(flyout)
+        keep.extend((c_idx, opts))
+        changed = bool(self._lib.cui_toolbar_cycle_ex(
+            self._ctx, encode_str(id, keep), arr, n, ctypes.byref(c_idx), ctypes.byref(opts)
+        ))
+        self._record_change(changed)
+        return int(c_idx.value)
+
+    def flyout_mark(self) -> None:
+        """Corner mark saying the button under the pointer opens a flyout
+        (CUI post-1.4)."""
+        self._lib.cui_flyout_mark(self._ctx)
 
     # ---- Status Bar ----
 

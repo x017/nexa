@@ -931,7 +931,8 @@ static void cui__add_hit(cui_ctx *ui, cui_id id, cui_rect r, uint32_t flags) {
     h->id = id; h->rect = r; h->flags = flags; h->layer = ui->current_layer; h->order = ui->hit_count;
 }
 
-static cui_rect cui__xform_rect(cui_ctx *ui, cui_rect r) {
+/** Map a rectangle to the same logical coordinates used for hit testing. */
+cui_rect cui__xform_rect(cui_ctx *ui, cui_rect r) {
     cui_xform x = ui->dl.xform_stack[ui->dl.xform_depth - 1];
     if (x.scale == 1 && x.ox == 0 && x.oy == 0) return r;
     float s = ui->scale;
@@ -1046,7 +1047,11 @@ static void cui__paint_node(cui_ctx *ui, int i, cui_rect clip) {
         cui_push_clip(ui, r);
         child_clip = cui__rect_intersect(clip, cui__xform_rect(ui, r));
     }
-    for (int c = n->abs_first; c >= 0; c = ui->nodes[c].next) cui__paint_node(ui, c, child_clip);
+    bool any_overlay = false;
+    for (int c = n->abs_first; c >= 0; c = ui->nodes[c].next) {
+        if (ui->nodes[c].flags & CUI_NF_OVERLAY) { any_overlay = true; continue; }
+        cui__paint_node(ui, c, child_clip);
+    }
     bool any_top = false;
     for (int c = n->first; c >= 0; c = ui->nodes[c].next) {
         if (ui->nodes[c].flags & CUI_NF_ON_TOP) { any_top = true; continue; }
@@ -1055,6 +1060,9 @@ static void cui__paint_node(cui_ctx *ui, int i, cui_rect clip) {
     if (any_top)
         for (int c = n->first; c >= 0; c = ui->nodes[c].next)
             if (ui->nodes[c].flags & CUI_NF_ON_TOP) cui__paint_node(ui, c, child_clip);
+    if (any_overlay)
+        for (int c = n->abs_first; c >= 0; c = ui->nodes[c].next)
+            if (ui->nodes[c].flags & CUI_NF_OVERLAY) cui__paint_node(ui, c, child_clip);
     if (clips) cui_pop_clip(ui);
     n = &ui->nodes[i];
     if (border_after) cui_draw_rect_border(ui, r, n->radius, cui__rgba(0, 0, 0, 0), n->border_color, n->border);

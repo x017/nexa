@@ -19,12 +19,14 @@ from .._cdefs import (
     CuiPopoverOpts,
     CuiSheetOpts,
     CuiUserMenuOpts,
+    CuiVeilOpts,
     encode_opt,
     encode_str,
     to_c_color,
+    to_c_size,
 )
-from ..scopes import ConditionalScope, OpenStateScope, SimpleScope
-from ..types import ButtonVariant, ColorLike, Placement, Side, Tone, TourStep
+from ..scopes import ConditionalScope, OpenStateScope, SimpleScope, VeilScope
+from ..types import ButtonVariant, ColorLike, Placement, Side, SizeLike, Tone, TourStep
 
 
 class OverlaysMixin:
@@ -358,3 +360,46 @@ class OverlaysMixin:
         ))
         names = {0: "none", 1: "next", 2: "back", 3: "done", 4: "skipped"}
         return int(c_step.value), names.get(action, "none")
+
+    # ---- Veil (CUI post-1.4) ----
+
+    def veil(
+        self,
+        id: str,
+        revealed: bool = False,
+        *,
+        label: Optional[str] = None,
+        hint: Optional[str] = None,
+        toggle: bool = True,
+        radius: float = 0.0,
+        color: ColorLike = None,
+        width: SizeLike = None,
+    ) -> VeilScope:
+        """Cover the content built inside with slowly moving dither dots
+        (CUI post-1.4) — for a picture, a secret or a spoiler.
+
+        A click, Enter or Space dissolves the veil; read ``scope.revealed``
+        after the block and keep it for the next frame (assign ``False`` to
+        re-cover). While covered the content takes no clicks and no keyboard
+        focus. ``toggle=False`` makes it reveal-once (no re-cover).
+
+        Example::
+
+            with ctx.veil("key", revealed, label="API key", hint="Click to show") as v:
+                ctx.text(SECRET)
+            revealed = v.revealed
+        """
+        keep = self._frame_keepalive
+        holder = c_bool(bool(revealed))
+        opts = CuiVeilOpts()
+        opts.label = encode_opt(label, keep)
+        opts.hint = encode_opt(hint, keep)
+        opts.toggle = bool(toggle)
+        opts.radius = float(radius)
+        opts.color = to_c_color(color)
+        opts.width = to_c_size(width)
+        keep.extend((holder, opts))
+        changed = bool(self._lib.cui_veil_begin_ex(
+            self._ctx, encode_str(id, keep), ctypes.byref(holder), ctypes.byref(opts)
+        ))
+        return VeilScope(self._ctx, self._lib.cui_veil_end, bool(holder.value), changed)

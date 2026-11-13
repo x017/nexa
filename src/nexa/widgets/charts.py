@@ -51,6 +51,7 @@ def _build_chart_opts(
     min_y: float = 0.0,
     max_y: float = 0.0,
     annotations: Sequence[object] = (),
+    dither: bool = False,
 ) -> CuiChartOpts:
     opts = CuiChartOpts()
     opts.width = to_c_size(width)
@@ -74,6 +75,7 @@ def _build_chart_opts(
         opts.annotations = ann_arr
         opts.annotation_count = ann_n
         keep.append(ann_keep)
+    opts.dither = bool(dither)
     keep.append(opts)
     return opts
 

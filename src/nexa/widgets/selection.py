@@ -11,6 +11,8 @@ from .._cdefs import (
     CuiChipOpts,
     CuiChoice,
     CuiRadioCardsOpts,
+    CuiSelectionAction,
+    CuiSelectionBarOpts,
     CuiSliderOpts,
     CuiTileOpts,
     encode_opt,
@@ -19,7 +21,7 @@ from .._cdefs import (
     to_c_color,
     to_c_size,
 )
-from ..types import Choice, ColorLike, SizeLike
+from ..types import Choice, ColorLike, SelectionAction, SizeLike
 
 
 class SelectionMixin:
@@ -222,3 +224,52 @@ class SelectionMixin:
         ))
         self._record_change(changed)
         return bool(c_on.value)
+
+    def selection_bar(
+        self,
+        id: str,
+        actions: Sequence[object],
+        selected: list,
+        *,
+        count_format: Optional[str] = None,
+        anchor: int = 0,
+        no_escape: bool = False,
+    ) -> int:
+        """A bar that slides up under a list while something is selected
+        (CUI post-1.4): count, clear button and labelled actions.
+
+        ``selected`` is the list of per-item flags, updated in place (Esc or
+        clear zeroes it). ``actions`` are :class:`nexa.SelectionAction` (or
+        ``(label, icon, tone)`` tuples). Returns the action picked, ``-1``
+        (``CUI_SELECTION_NONE``) for no interaction, or ``-2``
+        (``CUI_SELECTION_CLEARED``).
+        """
+        keep = self._frame_keepalive
+        n = len(selected)
+        sel = (c_bool * max(n, 1))()
+        for i in range(max(n, 1)):
+            sel[i] = bool(selected[i]) if i < n else False
+        keep.append(sel)
+        m = len(actions)
+        arr = (CuiSelectionAction * max(m, 1))()
+        for i, a in enumerate(actions):
+            if not isinstance(a, SelectionAction):
+                a = SelectionAction(*a)  # (label, icon, tone)
+            arr[i].icon = encode_opt(a.icon, keep)
+            arr[i].label = encode_str(a.label, keep)
+            arr[i].tone = int(a.tone)
+        keep.append(arr)
+        opts = CuiSelectionBarOpts()
+        opts.selected = sel
+        opts.item_count = n
+        opts.count_format = encode_opt(count_format, keep)
+        opts.anchor = int(anchor)
+        opts.no_escape = bool(no_escape)
+        keep.append(opts)
+        result = int(self._lib.cui_selection_bar_ex(
+            self._ctx, encode_str(id, keep), n, arr, m, ctypes.byref(opts)
+        ))
+        for i in range(n):
+            selected[i] = bool(sel[i])
+        self._record_change(result != -1)
+        return result

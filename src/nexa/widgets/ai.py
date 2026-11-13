@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import ctypes
-from ctypes import c_int
+from ctypes import c_float, c_int
 from typing import Optional, Sequence, Tuple
 
 from .._cdefs import (
@@ -261,7 +261,17 @@ class AIMixin:
         max_lines: int = 0,
         width: SizeLike = None,
         max_bytes: int = 8192,
+        mic: bool = False,
+        recording: bool = False,
+        levels: Optional[Sequence[float]] = None,
+        record_seconds: float = 0.0,
     ) -> ComposerResult:
+        """Chat composer. ``mic=True`` adds a microphone button; while
+        ``recording`` it shows the recorder instead of the text — a recording
+        dot, the time, the mic ``levels`` scrolling by, Cancel and Send, at
+        the same height. The result flags carry ``RECORD``/``CANCEL``/``VOICE``
+        (CUI post-1.4).
+        """
         keep = self._frame_keepalive
         buf, cap = make_text_buffer(text, max_bytes)
         c_removed = c_int(-1)
@@ -269,6 +279,14 @@ class AIMixin:
         opts = CuiComposerOpts()
         opts.placeholder = encode_opt(placeholder, keep)
         opts.busy = bool(busy)
+        opts.mic = bool(mic)
+        opts.recording = bool(recording)
+        if levels:
+            lv = (c_float * len(levels))(*(float(v) for v in levels))
+            opts.levels = lv
+            opts.level_count = len(levels)
+            keep.append(lv)
+        opts.record_seconds = float(record_seconds)
         if attachments:
             att_arr, att_n = encode_str_array(attachments, keep)
             opts.attachments = att_arr

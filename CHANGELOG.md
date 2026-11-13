@@ -28,6 +28,27 @@ release that picks it up. The published version of this page is
   - *Utilities*: `regex_search`, `cron_next` / `cron_describe`, `url_params` /
     `url_set_params`, `http_reason` / `http_method_name`, `UI.request_wakeup`,
     `set_strings` / `get_strings`, `response_status`, `is_software`.
+- **CUI post-1.4 sync** — 69 engine commits past v1.4.0, every new component
+  exposed to Python:
+  - *Dither family* (an 8×8 ordered dither; a dot is the colour or nothing):
+    `veil`, `pattern_meter`, `status_spinner`, `skeleton_group`,
+    `spinner(style=…)` with 15 dot animations, `progress(dither=True)` and
+    `line_chart(dither=True, stacked=True)`.
+  - *Creative controls*: `status_tag`, `ratio_slider`, `gradient_slider`,
+    `step_slider`, `palette_strip`, `aspect_picker`, `option_action`,
+    `seed_field` — value in, `WellResult`/`SeedResult` out.
+  - *Canvas & bars*: `toolbar(style=GROUPED|FLOATING)` with `toolbar_group`,
+    `toolbar_radio`, `toolbar_cycle`, `toolbar_primary`, `flyout_mark`,
+    `format_bar` (edits a `TextFormat` in place), `live_cursors` +
+    `presence_pill` + `selection_ring`, `canvas_controls`, `result_card` and
+    `selection_bar`.
+  - *Voice*: `voice_wave`, `voice_note`, `voice_session`, plus the composer's
+    `mic=` / `recording=` / `levels=` recorder and `ComposerFlags.RECORD/CANCEL/VOICE`.
+  - *API & fixes*: `UI.set_clipboard` / `UI.get_clipboard`,
+    `App.follow_system_theme(...)`, SQL colours via `code_block(lang="sql")`,
+    and the engine's input/focus/caret/wheel/IME/macOS-quit fixes.
+  - Four examples (`dither.py`, `creative.py`, `voice.py`, `studio.py`) and
+    `tests/test_post_1_4_widgets.py` (21 tests).
 - **Whole-UI typography.** `UI.load_font()`, `UI.use_font()`,
   `UI.use_system_font()` and `UI.use_rtl_font()` re-face the entire app in one
   call (body/medium/display roles, with fallback chains; MONO and ICONS keep

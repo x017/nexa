@@ -14,6 +14,7 @@ from ._cdefs import (
     PlatSetClipFn,
     PlatSetCursorFn,
     PlatSetImeFn,
+    encode_str,
     encode_str_array,
 )
 from ._context_var import pop_current_ui, push_current_ui
@@ -36,6 +37,7 @@ from .widgets.actions import ActionsMixin
 from .widgets.ai import AIMixin
 from .widgets.charts import ChartsMixin
 from .widgets.chrome import ChromeMixin
+from .widgets.creative import CreativeMixin
 from .widgets.data import DataMixin
 from .widgets.feedback import FeedbackMixin
 from .widgets.files import FilesMixin
@@ -95,6 +97,7 @@ class UI(
     MediaMixin,
     MotionMixin,
     ChromeMixin,
+    CreativeMixin,
     ToolsMixin,
     NodesCanvasMixin,
     InstrumentsMixin,
@@ -446,6 +449,17 @@ class UI(
 
     def request_redraw(self) -> None:
         self._lib.cui_request_redraw(self._ctx)
+
+    def set_clipboard(self, text: str) -> None:
+        """Copy ``text`` through the same platform hooks the copy button and
+        text fields use (CUI post-1.4) — e.g. from a menu item or status bar.
+        """
+        self._lib.cui_set_clipboard_text(self._ctx, encode_str(text, self._frame_keepalive))
+
+    def get_clipboard(self) -> str:
+        """Read the clipboard, e.g. for a Paste item (CUI post-1.4)."""
+        raw = self._lib.cui_get_clipboard_text(self._ctx)
+        return raw.decode("utf-8", errors="replace") if raw else ""
 
     @property
     def viewport_size(self) -> Vec2:

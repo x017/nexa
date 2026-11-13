@@ -194,12 +194,12 @@ Theme tokens restyle everything; these arguments restyle a single widget and lea
 | `image(...)` | `tint=` |
 | `knob`, `dot_display`, `loader`, `voice_orb`, `dock_item`, `gradient_text`, `spotlight` | `color=` / `from_color=`, `to_color=` |
 | `line_chart`, `bar_chart`, `donut_chart`, `area`, `sparkline`, … and every `Series` | per-series `color=` |
-| everything else (checkboxes, switches, sliders, trees, editors, docks, toolbars, dialogs…) | follows `ctx.theme[...]` — change a token, or wrap the region in `ctx.set_accent` |
+| `spinner`, `status_spinner`, `veil`, `voice_wave`, `selection_ring` | `color=` (`spinner` also `track=`) |\n| `pattern_meter` | per-part `color=` on each `MeterPart` |\n| everything else (checkboxes, switches, sliders, trees, editors, docks, toolbars, dialogs…) | follows `ctx.theme[...]` — change a token, or wrap the region in `ctx.set_accent` |
 
 **How far does this reach?** Not every component has a colour argument, and that
 is a boundary of the vendored engine rather than an omission: a widget can only
 be recoloured per-call if its C opts struct carries a `cui_color`. Today
-**67 of ~300** widget methods take any colour argument:
+**72 of ~300** widget methods take any colour argument:
 
 - **6 containers** take `fg=` (and `bg=` / `border_color=`): `box`, `row`,
   `column`, `grid`, `stack`, `card`. `fg=` is inherited by the text drawn inside,
@@ -212,8 +212,11 @@ be recoloured per-call if its C opts struct carries a `cui_color`. Today
   `indicator_color`), and `table` (`bg`, `border_color`, `header_bg`,
   `header_color`, `text_color`, `selected_bg`). `table` striping still uses the
   theme's translucent overlay on top of `bg=`.
-- **~40 widgets** take a foreground/`tone`/`tint` (text, headings, markdown,
-  buttons, badges, charts, knobs, image tint, …).
+- **5 post-1.4 widgets** take a direct `color=`: `spinner(color, track)`,
+  `status_spinner(color)`, `veil(color)`, `voice_wave(color)`,
+  `selection_ring(color)` — plus the per-part `color=` of `pattern_meter`.
+- **~45 widgets** take a foreground/`tone`/`tint` (text, headings, markdown,
+  buttons, badges, charts, knobs, image tint, `status_tag`, toolbar `tone=`, …).
 - **Everything else follows the theme**: `tree`, `menu`, `checkbox`,
   `switch`/`slider`, `number`, toolbars, dialogs/popovers/tooltips, docks. For
   those, change the token (`ctx.theme[...]` / `ctx.set_accent`) or wrap the

@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 import ctypes
-from ctypes import c_float
+from ctypes import c_float, c_int
 from pathlib import Path
 from typing import Optional, Sequence, Union
 
 from .._cdefs import (
+    CuiFormatBarOpts,
     CuiTerminalOpts,
     CuiTerminalResult,
+    CuiTextFormat,
     CuiTextOpts,
+    CuiTextStyle,
     encode_opt,
     encode_str,
     to_c_color,
@@ -22,6 +25,7 @@ from ..types import (
     Color,
     ColorLike,
     FontRole,
+    FormatBarResult,
     Size,
     SizeLike,
     TerminalBuffer,
@@ -29,6 +33,8 @@ from ..types import (
     TextAlign,
     TextDirection,
     TextMetrics,
+    TextFormat,
+    Tone,
 )
 
 
@@ -313,3 +319,73 @@ class TextMixin:
         )
         self._record_change(bool(res))
         return res
+
+    def format_bar(
+        self,
+        id: str,
+        fmt: TextFormat,
+        *,
+        styles: Optional[Sequence[object]] = None,
+        colors: Optional[Sequence[Tone]] = None,
+        footer: Optional[str] = None,
+        footer_keys: Optional[str] = None,
+        delete_question: Optional[str] = None,
+        no_delete: bool = False,
+        no_more: bool = False,
+    ) -> FormatBarResult:
+        """A floating bar that edits ``fmt`` in place (CUI post-1.4): colour
+        swatch grid, bold, underline, link, a style menu that previews each
+        style at its size, alignment and list flyouts, and delete behind a
+        confirmation. ``styles`` are :class:`nexa.TextFormat`-style dicts —
+        ``(name, size[, preview_size[, font]])`` tuples; ``colors`` are the
+        tones of the swatch grid.
+
+        Keep one ``TextFormat`` across frames and apply the returned flags:
+        ``changed`` means a field changed, ``link``/``delete``/``more`` report
+        those buttons.
+        """
+        keep = self._frame_keepalive
+        c_fmt = CuiTextFormat(
+            int(fmt.color), bool(fmt.bold), bool(fmt.underline), bool(fmt.link),
+            int(fmt.style), float(fmt.size), int(fmt.align), int(fmt.list),
+        )
+        opts = CuiFormatBarOpts()
+        if styles:
+            n = len(styles)
+            arr = (CuiTextStyle * n)()
+            for i, s in enumerate(styles):
+                if not isinstance(s, (tuple, list)):
+                    s = (s,)
+                arr[i].name = encode_str(str(s[0]), keep)
+                arr[i].size = float(s[1]) if len(s) > 1 else 0.0
+                arr[i].preview_size = float(s[2]) if len(s) > 2 else 0.0
+                arr[i].font = int(s[3]) if len(s) > 3 else 0
+            opts.styles = ctypes.cast(arr, ctypes.c_void_p)
+            opts.style_count = n
+            keep.append(arr)
+        if colors:
+            m = len(colors)
+            c_arr = (c_int * m)(*(int(c) for c in colors))
+            opts.colors = ctypes.cast(c_arr, ctypes.c_void_p)
+            opts.color_count = m
+            keep.append(c_arr)
+        opts.footer = encode_opt(footer, keep)
+        opts.footer_keys = encode_opt(footer_keys, keep)
+        opts.delete_question = encode_opt(delete_question, keep)
+        opts.no_delete = bool(no_delete)
+        opts.no_more = bool(no_more)
+        keep.extend((c_fmt, opts))
+        flags = int(self._lib.cui_format_bar_ex(
+            self._ctx, encode_str(id, keep), ctypes.byref(c_fmt), ctypes.byref(opts)
+        ))
+        # Write the edited format back into the caller's object.
+        fmt.color = int(c_fmt.color)
+        fmt.bold = bool(c_fmt.bold)
+        fmt.underline = bool(c_fmt.underline)
+        fmt.link = bool(c_fmt.link)
+        fmt.style = int(c_fmt.style)
+        fmt.size = float(c_fmt.size)
+        fmt.align = int(c_fmt.align)
+        fmt.list = int(c_fmt.list)
+        self._record_change(bool(flags & 1))
+        return FormatBarResult(flags)

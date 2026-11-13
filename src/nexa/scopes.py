@@ -159,6 +159,29 @@ class ConditionalScope:
             self._end_fn(self._ctx)
 
 
+class VeilScope:
+    """Scope around veil content (CUI post-1.4).
+
+    The body always builds (it is the covered content). Read ``revealed`` after
+    the block for the updated cover state — a click or Enter/Space dissolves the
+    veil and sets it to ``True``; assigning ``False`` re-covers the content.
+    """
+
+    __slots__ = ("_ctx", "_end_fn", "revealed", "changed")
+
+    def __init__(self, ctx: int, end_fn: Callable[[int], Any], revealed: bool, changed: bool = False) -> None:
+        self._ctx = ctx
+        self._end_fn = end_fn
+        self.revealed = bool(revealed)
+        self.changed = bool(changed)
+
+    def __enter__(self) -> VeilScope:
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self._end_fn(self._ctx)
+
+
 class OpenStateScope:
     """Conditional scope with an ``open`` state value (dialog, sheet, accordion, tree, expandable_card).
 

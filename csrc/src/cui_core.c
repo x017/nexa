@@ -280,6 +280,15 @@ void cui_set_platform(cui_ctx *ui, const cui_platform_iface *p) {
     if (p) ui->platform = *p; else memset(&ui->platform, 0, sizeof ui->platform);
 }
 
+void cui_set_clipboard_text(cui_ctx *ui, const char *text) {
+    if (text && ui->platform.set_clipboard) ui->platform.set_clipboard(ui->platform.user, text);
+}
+
+const char *cui_get_clipboard_text(cui_ctx *ui) {
+    const char *s = ui->platform.get_clipboard ? ui->platform.get_clipboard(ui->platform.user) : NULL;
+    return s ? s : "";
+}
+
 void cui_set_viewport(cui_ctx *ui, float w, float h, float scale) {
     if (scale <= 0) scale = 1;
     if (w != ui->vw || h != ui->vh || scale != ui->scale) ui->settle_frames = CUI_MAX(ui->settle_frames, 2);
@@ -585,16 +594,33 @@ void cui__set_cursor(cui_ctx *ui, cui_cursor c) { ui->cursor = c; }
 /* Interaction                                                              */
 /* ------------------------------------------------------------------------ */
 
+/** Choose the deepest compatible wheel target before building any widgets. */
 static void cui__compute_hot(cui_ctx *ui) {
     ui->hot = 0; ui->hot_layer = 0; ui->scroll_target = 0;
     if (!ui->mouse_inside) return;
     bool found_hot = false, fits = false;
     /* the wheel goes to the innermost scroll area that can move that way, so a
      * sideways strip (tabs, a board) inside a page does not swallow the page scroll */
-    bool want_x = ui->scroll_dx != 0 || ((ui->mods & CUI_MOD_SHIFT) && ui->scroll_dy != 0), want_y = ui->scroll_dy != 0 && !want_x;
+    bool shift = (ui->mods & CUI_MOD_SHIFT) != 0;
+    bool want_x = ui->scroll_dx != 0 || (shift && ui->scroll_dy != 0);
+    bool want_y = ui->scroll_dy != 0 && !want_x;
+    uint32_t wheel = !shift && ui->scroll_dy != 0
+        ? (ui->scroll_dy > 0 ? CUI_HIT_WHEEL_UP : CUI_HIT_WHEEL_DOWN) : 0;
     for (int i = ui->prev_hit_count - 1; i >= 0; i--) {
         cui_hit *h = &ui->prev_hits[i];
         if (!cui__rect_contains(h->rect, ui->mx, ui->my)) continue;
+        if (!fits && (h->flags & wheel)) {
+            if (want_x) {
+                /* The enclosing scroll view builds first and must see only X. */
+                cui__vertical_wheel *vertical = cui_state(ui, h->id ^ CUI__VERTICAL_WHEEL_STATE, sizeof *vertical);
+                *vertical = (cui__vertical_wheel){ ui->frame, ui->scroll_dy };
+                ui->scroll_dy = 0;
+                wheel = 0;
+            } else {
+                ui->scroll_target = h->id;
+                fits = true;
+            }
+        }
         if ((h->flags & (CUI_NF_SCROLL_X | CUI_NF_SCROLL_Y)) && !fits) {
             cui_scroll_state *ss = cui_state(ui, h->id, sizeof *ss);
             bool can = (want_x && (h->flags & CUI_NF_SCROLL_X) && ss->content_w > ss->view_w + 0.5f) ||
@@ -612,6 +638,7 @@ static void cui__compute_hot(cui_ctx *ui) {
     }
 }
 
+/** Track focus independently from whether a popup covers keyboard input. */
 cui_interact cui__interact(cui_ctx *ui, cui_id id, int flags) {
     cui_interact r;
     memset(&r, 0, sizeof r);
@@ -650,7 +677,8 @@ cui_interact cui__interact(cui_ctx *ui, cui_id id, int flags) {
     for (int i = 0; i < ui->popup_count; i++) if (ui->popups[i].id == ui->current_layer) my_z = ui->popups[i].z;
     bool covered = false;   /* an open popup above this control owns the keyboard */
     for (int i = 0; i < ui->popup_count; i++) if (ui->popups[i].open && ui->popups[i].z > my_z) { covered = true; break; }
-    if (r.focused && !ui->focus_visible && !covered && !(flags & CUI_IF_TEXT) &&
+    r.keyboard_focused = r.focused && !covered;
+    if (r.keyboard_focused && !ui->focus_visible && !(flags & CUI_IF_TEXT) &&
         (cui_key_pressed(ui, CUI_KEY_ENTER) || cui_key_pressed(ui, CUI_KEY_SPACE) || cui_key_pressed(ui, CUI_KEY_LEFT) ||
          cui_key_pressed(ui, CUI_KEY_RIGHT) || cui_key_pressed(ui, CUI_KEY_UP) || cui_key_pressed(ui, CUI_KEY_DOWN) ||
          cui_key_pressed(ui, CUI_KEY_HOME) || cui_key_pressed(ui, CUI_KEY_END)))
@@ -726,12 +754,16 @@ float cui_animate_spring(cui_ctx *ui, cui_id id, float target, float duration, f
 /* Frame                                                                    */
 /* ------------------------------------------------------------------------ */
 
+/** Advance timers by elapsed time and cap only the animation step after idle. */
 void cui_begin_frame(cui_ctx *ui, float dt) {
     if (ui->in_frame) cui_end_frame(ui);
-    if (dt < 0) dt = 0;
-    if (dt > 0.25f) dt = 0.25f;
+    if (!isfinite(dt) || dt < 0) dt = 0;
+    /* at most an hour of clock per frame: a first dt of "seconds since 1970" (a last time of 0)
+     * would otherwise put the clock where a float cannot tell frames apart, and the spinner,
+     * which draws from (float)ui->time, would stop. An idle hour expires every timer anyway. */
+    if (dt > 3600.0f) dt = 3600.0f;
     ui->in_frame = true;
-    ui->dt = dt;
+    ui->dt = CUI_MIN(dt, 0.25f);
     ui->time += dt;
     ui->frame++;
     ui->animating = false;
