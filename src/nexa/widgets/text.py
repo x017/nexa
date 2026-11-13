@@ -18,9 +18,11 @@ from .._cdefs import (
     to_packed_color,
 )
 from ..types import (
+    Align,
     Color,
     ColorLike,
     FontRole,
+    Size,
     SizeLike,
     TerminalBuffer,
     TerminalResult,
@@ -63,8 +65,70 @@ class TextMixin:
         keep.append(opts)
         self._lib.cui_text_ex(self._ctx, encode_str(content, keep), ctypes.byref(opts))
 
-    def heading(self, content: str, level: int = 2) -> None:
-        self._lib.cui_heading(self._ctx, encode_str(content, self._frame_keepalive), int(level))
+    def heading(
+        self,
+        content: str,
+        level: int = 2,
+        *,
+        color: ColorLike = None,
+        size: float = 0.0,
+        line_height: float = 0.0,
+        width: SizeLike = None,
+        align: TextAlign = TextAlign.LEFT,
+        bg: ColorLike = None,
+        pad: Optional[float] = None,
+        radius: Optional[float] = None,
+    ) -> None:
+        """Section title; ``level`` 1..4 picks the theme's heading size.
+
+        By default the title is drawn in the theme foreground at
+        ``theme.headings[level - 1]`` px. Pass ``color`` for a custom
+        foreground (any :data:`ColorLike`: a token, ``"#7c5cff"``,
+        ``(r, g, b)``, or ``ui.Color.hex(...)``), ``size`` to override the
+        scale, and ``bg`` to sit the title on a tinted chip (``pad`` and
+        ``radius`` tune that chip).
+        """
+        keep = self._frame_keepalive
+        if (
+            color is None
+            and not size
+            and not line_height
+            and width is None
+            and align is TextAlign.LEFT
+            and bg is None
+        ):
+            self._lib.cui_heading(self._ctx, encode_str(content, keep), int(level))
+            return
+
+        lvl = max(1, min(4, int(level)))
+        px = float(size) if size else float(self.theme.headings[lvl - 1])
+        font = FontRole.DISPLAY if px >= 26.0 else FontRole.MEDIUM
+        lh = float(line_height) if line_height else (1.15 if px >= 26.0 else 1.3)
+
+        def draw_title() -> None:
+            self.text(
+                content,
+                font=font,
+                size=px,
+                color=color,
+                align=align,
+                width=width,
+                line_height=lh,
+            )
+
+        if bg is None:
+            draw_title()
+            return
+        chip_pad = 6.0 if pad is None else float(pad)
+        chip_radius = 8.0 if radius is None else float(radius)
+        if width is None:
+            # a row with START alignment lets the chip hug its text
+            with self.row(align=Align.START, width=Size.fit()):
+                with self.box(bg=bg, pad=chip_pad, radius=chip_radius):
+                    draw_title()
+        else:
+            with self.box(bg=bg, pad=chip_pad, radius=chip_radius, width=width):
+                draw_title()
 
     def label(self, content: str) -> None:
         self._lib.cui_label(self._ctx, encode_str(content, self._frame_keepalive))

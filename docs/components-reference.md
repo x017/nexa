@@ -25,7 +25,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 ## 2. Text & Typography (`nexa.widgets.text`)
 
 - **`text(content, *, font=FontRole.BODY, size=0.0, color=None, align=TextAlign.LEFT, nowrap=False, tabular=False, selectable=False, width=None, line_height=0.0)`**
-- **`heading(content, level=2)`** (`level` in `1..4`)
+- **`heading(content, level=2, *, color=None, size=0.0, line_height=0.0, width=None, align=TextAlign.LEFT, bg=None, pad=None, radius=None)`** (`level` in `1..4`; `color`/`size` restyle the title, `bg` draws it on a chip — pass `width=ui.FILL` for a full-width banner)
 - **`label(content)`** | **`secondary(content)`** | **`muted(content)`**
 - **`code(content)`** — Inline monospace pill (`Geist Mono`).
 - **`kbd(keys)`** — Styled keycap chord (`"Ctrl K"`, `"Shift Tab"`).

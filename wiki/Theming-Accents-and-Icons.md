@@ -96,6 +96,35 @@ ctx.font_scale = 1.10            # 110% proportional DPI/typography scale
 ctx.set_reduced_motion(False)    # True snaps animations for accessibility
 ```
 
+### Coloring Text, Headings & Their Background
+
+`heading` and `text` take the same color forms as everything else — `color=` is a plain foreground, so it can be a hex string, an RGB(A) tuple, or a live token that follows the active accent and light/dark mode:
+
+```python
+# level 1..4 picks the size from ctx.theme.headings[level - 1]
+ctx.heading("Reactor Console", level=1, color="#7c5cff")          # hex
+ctx.heading("Reactor Console", level=1, color=ui.Color.ACCENT)    # live token
+ctx.heading("Reactor Console", level=2, color=(124, 92, 255))     # rgb tuple
+ctx.heading("Reactor Console", level=2, size=44)                  # custom scale
+
+# a background chip behind the title (pad/radius tune it)
+ctx.heading("LIVE", level=4, color=ui.Color.ACCENT_FOREGROUND,
+            bg=ui.Color.ACCENT_STRONG, pad=8, radius=10)
+
+# …or a full-width banner instead of a hugging chip
+ctx.heading("Section", level=3, color=ui.Color.ACCENT, bg=ui.Color.SURFACE_RAISED, width=ui.FILL)
+
+# body copy: same color forms, plus translucent text
+ctx.text("Body copy", size=14, color=ui.Color.TEXT_SECONDARY)
+ctx.text("faded live value", size=14, color=ui.with_alpha(ui.Color.hex("#22c55e"), 0.45))
+
+# a background for a paragraph: any container's bg= draws behind its children
+with ctx.box(bg=ui.Color.SURFACE_RAISED, pad=10, radius=12):
+    ctx.text("Text on its own surface", color=ui.Color.TEXT_SECONDARY)
+```
+
+> `ctx.heading(...)` with no `color`/`size`/`bg` is the plain CUI heading: theme heading size in `FOREGROUND`. The overrides above are resolved in Python from `ctx.theme.headings`, so they follow `ctx.theme.font_scale` and your own `ctx.theme.headings = (...)` edits.
+
 ### Perceptual Color Math (`oklch`, `mix_colors`, `with_alpha`)
 
 ```python

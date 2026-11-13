@@ -117,6 +117,29 @@ ctx.theme.radius_surface = <span class="tok-num">14.0</span>  <span class="tok-c
 ctx.theme.radius_panel = <span class="tok-num">16.0</span>    <span class="tok-com"># Dialogs, popovers, sheets</span>
 ctx.font_scale = <span class="tok-num">1.10</span>            <span class="tok-com"># 110% proportional DPI/typography scale</span>
 ctx.set_reduced_motion(<span class="tok-kw">False</span>)    <span class="tok-com"># True snaps animations for accessibility</span></code></pre></div>
+<h3 id="coloring-text-headings-their-background">Coloring Text, Headings &amp; Their Background</h3>
+<p><code>heading</code> and <code>text</code> take the same color forms as everything else — <code>color=</code> is a plain foreground, so it can be a hex string, an RGB(A) tuple, or a live token that follows the active accent and light/dark mode:</p>
+<div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-com"># level 1..4 picks the size from ctx.theme.headings[level - 1]</span>
+ctx.heading(<span class="tok-str">&quot;Reactor Console&quot;</span>, level=<span class="tok-num">1</span>, color=<span class="tok-str">&quot;#7c5cff&quot;</span>)          <span class="tok-com"># hex</span>
+ctx.heading(<span class="tok-str">&quot;Reactor Console&quot;</span>, level=<span class="tok-num">1</span>, color=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">ACCENT</span>)    <span class="tok-com"># live token</span>
+ctx.heading(<span class="tok-str">&quot;Reactor Console&quot;</span>, level=<span class="tok-num">2</span>, color=(<span class="tok-num">124</span>, <span class="tok-num">92</span>, <span class="tok-num">255</span>))     <span class="tok-com"># rgb tuple</span>
+ctx.heading(<span class="tok-str">&quot;Reactor Console&quot;</span>, level=<span class="tok-num">2</span>, size=<span class="tok-num">44</span>)                  <span class="tok-com"># custom scale</span>
+
+<span class="tok-com"># a background chip behind the title (pad/radius tune it)</span>
+ctx.heading(<span class="tok-str">&quot;LIVE&quot;</span>, level=<span class="tok-num">4</span>, color=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">ACCENT_FOREGROUND</span>,
+            bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">ACCENT_STRONG</span>, pad=<span class="tok-num">8</span>, radius=<span class="tok-num">10</span>)
+
+<span class="tok-com"># …or a full-width banner instead of a hugging chip</span>
+ctx.heading(<span class="tok-str">&quot;Section&quot;</span>, level=<span class="tok-num">3</span>, color=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">ACCENT</span>, bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">SURFACE_RAISED</span>, width=ui.<span class="tok-cls">FILL</span>)
+
+<span class="tok-com"># body copy: same color forms, plus translucent text</span>
+ctx.text(<span class="tok-str">&quot;Body copy&quot;</span>, size=<span class="tok-num">14</span>, color=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">TEXT_SECONDARY</span>)
+ctx.text(<span class="tok-str">&quot;faded live value&quot;</span>, size=<span class="tok-num">14</span>, color=ui.with_alpha(ui.<span class="tok-cls">Color</span>.hex(<span class="tok-str">&quot;#22c55e&quot;</span>), <span class="tok-num">0.45</span>))
+
+<span class="tok-com"># a background for a paragraph: any container&#x27;s bg= draws behind its children</span>
+<span class="tok-kw">with</span> ctx.box(bg=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">SURFACE_RAISED</span>, pad=<span class="tok-num">10</span>, radius=<span class="tok-num">12</span>):
+    ctx.text(<span class="tok-str">&quot;Text on its own surface&quot;</span>, color=ui.<span class="tok-cls">Color</span>.<span class="tok-cls">TEXT_SECONDARY</span>)</code></pre></div>
+<blockquote><p><code>ctx.heading(...)</code> with no <code>color</code>/<code>size</code>/<code>bg</code> is the plain CUI heading: theme heading size in <code>FOREGROUND</code>. The overrides above are resolved in Python from <code>ctx.theme.headings</code>, so they follow <code>ctx.theme.font_scale</code> and your own <code>ctx.theme.headings = (...)</code> edits.</p></blockquote>
 <h3 id="perceptual-color-math-oklch-mix-colors-with-alpha">Perceptual Color Math (<code>oklch</code>, <code>mix_colors</code>, <code>with_alpha</code>)</h3>
 <div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code>brand = ui.oklch(<span class="tok-num">0.68</span>, <span class="tok-num">0.16</span>, <span class="tok-num">172.0</span>)              <span class="tok-com"># Perceptually uniform Lightness, Chroma, Hue°</span>
 soft = ui.mix_colors(brand, ui.<span class="tok-cls">Color</span>.hex(<span class="tok-str">&quot;#ffffff&quot;</span>), <span class="tok-num">0.25</span>)  <span class="tok-com"># Mixed in OKLab space (no muddy grays!)</span>
