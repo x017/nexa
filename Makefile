@@ -16,9 +16,26 @@
 VENV    ?= .venv
 VENV_PY := $(firstword $(wildcard $(VENV)/bin/python $(VENV)/Scripts/python.exe))
 PY      ?= $(if $(VENV_PY),$(VENV_PY),python3)
-PIP     := $(PY) -m pip
 PYTEST  ?= $(PY) -m pytest
 TWINE   ?= $(PY) -m twine
+
+# ---- installer: uv or pip -------------------------------------------------
+# `uv venv` creates virtualenvs without pip, so `$(PY) -m pip` fails there.
+# Prefer uv when it is on PATH (or when INSTALLER=uv); override with
+#   make INSTALLER=pip install-dev      make UV=/path/to/uv install-dev
+UV        ?= $(shell command -v uv 2>/dev/null)
+INSTALLER ?= $(if $(strip $(UV)),uv,pip)
+
+ifeq ($(INSTALLER),uv)
+ifeq ($(strip $(UV)),)
+$(error INSTALLER=uv but no uv found; install uv or use INSTALLER=pip)
+endif
+PIP_CMD  := $(UV) pip install --python $(PY)
+VENV_CMD := $(UV) venv
+else
+PIP_CMD  := $(PY) -m pip install
+VENV_CMD := $(PY) -m venv
+endif
 JOBS    ?= $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
 
 # tests and tools import the checkout, installed or not
@@ -58,7 +75,7 @@ endif
 EXAMPLES := $(sort $(basename $(notdir $(wildcard examples/*.py))))
 
 .DEFAULT_GOAL := help
-.PHONY: help install install-dev venv native native-info test test-quick examples \
+.PHONY: help install install-dev sync venv native native-info test test-quick examples \
         example docs bridge bridge-check abi verify dist check testpypi publish \
         clean clean-native clean-dist ci
 
@@ -67,19 +84,27 @@ help: ## Show this help
 	@printf 'nexa-ui developer tasks\n\n'
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
 		| sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
-	@printf '\nVariables: PY=%s  RTL=%s  HEADLESS=%s  MINIMAL=%s  LTO=%s  DEBUG=%s  OUT=%s\n' \
-		"$(PY)" "$(RTL)" "$(HEADLESS)" "$(MINIMAL)" "$(LTO)" "$(DEBUG)" "$(OUT)"
+	@printf '\nInstaller: %s%s\n' "$(INSTALLER)" "$(if $(strip $(UV)), ($(UV)),)"
+	@printf 'Variables: PY=%s  VENV=%s  RTL=%s  HEADLESS=%s  MINIMAL=%s  LTO=%s  DEBUG=%s  OUT=%s\n' \
+		"$(PY)" "$(VENV)" "$(RTL)" "$(HEADLESS)" "$(MINIMAL)" "$(LTO)" "$(DEBUG)" "$(OUT)"
 
 # ---- environment ----------------------------------------------------------
-venv: ## Create .venv
-	$(PY) -m venv $(VENV)
-	$(VENV)/bin/$(PY) -m pip install --upgrade pip
+venv: ## Create .venv with uv (no pip needed) or venv+pip
+	$(VENV_CMD) $(VENV)
+	@echo "created $(VENV) — now run: make install-dev"
 
 install: ## Install the package (editable, runtime only)
-	$(PIP) install -e .
+	$(PIP_CMD) -e .
 
-install-dev: ## Install editable + dev tools (pytest, build, twine)
-	$(PIP) install -e ".[dev]"
+install-dev: ## Install editable + dev tools (pytest, build, twine) with uv or pip
+	$(PIP_CMD) -e ".[dev]"
+
+sync: ## Create/sync the environment from pyproject (uv sync --extra dev, else pip -e ".[dev]")
+ifeq ($(INSTALLER),uv)
+	$(UV) sync --extra dev
+else
+	$(PIP_CMD) -e ".[dev]"
+endif
 
 # ---- native engine --------------------------------------------------------
 native: ## Compile src/nexa/_native/libnexa_cui (auto-runs on first import too)

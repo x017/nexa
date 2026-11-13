@@ -59,7 +59,8 @@ git push origin v1.4.0
 Install the release tools (`pytest`, `build`, `twine` come from the `dev` extra):
 
 ```bash
-python3 -m pip install -e ".[dev]"
+uv sync --extra dev            # uv (venvs without pip)
+python3 -m pip install -e ".[dev]"   # pip
 # or the raw commands below need: python3 -m pip install --upgrade build twine auditwheel
 ```
 

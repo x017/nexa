@@ -267,10 +267,22 @@ pytest -v
 
 ```bash
 git clone https://github.com/x017/nexa && cd nexa
-python3 -m pip install -e ".[dev]"     # pytest, build, twine
+
+# with uv — no pip in the environment, the Makefile uses `uv pip` / `uv venv`
+uv sync --extra dev                    # or: make sync
+# …or with pip
+python3 -m pip install -e ".[dev]"
+
 make test                              # builds the native library on first run, then pytest
 make examples                          # headless screenshots of all 16 examples → build/screenshots/
 ```
+
+The installer is picked automatically: if `uv` is on `PATH` the Makefile uses
+`uv venv` + `uv pip install --python <interpreter>` (uv virtualenvs ship without
+pip), otherwise `python -m venv` + `python -m pip`. Force one explicitly with
+`make INSTALLER=pip …` or `make INSTALLER=uv …`; `make help` prints which
+installer and interpreter are in effect. `uv run make test` works too, since
+`uv` keeps the project environment in sync.
 
 `make` on its own lists every task:
 
