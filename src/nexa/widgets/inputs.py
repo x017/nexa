@@ -83,11 +83,17 @@ def _build_input_opts(
         opts.height = float(height)
     opts.prefix = encode_opt(prefix, keep)
     opts.suffix = encode_opt(suffix, keep)
-    opts.bg = to_c_color(bg)
-    opts.text_color = to_c_color(text_color if text_color is not None else color)
-    opts.placeholder_color = to_c_color(placeholder_color)
-    opts.border_color = to_c_color(border_color)
-    opts.focus_color = to_c_color(focus_color)
+    # convert lazily: the default path must not pay for ctypes field writes
+    if bg is not None:
+        opts.bg = to_c_color(bg)
+    if text_color is not None or color is not None:
+        opts.text_color = to_c_color(text_color if text_color is not None else color)
+    if placeholder_color is not None:
+        opts.placeholder_color = to_c_color(placeholder_color)
+    if border_color is not None:
+        opts.border_color = to_c_color(border_color)
+    if focus_color is not None:
+        opts.focus_color = to_c_color(focus_color)
     keep.append(opts)
     return opts
 

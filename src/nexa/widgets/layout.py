@@ -169,8 +169,10 @@ class LayoutMixin:
         opts.hoverable = bool(hoverable)
         opts.muted = bool(muted)
         opts.selected = bool(selected)
-        opts.bg = to_c_color(bg)
-        opts.border_color = to_c_color(border_color)
+        if bg is not None:
+            opts.bg = to_c_color(bg)
+        if border_color is not None:
+            opts.border_color = to_c_color(border_color)
         keep.append(opts)
         clicked = bool(self._lib.cui_card_begin(self._ctx, ctypes.byref(opts)))
         return CardScope(self._ctx, self._lib.cui_card_end, clicked)
