@@ -125,6 +125,37 @@ with ctx.box(bg=ui.Color.SURFACE_RAISED, pad=10, radius=12):
 
 > `ctx.heading(...)` with no `color`/`size`/`bg` is the plain CUI heading: theme heading size in `FOREGROUND`. The overrides above are resolved in Python from `ctx.theme.headings`, so they follow `ctx.theme.font_scale` and your own `ctx.theme.headings = (...)` edits.
 
+#### One colour for a whole region: `fg=`
+
+Instead of threading `color=` through every call, put it on the container. `fg=`
+is pushed for the lifetime of the `with` block and used by `text()` and
+`heading()` whenever they are not given an explicit `color=`:
+
+```python
+with ctx.column(pad=16, gap=8, fg="#7c5cff"):
+    ctx.heading("Deploy log")            # purple
+    ctx.text("14:02 build started")      # purple
+    ctx.text("14:03 done", color=ui.Color.SUCCESS)   # explicit colour still wins
+
+# scopes nest and restore: the inner block returns to the outer colour
+with ctx.column(fg="#7c5cff"):
+    ctx.text("purple")
+    with ctx.box(fg=ui.Color.DANGER):
+        ctx.text("red")
+    ctx.text("purple again")             # stack unwound
+
+# it works on cards and grids too, and unwinds even when the block raises
+with ctx.card(fg=ui.Color.TEXT_SECONDARY, pad=18):
+    ctx.text("muted body copy")
+```
+
+`fg=` reaches `text()`, `heading()`, `markdown()` and `expandable_text()` —
+anything that takes `color=`. The shorthand micro-styles (`label`,
+`secondary`, `muted`, `code`, `kbd`, `link`) and widgets that own their
+colouring (buttons, inputs, tables, charts…) keep the palette they already use;
+pass them their own colour argument, or wrap the region and use `text()` for the
+copy you want tinted.
+
 ### Perceptual Color Math (`oklch`, `mix_colors`, `with_alpha`)
 
 ```python
@@ -143,7 +174,7 @@ Theme tokens restyle everything; these arguments restyle a single widget and lea
 | `text(...)`, `markdown(...)`, `expandable_text(...)` | `color=` |
 | `input` / `textarea` / `search` / `number` | `bg=`, `color=` (alias `text_color=`), `placeholder_color=`, `border_color=`, `focus_color=` |
 | `card(...)` | `bg=`, `border_color=` (with `muted=`, `selected=`) |
-| `box(...)`, `row`, `column`, `grid`, `stack` | `bg=`, `border_color=`, `border=`, `radius=` |
+| `box(...)`, `row`, `column`, `grid`, `stack`, `card(...)` | `bg=`, `border_color=`, `border=`, `radius=`, and `fg=` — the text colour inherited by everything drawn inside |
 | `button` / `icon_button` | `color=` (label + glyph tint) |
 | `badge`, `progress`, `readout`, `status_bar_text`, `timeline_item` | `tone=` (semantic palette) |
 | `image(...)` | `tint=` |

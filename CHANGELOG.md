@@ -47,6 +47,14 @@ release that picks it up. The published version of this page is
 
   Every colour argument accepts a theme token, `"#7c5cff"`, `(r, g, b[, a])`,
   `ui.Color`, or the result of `ui.mix_colors()` / `ui.with_alpha()`.
+- **`fg=` on containers** — `box`, `row`, `column`, `grid`, `stack` and `card`
+  take a text colour that everything inside inherits, so a region can be
+  recoloured in one place instead of threading `color=` through every call:
+  `with ctx.column(fg="#7c5cff"): ctx.heading("Deploy log"); ctx.text("…")`.
+  An explicit `color=` still wins, scopes nest and restore the outer colour, the
+  stack unwinds when the block raises, and `markdown()` / `expandable_text()`
+  honour it too. The theme micro-styles (`label`, `secondary`, `muted`, `code`,
+  `kbd`, `link`) and self-colouring widgets keep their own palettes.
 - **Examples**: `examples/instruments.py` (Reactor Console), `examples/devtools.py`
   (all 20 dev panels across tabs) and `examples/rtl.py` (Persian/Arabic app with
   RTL layout, localized calendar, terminal and charts).
@@ -57,8 +65,15 @@ release that picks it up. The published version of this page is
 - **`make doctor`** — diagnoses a checkout before a build does: root-owned or
   read-only paths (the cause of setuptools' `Cannot update time stamp of
   directory 'src/nexa_ui.egg-info'`), dangling symlinks, a stale compiled
-  library, a library built without shaping, a missing C compiler, and a bad
-  `NEXA_LIB_PATH` — each with the fix to run. `--json` for CI and bug reports.
+  library, a library built without shaping, a missing C compiler, a bad
+  `NEXA_LIB_PATH`, and an editable install that points at a *different* checkout
+  (tracebacks then name files you are not editing) — each with the fix to run.
+  `--json` for CI and bug reports.
+- **Root-safe tooling**: `make install`, `native`, `test`, `examples` and `dist`
+  refuse to run as root in a checkout owned by someone else (that is what leaves
+  root-owned artifacts behind), `make clean` removes what it can and names the
+  rest instead of dying with `Permission denied`, and `make fix-permissions`
+  hands the tree back to you.
 
 ### Changed
 

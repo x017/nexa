@@ -589,7 +589,7 @@ class DataMixin:
         opts.fit_content = bool(fit_content)
         opts.length = len(raw)
         opts.size = float(size)
-        opts.color = to_c_color(color)
+        opts.color = to_c_color(color if color is not None else self.current_fg)
         opts.streaming = bool(streaming)
         opts.compact = bool(compact)
         out = CuiMarkdownResult()

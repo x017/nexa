@@ -75,7 +75,7 @@ endif
 EXAMPLES := $(sort $(basename $(notdir $(wildcard examples/*.py))))
 
 .DEFAULT_GOAL := help
-.PHONY: help install install-dev sync venv native native-info test test-quick examples \
+.PHONY: help guard install install-dev sync venv native native-info test test-quick examples \
         example docs bridge bridge-check abi verify dist check testpypi publish \
         clean clean-native clean-dist ci
 
@@ -89,18 +89,25 @@ help: ## Show this help
 	@printf 'Variables: PY=%s  VENV=%s  RTL=%s  HEADLESS=%s  MINIMAL=%s  LTO=%s  DEBUG=%s  OUT=%s\n' \
 		"$(PY)" "$(VENV)" "$(RTL)" "$(HEADLESS)" "$(MINIMAL)" "$(LTO)" "$(DEBUG)" "$(OUT)"
 
+# ---- guards ---------------------------------------------------------------
+# Building as root in someone else's checkout leaves root-owned files behind,
+# and setuptools then fails with "Cannot update time stamp of directory
+# 'src/nexa_ui.egg-info'" on every later build as the real user.
+guard:
+	@$(PY) tools/doctor.py --assert-not-root
+
 # ---- environment ----------------------------------------------------------
-venv: ## Create .venv with uv (no pip needed) or venv+pip
+venv: | guard ## Create .venv with uv (no pip needed) or venv+pip
 	$(VENV_CMD) $(VENV)
 	@echo "created $(VENV) — now run: make install-dev"
 
-install: ## Install the package (editable, runtime only)
+install: | guard ## Install the package (editable, runtime only)
 	$(PIP_CMD) -e .
 
-install-dev: ## Install editable + dev tools (pytest, build, twine) with uv or pip
+install-dev: | guard ## Install editable + dev tools (pytest, build, twine) with uv or pip
 	$(PIP_CMD) -e ".[dev]"
 
-sync: ## Create/sync the environment from pyproject (uv sync --extra dev, else pip -e ".[dev]")
+sync: | guard ## Create/sync the environment from pyproject (uv sync --extra dev, else pip -e ".[dev]")
 ifeq ($(INSTALLER),uv)
 	$(UV) sync --extra dev
 else
@@ -108,7 +115,7 @@ else
 endif
 
 # ---- native engine --------------------------------------------------------
-native: ## Compile src/nexa/_native/libnexa_cui (auto-runs on first import too)
+native: | guard ## Compile src/nexa/_native/libnexa_cui (auto-runs on first import too)
 	$(PY) -m nexa.build $(NATIVE_FLAGS)
 
 native-info: ## Show which library is loaded and what it was built with
@@ -124,16 +131,16 @@ clean-native: ## Delete the compiled library and its build stamp
 	      src/nexa/_native/*.stamp
 
 # ---- tests ----------------------------------------------------------------
-test: ## Run the whole pytest suite
+test: | guard ## Run the whole pytest suite
 	$(PYTEST) tests -q $(PYTEST_ARGS)
 
-test-quick: ## Run everything except the slow native-build and example tests
+test-quick: | guard ## Run everything except the slow native-build and example tests
 	$(PYTEST) tests -q -k "not minimal_stripped_builds_and_size" \
 		--ignore=tests/test_paradigms_and_async.py \
 		--ignore=tests/test_packaging.py $(PYTEST_ARGS)
 
 # ---- examples -------------------------------------------------------------
-examples: ## Render every example headless into build/screenshots
+examples: | guard ## Render every example headless into build/screenshots
 	@mkdir -p build/screenshots
 	@set -e; for name in $(EXAMPLES); do \
 		printf '  %-16s' "$$name"; \
@@ -171,7 +178,7 @@ verify: ## Smoke-test the installed binding end to end
 	print('ok —', ui.get_library_path(), '| shaping:', fonts.supports_text_shaping())"
 
 # ---- packaging ------------------------------------------------------------
-dist: clean-dist ## Build sdist + wheel into dist/
+dist: clean-dist guard ## Build sdist + wheel into dist/
 	NEXA_LTO=1 $(PY) -m build
 
 check: ## Validate dist/ metadata and README rendering (twine --strict)
@@ -190,11 +197,18 @@ clean-dist: ## Remove dist/ and build/
 	rm -rf dist build
 
 clean: clean-dist ## Remove build outputs, caches and compiled libraries
-	rm -rf .pytest_cache .mypy_cache .ruff_cache htmlcov .coverage \
-	       src/*.egg-info *.egg-info
-	find . -name '__pycache__' -type d -prune -exec rm -rf {} +
-	rm -f src/nexa/_native/*.so src/nexa/_native/*.dylib src/nexa/_native/*.dll \
-	      src/nexa/_native/*.stamp
+	@rm -rf .pytest_cache .mypy_cache .ruff_cache htmlcov .coverage \
+	       src/*.egg-info *.egg-info 2>/dev/null || true
+	@find . -name '__pycache__' -type d -prune -exec rm -rf {} + 2>/dev/null || true
+	@rm -f src/nexa/_native/*.so src/nexa/_native/*.dylib src/nexa/_native/*.dll \
+	      src/nexa/_native/*.stamp 2>/dev/null || true
+	@$(PY) tools/doctor.py --only writable,leftovers --quiet
 
+fix-permissions: ## Hand root-owned leftovers back to you (sudo; repairs a `sudo make` run)
+	@echo "chown -R $$(id -u):$$(id -g) $(CURDIR)"
+	@sudo chown -R "$$(id -u):$$(id -g)" "$(CURDIR)"
+	@$(PY) tools/doctor.py --only writable --quiet && echo "permissions fixed — now run: make install-dev"
+
+ci: | guard
 ci: native test docs bridge-check ## What CI runs: build, test, docs, generated-code check
 	@echo "all good"

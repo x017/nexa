@@ -303,7 +303,7 @@ installer and interpreter are in effect. `uv run make test` works too, since
 | `make dist` / `make check` | sdist + wheel into `dist/`, then `twine check --strict` |
 | `make testpypi` / `make publish PUBLISH=yes` | upload to TestPyPI / PyPI |
 | `make ci` | build + test + docs + generated-code check |
-| `make doctor` | diagnose the checkout — root-owned/read-only paths, dangling symlinks, stale library, missing compiler |
+| `make doctor` / `make fix-permissions` | diagnose the checkout (root-owned/read-only paths, dangling symlinks, stale library, missing compiler) / hand root-owned leftovers back |
 
 ## License
 

@@ -130,6 +130,8 @@ class UI(
         self._clip_buf: Optional[bytes] = None
 
         self._frame_keepalive: List[Any] = []
+        # inherited text colour from container scopes: `with ctx.column(fg=...)`
+        self._fg_stack: List[Any] = []
         self._frame_canvas_cbs: List[Callable[[UI, Rect], None]] = []
         self._canvas_error: Optional[BaseException] = None
 
@@ -467,6 +469,11 @@ class UI(
         return int(self._lib.cui_frame_count(self._ctx))
 
     # ---- Theme & Appearance ----
+
+    @property
+    def current_fg(self) -> Optional[Any]:
+        """The text colour inherited from an enclosing ``fg=`` container scope."""
+        return self._fg_stack[-1] if self._fg_stack else None
 
     @property
     def theme(self) -> ThemeProxy:

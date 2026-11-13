@@ -47,6 +47,48 @@ class BoxScope:
         self._end_fn(self._ctx)
 
 
+class ColorScope:
+    """Wraps a scope and gives its children a default text colour (``fg=``).
+
+    ``with ctx.column(fg="#7c5cff"):`` pushes the colour for the lifetime of the
+    block; ``ctx.text()`` and ``ctx.heading()`` use it when no ``color=`` is
+    passed. Attributes of the wrapped scope (``.id``, ``.clicked``, ``.open``)
+    are reachable through the wrapper, and ``bool()`` follows the inner scope.
+    """
+
+    __slots__ = ("_ui", "_inner", "_fg", "_pushed")
+
+    def __init__(self, ui: Any, inner: Any, fg: Any) -> None:
+        self._ui = ui
+        self._inner = inner
+        self._fg = fg
+        self._pushed = False
+
+    def __enter__(self) -> Any:
+        if self._fg is not None:
+            self._ui._fg_stack.append(self._fg)
+            self._pushed = True
+        return self._inner.__enter__()
+
+    def __exit__(self, *exc: Any) -> Any:
+        try:
+            return self._inner.__exit__(*exc)
+        finally:
+            if self._pushed:
+                self._ui._fg_stack.pop()
+                self._pushed = False
+
+    def __bool__(self) -> bool:
+        return bool(self._inner)
+
+    def __getattr__(self, name: str) -> Any:
+        try:
+            inner = object.__getattribute__(self, "_inner")
+        except AttributeError:  # pragma: no cover - defensive
+            raise AttributeError(name) from None
+        return getattr(inner, name)
+
+
 class SimpleScope:
     """Unconditional scope calling ``end_fn(ctx)`` on exit."""
 

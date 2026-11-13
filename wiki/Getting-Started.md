@@ -218,6 +218,32 @@ uv sync --extra dev      # or: make sync
 uv remove nexa-ui --dev  # undo the self-dependency
 ```
 
+**`rm: cannot remove 'src/nexa_ui.egg-info/SOURCES.txt': Permission denied` from `make clean`**
+
+Something ran as root in this checkout (`sudo make install`, `sudo uv sync`, a
+container build) and left root-owned files behind. `make clean` now removes what
+it can and names what is left; hand the tree back and retry:
+
+```bash
+make fix-permissions     # sudo chown -R "$(id -u):$(id -g)" .
+make clean && make install-dev
+```
+
+Do not build as root: `make install`, `make native`, `make test`, `make examples`
+and `make dist` refuse when root would create root-owned artifacts in a checkout
+owned by someone else, and print the same fix.
+
+**A traceback points at a file that is not in this checkout**
+
+An editable install can point somewhere else entirely — `…/Projects/yapps/src/nexa/widgets/layout.py`
+while you edit `…/Projects/nexa`. Confirm and reinstall:
+
+```bash
+python -c "import nexa; print(nexa.__file__)"   # which tree am I running?
+make doctor                                     # flags "imports nexa-ui from another checkout"
+uv pip uninstall nexa-ui && make install-dev    # rebind the environment to this tree
+```
+
 **`AttributeError: … undefined symbol: cui_dot_display_ex`**
 
 A compiled library from an older version survived the update (`src/nexa/_native/`

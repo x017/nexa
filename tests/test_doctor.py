@@ -146,3 +146,104 @@ def test_report_renders_every_level() -> None:
     assert not rep.failed
     rep.add(doctor.FAIL, "broken")
     assert rep.failed
+
+
+# ---------------------------------------------------------------------------
+# selective runs, the root guard, and the Makefile wiring that depends on both
+# ---------------------------------------------------------------------------
+
+def test_only_runs_the_selected_checks(tmp_path: pathlib.Path) -> None:
+    rep = doctor.run_checks(_tree(tmp_path), ["python"])
+    assert [row["title"].split(" at ")[0] for row in rep.rows] == [
+        f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    ]
+
+
+def test_unknown_check_name_is_rejected(tmp_path: pathlib.Path) -> None:
+    with pytest.raises(SystemExit) as exit_info:
+        doctor.run_checks(_tree(tmp_path), ["nope"])
+    assert "unknown check" in str(exit_info.value)
+
+
+def test_quiet_prints_nothing_when_healthy(capsys: pytest.CaptureFixture[str]) -> None:
+    code = doctor.main(["--only", "python", "--quiet"])
+    assert code == 0
+    assert capsys.readouterr().out == ""
+
+
+@pytest.mark.skipif(
+    os.environ.get("NEXA_DOCTOR_PERM_TEST") != "1",
+    reason="set NEXA_DOCTOR_PERM_TEST=1 (needs sudo) to exercise the root guard",
+)
+def test_root_guard_refuses_a_foreign_checkout(tmp_path: pathlib.Path) -> None:
+    # as root, pointed at a uid-1001 tree: refuse; the same tree as its owner: allow
+    code = doctor.assert_not_root(pathlib.Path("/home/user/nexa"))
+    assert code == 1
+
+
+@pytest.mark.skipif(os.geteuid() == 0 if hasattr(os, "geteuid") else True,
+                    reason="only meaningful for a non-root user")
+def test_root_guard_never_blocks_a_normal_user(tmp_path: pathlib.Path) -> None:
+    assert doctor.assert_not_root(tmp_path) == 0
+
+
+def test_makefile_guards_builds_and_tolerates_clean() -> None:
+    """`make clean` must not die on root-owned leftovers, and builds must refuse sudo."""
+    makefile = (ROOT / "Makefile").read_text()
+    lines = makefile.splitlines()
+    for target in ("native:", "install:", "install-dev:", "sync:", "test:", "examples:"):
+        line = next(l for l in lines if l.startswith(target))
+        assert "guard" in line, f"{target} is not guarded: {line}"
+    assert any(l.startswith("dist:") and "guard" in l for l in lines)
+    clean_start = next(i for i, l in enumerate(lines) if l.startswith("clean:"))
+    clean_recipe = "\n".join(lines[clean_start:clean_start + 8])
+    assert "|| true" in clean_recipe, "clean must tolerate files it cannot remove"
+    assert "doctor.py --only writable" in clean_recipe, "clean must report what is left"
+    assert any(l.startswith("fix-permissions:") for l in lines)
+
+
+class _FakeDist:
+    version = "1.4.0"
+
+    def __init__(self, url: str | None) -> None:
+        self._url = url
+
+    def read_text(self, name: str) -> str | None:
+        assert name == "direct_url.json"
+        return None if self._url is None else '{"url": "%s", "dir_info": {"editable": true}}' % self._url
+
+
+def test_install_pointing_at_another_checkout_is_reported(tmp_path: pathlib.Path,
+                                                         monkeypatch: pytest.MonkeyPatch) -> None:
+    repo = _tree(tmp_path / "repo")
+    elsewhere = (tmp_path / "yapps" / "src").resolve()
+    elsewhere.mkdir(parents=True)
+    monkeypatch.setattr(doctor.importlib.metadata, "distribution",
+                        lambda name: _FakeDist(f"file://{elsewhere}"))
+    rep = doctor.run_checks(repo, ["install"])
+    row = rep.rows[0]
+    assert row["level"] == doctor.WARN
+    assert "another checkout" in row["title"] and str(elsewhere) in row["title"]
+    assert "uv pip uninstall" in row["fix"]
+
+
+def test_install_editable_from_this_checkout_is_fine(tmp_path: pathlib.Path,
+                                                     monkeypatch: pytest.MonkeyPatch) -> None:
+    repo = _tree(tmp_path / "repo")
+    monkeypatch.setattr(doctor.importlib.metadata, "distribution",
+                        lambda name: _FakeDist(f"file://{repo.resolve()}"))
+    rep = doctor.run_checks(repo, ["install"])
+    assert rep.rows[0]["level"] == doctor.OK
+    assert "from this checkout" in rep.rows[0]["title"]
+
+
+def test_install_absent_is_not_a_problem(tmp_path: pathlib.Path,
+                                         monkeypatch: pytest.MonkeyPatch) -> None:
+    repo = _tree(tmp_path / "repo")
+
+    def missing(name: str):
+        raise doctor.importlib.metadata.PackageNotFoundError(name)
+
+    monkeypatch.setattr(doctor.importlib.metadata, "distribution", missing)
+    rep = doctor.run_checks(repo, ["install"])
+    assert rep.rows[0]["level"] == doctor.OK

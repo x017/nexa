@@ -16,7 +16,7 @@ from .._cdefs import (
     to_c_color,
     to_c_size,
 )
-from ..scopes import BoxScope, CardScope, SimpleScope, SplitScope
+from ..scopes import ColorScope, BoxScope, CardScope, SimpleScope, SplitScope
 from ..types import Align, ColorLike, Direction, Elevation, Justify, Rect, SizeLike, TextDirection
 
 
@@ -104,32 +104,36 @@ class LayoutMixin:
 
     # ---- Scoped layout containers ----
 
-    def box(self, **kwargs) -> BoxScope:
+    def _scope(self, inner: BoxScope, fg: ColorLike) -> "BoxScope | ColorScope":
+        """Wrap a container scope so ``fg=`` tints the text drawn inside it."""
+        return inner if fg is None else ColorScope(self, inner, fg)
+
+    def box(self, *, fg: ColorLike = None, **kwargs) -> "BoxScope | ColorScope":
         opts = _build_box_opts(self._frame_keepalive, **kwargs)
         nid = int(self._lib.cui_box_begin(self._ctx, ctypes.byref(opts)))
-        return BoxScope(self._ctx, self._lib.cui_box_end, nid)
+        return self._scope(BoxScope(self._ctx, self._lib.cui_box_end, nid), fg)
 
-    def row(self, **kwargs) -> BoxScope:
+    def row(self, *, fg: ColorLike = None, **kwargs) -> "BoxScope | ColorScope":
         kwargs.setdefault("dir", Direction.ROW)
         opts = _build_box_opts(self._frame_keepalive, **kwargs)
         nid = int(self._lib.cui_row_begin(self._ctx, ctypes.byref(opts)))
-        return BoxScope(self._ctx, self._lib.cui_box_end, nid)
+        return self._scope(BoxScope(self._ctx, self._lib.cui_box_end, nid), fg)
 
-    def column(self, **kwargs) -> BoxScope:
+    def column(self, *, fg: ColorLike = None, **kwargs) -> "BoxScope | ColorScope":
         kwargs.setdefault("dir", Direction.COLUMN)
         opts = _build_box_opts(self._frame_keepalive, **kwargs)
         nid = int(self._lib.cui_column_begin(self._ctx, ctypes.byref(opts)))
-        return BoxScope(self._ctx, self._lib.cui_box_end, nid)
+        return self._scope(BoxScope(self._ctx, self._lib.cui_box_end, nid), fg)
 
-    def grid(self, columns: int = 0, *, min_column_width: float = 0.0, **kwargs) -> BoxScope:
+    def grid(self, columns: int = 0, *, min_column_width: float = 0.0, **kwargs) -> "BoxScope | ColorScope":
         kwargs["dir"] = Direction.GRID
         kwargs["columns"] = columns
         kwargs["min_column_width"] = min_column_width
         return self.box(**kwargs)
 
-    def stack(self, **kwargs) -> BoxScope:
+    def stack(self, *, fg: ColorLike = None, **kwargs) -> "BoxScope | ColorScope":
         kwargs["dir"] = Direction.STACK
-        return self.box(**kwargs)
+        return self.box(fg=fg, **kwargs)
 
     def card(
         self,
@@ -151,7 +155,8 @@ class LayoutMixin:
         selected: bool = False,
         bg: ColorLike = None,
         border_color: ColorLike = None,
-    ) -> CardScope:
+        fg: ColorLike = None,
+    ) -> "CardScope | ColorScope":
         keep = self._frame_keepalive
         opts = CuiCardOpts()
         opts.id = encode_opt(id, keep)
@@ -175,7 +180,8 @@ class LayoutMixin:
             opts.border_color = to_c_color(border_color)
         keep.append(opts)
         clicked = bool(self._lib.cui_card_begin(self._ctx, ctypes.byref(opts)))
-        return CardScope(self._ctx, self._lib.cui_card_end, clicked)
+        scope = CardScope(self._ctx, self._lib.cui_card_end, clicked)
+        return scope if fg is None else ColorScope(self, scope, fg)
 
     def scroll(
         self,

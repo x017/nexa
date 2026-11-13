@@ -54,7 +54,7 @@ class TextMixin:
         opts = CuiTextOpts()
         opts.font = int(font)
         opts.size = float(size)
-        opts.color = to_c_color(color)
+        opts.color = to_c_color(color if color is not None else self.current_fg)
         opts.align = int(align)
         opts.nowrap = bool(nowrap)
         opts.tabular = bool(tabular)
@@ -86,11 +86,13 @@ class TextMixin:
         foreground (any :data:`ColorLike`: a token, ``"#7c5cff"``,
         ``(r, g, b)``, or ``ui.Color.hex(...)``), ``size`` to override the
         scale, and ``bg`` to sit the title on a tinted chip (``pad`` and
-        ``radius`` tune that chip).
+        ``radius`` tune that chip). Without ``color`` it uses the inherited
+        ``fg=`` of the enclosing container, then the theme foreground.
         """
         keep = self._frame_keepalive
         if (
             color is None
+            and self.current_fg is None
             and not size
             and not line_height
             and width is None

@@ -25,6 +25,7 @@ from .render import (
 from .scopes import (
     BoxScope,
     CardScope,
+    ColorScope,
     CardStackScope,
     CarouselScope,
     ConditionalScope,
