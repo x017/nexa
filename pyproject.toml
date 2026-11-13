@@ -72,6 +72,13 @@ nexa-build = "nexa.build:main"
 [project.entry-points.pyinstaller40]
 hook-dirs = "nexa._pyinstaller:get_hook_dirs"
 
+[tool.pytest.ini_options]
+# plain `pytest` works from a fresh clone; the Python side builds the native
+# library on first import, so there is nothing to compile before `make test`
+testpaths = ["tests"]
+addopts = "-ra"
+norecursedirs = ["build", "dist", "docs", "wiki", "examples", "csrc", ".venv"]
+
 [tool.cibuildwheel]
 # nexa binds via ctypes (`py3-none-<plat>`) without linking libpython, so one build per OS/arch
 # produces an ABI-independent wheel compatible with Python 3.9+.

@@ -263,6 +263,29 @@ pytest -v
 
 ---
 
+## Development
+
+```bash
+git clone https://github.com/x017/nexa && cd nexa
+python3 -m pip install -e ".[dev]"     # pytest, build, twine
+make test                              # builds the native library on first run, then pytest
+make examples                          # headless screenshots of all 16 examples → build/screenshots/
+```
+
+`make` on its own lists every task:
+
+| Task | What it does |
+|---|---|
+| `make native` | compile the C99 engine (`RTL=0`, `LTO=1`, `MINIMAL=1`, `DEBUG=1`, `OUT=…`; a shapeless build at the default path is replaced on next import, so pair `RTL=0` with `OUT=` + `NEXA_LIB_PATH`) |
+| `make native-info` | which library is loaded, its build stamp and whether shaping is on |
+| `make test` / `make test-quick` | full pytest suite / everything but the slow example + packaging tests |
+| `make examples` / `make example EXAMPLE=rtl` | render every example headless / run one |
+| `make docs` | rebuild the HTML + wiki bundle from `README.md` and `docs/*.md` |
+| `make bridge-check` / `make abi` | verify or regenerate the generated ctypes/C bridge code |
+| `make dist` / `make check` | sdist + wheel into `dist/`, then `twine check --strict` |
+| `make testpypi` / `make publish PUBLISH=yes` | upload to TestPyPI / PyPI |
+| `make ci` | build + test + docs + generated-code check |
+
 ## License
 
 MIT License. Bundled fonts (Inter, Geist Mono, Lucide) and single-header libraries (`stb_*`) are permissive open-source; see [`LICENSE`](https://github.com/x017/nexa/blob/main/LICENSE), [`THIRD_PARTY.md`](https://github.com/x017/nexa/blob/main/THIRD_PARTY.md), and [`RELEASING.md`](https://github.com/x017/nexa/blob/main/RELEASING.md).

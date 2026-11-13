@@ -56,18 +56,20 @@ git push origin v1.4.0
 
 ## 3. Building & Publishing Locally (Manual `build` + `twine`)
 
-Install packaging tools:
+Install the release tools (`pytest`, `build`, `twine` come from the `dev` extra):
 
 ```bash
-python3 -m pip install --upgrade build twine auditwheel
+python3 -m pip install -e ".[dev]"
+# or the raw commands below need: python3 -m pip install --upgrade build twine auditwheel
 ```
 
 Build both `sdist` (`.tar.gz`) and a platform wheel (`.whl`) into `dist/`:
 
 ```bash
-rm -rf dist build
-NEXA_LTO=1 python3 -m build
+make dist                     # rm -rf dist build && NEXA_LTO=1 python3 -m build
 ```
+
+`make help` lists every task; the rest of this section is the manual equivalent.
 
 > **Linux note:** Raw local Linux wheels carry the `linux_x86_64` / `linux_aarch64` tag, which PyPI rejects until repaired to a `manylinux` tag:
 > ```bash
@@ -78,15 +80,15 @@ NEXA_LTO=1 python3 -m build
 Validate PyPI metadata and `README.md` rendering:
 
 ```bash
-twine check --strict dist/*
+make check                    # twine check --strict dist/*
 ```
 
 Upload to **TestPyPI** (optional rehearsal) or **PyPI**:
 
 ```bash
 # TestPyPI:
-twine upload --repository testpypi dist/*
+make testpypi                 # twine upload --repository testpypi dist/*
 
-# Production PyPI:
-twine upload dist/*
+# Production PyPI (asks for confirmation first):
+make publish PUBLISH=yes      # twine upload dist/*
 ```
