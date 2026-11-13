@@ -305,7 +305,7 @@ installer and interpreter are in effect. `uv run make test` works too, since
 | `make docs` | rebuild the HTML + wiki bundle from `README.md` and `docs/*.md` |
 | `make bridge-check` / `make abi` | verify or regenerate the generated ctypes/C bridge code |
 | `make dist` / `make check` | sdist + wheel into `dist/`, then `twine check --strict` |
-| `make testpypi` / `make publish PUBLISH=yes` | upload to TestPyPI / PyPI |
+| `make testpypi` / `make publish PUBLISH=yes` | upload to TestPyPI / PyPI — both refuse bare `linux_*` wheels (PyPI would 400 them); local wheels need `auditwheel repair` and real releases go through a `v*.*.*` tag → `release.yml` ([`RELEASING.md`](https://github.com/x017/nexa/blob/main/RELEASING.md)) |
 | `make ci` | build + test + docs + generated-code check |
 | `make doctor` / `make fix-permissions` | diagnose the checkout (root-owned/read-only paths, dangling symlinks, stale library, missing compiler) / hand root-owned leftovers back |
 

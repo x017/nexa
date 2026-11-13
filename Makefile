@@ -6,7 +6,7 @@
 #   make native          compile the C99 engine (text shaping on by default)
 #   make examples        render every example headless into build/screenshots
 #   make dist check      build sdist + wheel, then validate with twine
-#   make publish PUBLISH=yes
+#   make publish PUBLISH=yes   (refuses bare linux_* wheels; releases = tag -> release.yml)
 #
 # Override anything on the command line, e.g.:
 #   make native RTL=0 LTO=1        make test PYTEST_ARGS="-k rtl -x"
@@ -76,7 +76,7 @@ EXAMPLES := $(sort $(basename $(notdir $(wildcard examples/*.py))))
 
 .DEFAULT_GOAL := help
 .PHONY: help guard install install-dev sync venv native native-info test test-quick examples \
-        example docs bridge bridge-check abi verify dist check require-twine testpypi publish \
+        example docs bridge bridge-check abi verify dist check require-twine require-publishable testpypi publish \
         clean clean-native clean-dist ci
 
 # ---------------------------------------------------------------------------
@@ -186,6 +186,28 @@ require-twine: ## Check that twine is installed for $(PY)
 		echo "  run: make install-dev     (twine ships in the [dev] extra)"; \
 		exit 2; }
 
+# PyPI *and* TestPyPI reject bare `linux_*` wheels with a server-side 400
+# ("unsupported platform tag") after the whole file has been uploaded; only
+# manylinux*/musllinux* pass (PEP 600). Fail locally instead. See RELEASING.md
+# section 3 (auditwheel) or section 2 (v*.*.* tag -> release.yml publishes).
+require-publishable: ## Refuse dist/ wheels PyPI would 400 (bare linux_* tags)
+	@bad=""; \
+		for w in dist/*.whl; do \
+			[ -e "$$w" ] || continue; \
+			base=$$(basename "$$w" .whl); \
+			plat=$${base##*-}; \
+			case "$$plat" in linux_*) bad="$$bad $$w" ;; esac; \
+		done; \
+		if [ -n "$$bad" ]; then \
+			echo "refusing:$$bad"; \
+			echo "  PyPI and TestPyPI reject bare 'linux_*' wheels (400: unsupported platform tag);"; \
+			echo "  only manylinux*/musllinux* wheels are accepted (PEP 600)."; \
+			echo "  local:  auditwheel repair dist/*.whl -w dist/ && rm -f dist/*-linux_*.whl"; \
+			echo "  or tag:  git tag vX.Y.Z && git push origin vX.Y.Z  ->  release.yml publishes"; \
+			echo "  see RELEASING.md"; \
+			exit 2; \
+		fi
+
 dist: clean-dist guard ## Build sdist + wheel into dist/
 	NEXA_LTO=1 $(PY) -m build
 
@@ -193,10 +215,10 @@ check: require-twine ## Validate dist/ metadata and README rendering (twine --st
 	@ls dist/* >/dev/null 2>&1 || { echo "no dist/ yet — run 'make dist' first"; exit 2; }
 	$(TWINE) check --strict dist/*
 
-testpypi: check ## Upload dist/ to TestPyPI
+testpypi: check require-publishable ## Upload dist/ to TestPyPI
 	$(TWINE) upload --repository testpypi dist/*
 
-publish: check ## Upload dist/ to PyPI (needs PUBLISH=yes)
+publish: check require-publishable ## Upload dist/ to PyPI (needs PUBLISH=yes)
 	@test "$(PUBLISH)" = "yes" || { echo "refusing: run 'make publish PUBLISH=yes'"; exit 2; }
 	$(TWINE) upload dist/*
 

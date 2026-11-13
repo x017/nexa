@@ -64,9 +64,11 @@ dev = [
     "pytest>=7.0",
     "build>=1.0",
     "twine>=5.0",
-    # the sdist tests build with --no-isolation, so the venv's setuptools must
-    # understand the SPDX `license = "MIT"` form (PEP 639, setuptools>=77)
+    # the sdist tests build with --no-isolation, so a fresh venv must satisfy
+    # [build-system].requires itself: setuptools>=77 for the SPDX
+    # `license = "MIT"` form (PEP 639), and wheel for the backend
     "setuptools>=77.0",
+    "wheel",
 ]
 
 [project.scripts]
