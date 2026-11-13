@@ -132,6 +132,7 @@ class UI(
         self._frame_keepalive: List[Any] = []
         # inherited text colour from container scopes: `with ctx.column(fg=...)`
         self._fg_stack: List[Any] = []
+        self._fg_current: Any = None   # mirror of the top of the stack (hot path)
         self._frame_canvas_cbs: List[Callable[[UI, Rect], None]] = []
         self._canvas_error: Optional[BaseException] = None
 
@@ -473,7 +474,7 @@ class UI(
     @property
     def current_fg(self) -> Optional[Any]:
         """The text colour inherited from an enclosing ``fg=`` container scope."""
-        return self._fg_stack[-1] if self._fg_stack else None
+        return self._fg_current
 
     @property
     def theme(self) -> ThemeProxy:

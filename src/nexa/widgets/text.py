@@ -54,7 +54,7 @@ class TextMixin:
         opts = CuiTextOpts()
         opts.font = int(font)
         opts.size = float(size)
-        opts.color = to_c_color(color if color is not None else self.current_fg)
+        opts.color = to_c_color(color if color is not None else self._fg_current)
         opts.align = int(align)
         opts.nowrap = bool(nowrap)
         opts.tabular = bool(tabular)
@@ -92,7 +92,7 @@ class TextMixin:
         keep = self._frame_keepalive
         if (
             color is None
-            and self.current_fg is None
+            and self._fg_current is None
             and not size
             and not line_height
             and width is None

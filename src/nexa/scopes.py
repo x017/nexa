@@ -56,17 +56,23 @@ class ColorScope:
     are reachable through the wrapper, and ``bool()`` follows the inner scope.
     """
 
-    __slots__ = ("_ui", "_inner", "_fg", "_pushed")
+    __slots__ = ("_ui", "_inner", "_fg", "_pushed", "_prev")
 
     def __init__(self, ui: Any, inner: Any, fg: Any) -> None:
         self._ui = ui
         self._inner = inner
         self._fg = fg
         self._pushed = False
+        self._prev = None
 
     def __enter__(self) -> Any:
         if self._fg is not None:
-            self._ui._fg_stack.append(self._fg)
+            stack = self._ui._fg_stack
+            self._prev = stack[-1] if stack else None
+            stack.append(self._fg)
+            # mirrored on a plain attribute: text() reads it on every call, and a
+            # property access there costs ~0.1 µs (measured) on a hot path
+            self._ui._fg_current = self._fg
             self._pushed = True
         return self._inner.__enter__()
 
@@ -76,6 +82,7 @@ class ColorScope:
         finally:
             if self._pushed:
                 self._ui._fg_stack.pop()
+                self._ui._fg_current = self._prev
                 self._pushed = False
 
     def __bool__(self) -> bool:

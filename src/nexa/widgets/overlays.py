@@ -307,7 +307,7 @@ class OverlaysMixin:
         opts = CuiExpandableTextOpts()
         opts.lines = int(lines)
         opts.size = float(size)
-        opts.color = to_c_color(color if color is not None else self.current_fg)
+        opts.color = to_c_color(color if color is not None else self._fg_current)
         opts.fade_to = to_c_color(fade_to)
         keep.append(opts)
         return bool(self._lib.cui_expandable_text_ex(
