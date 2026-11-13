@@ -95,3 +95,8 @@ make testpypi                 # twine upload --repository testpypi dist/*
 # Production PyPI (asks for confirmation first):
 make publish PUBLISH=yes      # twine upload dist/*
 ```
+
+> **Guard:** `make testpypi` and `make publish` run `make require-publishable` first and refuse
+> bare `linux_*` wheels locally, so you see the fix (the `auditwheel repair` step above, or a
+> `v*.*.*` tag that lets `release.yml` build the publishable wheels) instead of a 400 after the
+> upload.
