@@ -301,3 +301,6 @@ installer and interpreter are in effect. `uv run make test` works too, since
 ## License
 
 MIT License. Bundled fonts (Inter, Geist Mono, Lucide) and single-header libraries (`stb_*`) are permissive open-source; see [`LICENSE`](https://github.com/x017/nexa/blob/main/LICENSE), [`THIRD_PARTY.md`](https://github.com/x017/nexa/blob/main/THIRD_PARTY.md), and [`RELEASING.md`](https://github.com/x017/nexa/blob/main/RELEASING.md).
+
+> `uv sync` writes a local `uv.lock`; it is intentionally *not* tracked, since
+> nexa-ui is a library and those are dev-only pins.
