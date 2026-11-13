@@ -14,6 +14,7 @@ scenarios are the ones that have actually broken builds:
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import pathlib
 import sys
@@ -210,7 +211,11 @@ class _FakeDist:
 
     def read_text(self, name: str) -> str | None:
         assert name == "direct_url.json"
-        return None if self._url is None else '{"url": "%s", "dir_info": {"editable": true}}' % self._url
+        if self._url is None:
+            return None
+        # json.dumps, not % formatting: a Windows path's backslashes would
+        # otherwise be invalid JSON escapes and silently read as "from an index"
+        return json.dumps({"url": self._url, "dir_info": {"editable": True}})
 
 
 def test_install_pointing_at_another_checkout_is_reported(tmp_path: pathlib.Path,
@@ -247,3 +252,32 @@ def test_install_absent_is_not_a_problem(tmp_path: pathlib.Path,
     monkeypatch.setattr(doctor.importlib.metadata, "distribution", missing)
     rep = doctor.run_checks(repo, ["install"])
     assert rep.rows[0]["level"] == doctor.OK
+
+
+def test_file_url_path_decodes_every_direct_url_form() -> None:
+    """direct_url.json file URLs: POSIX, PEP 610 Windows drive, percent-encoded."""
+    posix = doctor._file_url_path("file:///home/me/proj")
+    assert posix == pathlib.Path("/home/me/proj")
+
+    drive = doctor._file_url_path("file:///C:/Users/me/proj")
+    if os.name == "nt":
+        assert drive == pathlib.Path("C:/Users/me/proj")  # leading slash stripped
+    else:
+        assert drive == pathlib.Path("/C:/Users/me/proj")
+
+    spaced = str(doctor._file_url_path("file:///tmp/a%20b"))
+    assert "a b" in spaced  # percent-escapes decoded
+
+
+def test_install_pep610_drive_url_is_reported_as_other_checkout(
+    tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The file:///C:/... form pip and uv write on Windows must read on every OS."""
+    repo = _tree(tmp_path / "repo")
+    monkeypatch.setattr(
+        doctor.importlib.metadata, "distribution",
+        lambda name: _FakeDist("file:///C:/elsewhere/src"),
+    )
+    rep = doctor.run_checks(repo, ["install"])
+    assert rep.rows[0]["level"] == doctor.WARN
+    assert "another checkout" in rep.rows[0]["title"]

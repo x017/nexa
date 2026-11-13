@@ -25,6 +25,7 @@ import platform
 import shutil
 import sys
 from pathlib import Path
+from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parent.parent
 SKIP_DIRS = {".git", ".venv", "venv", "build", "dist", "__pycache__", "node_modules",
@@ -225,6 +226,19 @@ def check_env_override(rep: Report, root: Path = ROOT) -> None:
                 "unset NEXA_LIB_PATH or point it at a built library")
 
 
+def _file_url_path(source: str) -> Path:
+    """``file://`` URL from ``direct_url.json`` -> filesystem path (PEP 610).
+
+    Editable installs record ``file:///C:/path`` on Windows; naive slicing
+    leaves the leading slash and resolves to ``C:\\C:\\path``. Percent-encoded
+    sequences (``%20`` in a directory name) are decoded on the way.
+    """
+    raw = unquote(source[len("file://"):])
+    if os.name == "nt" and len(raw) > 2 and raw[0] == "/" and raw[2] == ":":
+        raw = raw[1:]  # file:///C:/x -> C:/x
+    return Path(raw)
+
+
 def check_install(rep: Report, root: Path = ROOT) -> None:
     """Which nexa-ui does this interpreter import, and from where?
 
@@ -249,7 +263,7 @@ def check_install(rep: Report, root: Path = ROOT) -> None:
         rep.add(OK, f"nexa-ui {dist.version} installed from an index (wheel)",
                 "a source checkout is imported through PYTHONPATH=src instead")
         return
-    path = Path(source[len("file://"):]).resolve()
+    path = _file_url_path(source).resolve()
     try:
         same = path == root.resolve()
     except OSError:
