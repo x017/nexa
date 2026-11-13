@@ -149,6 +149,8 @@ class LayoutMixin:
         hoverable: bool = False,
         muted: bool = False,
         selected: bool = False,
+        bg: ColorLike = None,
+        border_color: ColorLike = None,
     ) -> CardScope:
         keep = self._frame_keepalive
         opts = CuiCardOpts()
@@ -167,6 +169,8 @@ class LayoutMixin:
         opts.hoverable = bool(hoverable)
         opts.muted = bool(muted)
         opts.selected = bool(selected)
+        opts.bg = to_c_color(bg)
+        opts.border_color = to_c_color(border_color)
         keep.append(opts)
         clicked = bool(self._lib.cui_card_begin(self._ctx, ctypes.byref(opts)))
         return CardScope(self._ctx, self._lib.cui_card_end, clicked)

@@ -133,6 +133,38 @@ soft = ui.mix_colors(brand, ui.Color.hex("#ffffff"), 0.25)  # Mixed in OKLab spa
 translucent = ui.with_alpha(brand, 0.20)         # Multiply alpha by 0.20
 ```
 
+### Recoloring One Component (without touching the theme)
+
+Theme tokens restyle everything; these arguments restyle a single widget and leave the rest of the app alone — same `ColorLike` forms as above.
+
+| Component | Color arguments |
+|---|---|
+| `heading(...)` | `color=`, `bg=` (+ `pad`, `radius`, `width=ui.FILL` for a banner) |
+| `text(...)`, `markdown(...)`, `expandable_text(...)` | `color=` |
+| `input` / `textarea` / `search` / `number` | `bg=`, `color=` (alias `text_color=`), `placeholder_color=`, `border_color=`, `focus_color=` |
+| `card(...)` | `bg=`, `border_color=` (with `muted=`, `selected=`) |
+| `box(...)`, `row`, `column`, `grid`, `stack` | `bg=`, `border_color=`, `border=`, `radius=` |
+| `button` / `icon_button` | `color=` (label + glyph tint) |
+| `badge`, `progress`, `readout`, `status_bar_text`, `timeline_item` | `tone=` (semantic palette) |
+| `image(...)` | `tint=` |
+| `knob`, `dot_display`, `loader`, `voice_orb`, `dock_item`, `gradient_text`, `spotlight` | `color=` / `from_color=`, `to_color=` |
+| `line_chart`, `bar_chart`, `donut_chart`, `area`, `sparkline`, … and every `Series` | per-series `color=` |
+| everything else (selects, checkboxes, switches, sliders, tables, editors, docks…) | follows `ctx.theme[...]` — change a token, or wrap the region in `ctx.set_accent` |
+
+```python
+# a dark hero input on an otherwise light page
+ctx.input("email", value, bg="#101425", color="#e6e9ff",
+          placeholder_color="#6b7390", border_color="#2b3350", focus_color="#7c5cff")
+
+# a tinted panel that is not a card
+with ctx.card(bg=ui.with_alpha("#7c5cff", 0.12), border_color="#7c5cff", pad=18):
+    ctx.text("Notice", color="#c9b8ff")
+
+# brand-tinted button, one colour argument
+if ctx.button("Deploy", variant=ui.ButtonVariant.PRIMARY, color="#22d3ee"):
+    deploy()
+```
+
 ### All 34 `ui.Token` Slots
 - **Surfaces**: `BACKGROUND`, `SURFACE`, `SURFACE_RAISED`, `SURFACE_MUTED`
 - **Text**: `FOREGROUND`, `TEXT_SECONDARY`, `TEXT_MUTED`

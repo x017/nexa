@@ -659,6 +659,8 @@ bool cui_card_begin(cui_ctx *ui, const cui_card_opts *o) {
         n->border = 1;
         n->border_color = o->selected ? CUI_C(ui, ACCENT) : cui_mix(CUI_C(ui, BORDER), CUI_C(ui, BORDER_STRONG), hover);
     }
+    if (cui__color_set(o->bg)) n->bg = o->bg;
+    if (cui__color_set(o->border_color)) n->border_color = o->border_color;
     if (o->hoverable) {
         n->elevation = CUI_ELEVATION_RAISED;
         n->elevation_alpha = hover;

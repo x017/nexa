@@ -656,9 +656,12 @@ int cui__text_field(cui_ctx *ui, cui_id id, char *buf, size_t cap, const cui_inp
         if (multiline) { bn->pad[0] = bn->pad[2] = 8; }
         if (o->icon || search_icon) bn->pad[3] = CUI__FIELD_PAD_ICON;
         bn->bg = disabled ? CUI_C(ui, SURFACE_MUTED) : CUI_C(ui, SURFACE);
+        if (cui__color_set(o->bg)) bn->bg = o->bg;
         bn->border = 1;
         cui_color border = cui__control_edge(ui, e->hover);
         cui_color focus_c = cui__edge_on(ui);
+        if (cui__color_set(o->border_color)) border = o->border_color;
+        if (cui__color_set(o->focus_color)) focus_c = o->focus_color;
         border = cui_mix(border, focus_c, e->focus);
         if (has_error) border = CUI_C(ui, DANGER);
         bn->border_color = border;
@@ -697,8 +700,8 @@ int cui__text_field(cui_ctx *ui, cui_id id, char *buf, size_t cap, const cui_inp
     p->caret_phase = ui->time - ui->caret_time;
     p->font = font; p->size = size;
     p->placeholder = o->placeholder;
-    p->text = CUI_C(ui, FOREGROUND);
-    p->placeholder_color = CUI_C(ui, TEXT_MUTED);
+    p->text = cui__color_set(o->text_color) ? o->text_color : CUI_C(ui, FOREGROUND);
+    p->placeholder_color = cui__color_set(o->placeholder_color) ? o->placeholder_color : CUI_C(ui, TEXT_MUTED);
     p->caret = cui__emphasis(ui);
     p->selection = ui->accent == CUI_ACCENT_NEUTRAL ? cui_alpha(cui_oklch(0.6f, 0.13f, 250, 1), 0.28f) : cui_alpha(CUI_C(ui, ACCENT), 0.26f);
     p->line_h = line_h;

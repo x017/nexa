@@ -215,6 +215,8 @@ class CuiCardOpts(Structure):
         ("hoverable", c_bool),
         ("muted", c_bool),
         ("selected", c_bool),
+        ("bg", CuiColor),
+        ("border_color", CuiColor),
     ]
 
 
@@ -328,6 +330,11 @@ class CuiInputOpts(Structure):
         ("height", c_float),
         ("prefix", c_char_p),
         ("suffix", c_char_p),
+        ("bg", CuiColor),
+        ("text_color", CuiColor),
+        ("placeholder_color", CuiColor),
+        ("border_color", CuiColor),
+        ("focus_color", CuiColor),
     ]
 
 

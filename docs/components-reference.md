@@ -13,7 +13,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 - **`column(**box_kwargs)`** — Vertical flex container.
 - **`stack(**box_kwargs)`** — Overlapping Z-stack container (`Direction.STACK`).
 - **`grid(columns=0, *, min_column_width=0.0, **box_kwargs)`** — Responsive CSS-Grid-like multi-column container.
-- **`card(*, id=None, width=None, height=None, min_width=0.0, max_width=0.0, pad=0.0, pad_x=0.0, pad_y=0.0, gap=0.0, dir=Direction.COLUMN, align=Align.DEFAULT, wrap=False, hoverable=False, muted=False, selected=False)`** -> `CardScope` (`card.clicked` is `True` when a `hoverable=True` card is clicked).
+- **`card(*, id=None, width=None, height=None, min_width=0.0, max_width=0.0, pad=0.0, pad_x=0.0, pad_y=0.0, gap=0.0, dir=Direction.COLUMN, align=Align.DEFAULT, wrap=False, hoverable=False, muted=False, selected=False, bg=None, border_color=None)`** -> `CardScope` (`card.clicked` is `True` when a `hoverable=True` card is clicked).
 - **`scroll(id=None, *, width=None, height=None, horizontal=False, pad=0.0, gap=0.0, fade_edges=False, fade_color=None)`** -> `SimpleScope` + **`scroll_to(scroll_id, y)`**.
 - **`split(id, ratio, *, vertical=False, min_first=0.0, min_second=0.0, width=None, height=None)`** -> `SplitScope` (call `sp.next()` between pane 1 and pane 2; read updated `sp.ratio`).
 - **`spacer()`** | **`gap(size)`** | **`separator()`**
@@ -73,7 +73,7 @@ All layout scopes are **unconditional** (`with ui.row(...):` always enters).
 
 ## 5. Text & Specialized Inputs (`nexa.widgets.inputs`)
 
-- **`input(id, value: str, *, max_bytes=512, label=None, placeholder=None, icon=None, hint=None, error=None, password=False, disabled=False, clearable=False, autofocus=False, read_only=False, size=ControlSize.MD, width=None, height=0.0, prefix=None, suffix=None) -> str`**
+- **`input(id, value: str, *, max_bytes=512, label=None, placeholder=None, icon=None, hint=None, error=None, password=False, disabled=False, clearable=False, autofocus=False, read_only=False, size=ControlSize.MD, width=None, height=0.0, prefix=None, suffix=None, bg=None, color=None, text_color=None, placeholder_color=None, border_color=None, focus_color=None) -> str`** (`color` is an alias of `text_color`; `search`/`textarea`/`number` take the same colour keys)
 - **`search(id, value: str, *, max_bytes=256, **input_opts) -> str`**
 - **`textarea(id, value: str, *, max_bytes=4096, height=120.0, **input_opts) -> str`**
 - **`number(id, value: float, min_value=-1e12, max_value=1e12, *, label=None, step=1.0, decimals=0, disabled=False, width=None, suffix=None) -> float`**

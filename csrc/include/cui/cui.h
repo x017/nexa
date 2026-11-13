@@ -463,6 +463,8 @@ typedef struct cui_card_opts {
     bool hoverable;            /* lifts slightly on hover and returns clicks */
     bool muted;                /* muted surface, no border */
     bool selected;             /* accent border */
+    cui_color bg;              /* surface override (default SURFACE / SURFACE_MUTED) */
+    cui_color border_color;    /* edge override (default BORDER, ACCENT when selected) */
 } cui_card_opts;
 CUI_API bool cui_card_begin(cui_ctx *ui, const cui_card_opts *opts);   /* returns true when clicked (hoverable) */
 CUI_API void cui_card_end(cui_ctx *ui);
@@ -626,6 +628,13 @@ typedef struct cui_input_opts {
     float height;              /* textarea: height in points; negative fills the space */
     const char *prefix;        /* muted text before the value, e.g. "$" or "https://" */
     const char *suffix;        /* muted text after the value, e.g. "USD" or "kg" */
+    /* per-field colors, so one input can sit on a tinted bar or a dark hero
+     * section; leave zeroed to follow the theme tokens */
+    cui_color bg;              /* field surface (default SURFACE) */
+    cui_color text_color;      /* the value (default FOREGROUND) */
+    cui_color placeholder_color; /* default TEXT_MUTED */
+    cui_color border_color;    /* resting edge (default the theme control edge) */
+    cui_color focus_color;     /* the edge focus blends to (default ACCENT) */
 } cui_input_opts;
 
 /* Single line text field. Returns CUI_CHANGED / CUI_SUBMITTED (Enter) flags. */
