@@ -108,32 +108,81 @@ class LayoutMixin:
         """Wrap a container scope so ``fg=`` tints the text drawn inside it."""
         return inner if fg is None else ColorScope(self, inner, fg)
 
-    def box(self, *, fg: ColorLike = None, **kwargs) -> "BoxScope | ColorScope":
-        opts = _build_box_opts(self._frame_keepalive, **kwargs)
+    def box(
+        self,
+        *,
+        fg: ColorLike = None,
+        bg: ColorLike = None,
+        border_color: ColorLike = None,
+        **kwargs: Any,
+    ) -> "BoxScope | ColorScope":
+        """Container scope.
+
+        ``bg`` / ``border_color`` paint the container itself; ``fg`` is the text
+        colour inherited by ``text()``, ``heading()``, ``markdown()`` and
+        ``expandable_text()`` inside it. Layout arguments (``pad``, ``gap``,
+        ``width``, ``radius``, ``align``…) are documented on the container
+        reference page.
+        """
+        opts = _build_box_opts(self._frame_keepalive, bg=bg, border_color=border_color, **kwargs)
         nid = int(self._lib.cui_box_begin(self._ctx, ctypes.byref(opts)))
         return self._scope(BoxScope(self._ctx, self._lib.cui_box_end, nid), fg)
 
-    def row(self, *, fg: ColorLike = None, **kwargs) -> "BoxScope | ColorScope":
+    def row(
+        self,
+        *,
+        fg: ColorLike = None,
+        bg: ColorLike = None,
+        border_color: ColorLike = None,
+        **kwargs: Any,
+    ) -> "BoxScope | ColorScope":
+        """Horizontal container; same colour arguments as :meth:`box`."""
         kwargs.setdefault("dir", Direction.ROW)
-        opts = _build_box_opts(self._frame_keepalive, **kwargs)
+        opts = _build_box_opts(self._frame_keepalive, bg=bg, border_color=border_color, **kwargs)
         nid = int(self._lib.cui_row_begin(self._ctx, ctypes.byref(opts)))
         return self._scope(BoxScope(self._ctx, self._lib.cui_box_end, nid), fg)
 
-    def column(self, *, fg: ColorLike = None, **kwargs) -> "BoxScope | ColorScope":
+    def column(
+        self,
+        *,
+        fg: ColorLike = None,
+        bg: ColorLike = None,
+        border_color: ColorLike = None,
+        **kwargs: Any,
+    ) -> "BoxScope | ColorScope":
+        """Vertical container; same colour arguments as :meth:`box`."""
         kwargs.setdefault("dir", Direction.COLUMN)
-        opts = _build_box_opts(self._frame_keepalive, **kwargs)
+        opts = _build_box_opts(self._frame_keepalive, bg=bg, border_color=border_color, **kwargs)
         nid = int(self._lib.cui_column_begin(self._ctx, ctypes.byref(opts)))
         return self._scope(BoxScope(self._ctx, self._lib.cui_box_end, nid), fg)
 
-    def grid(self, columns: int = 0, *, min_column_width: float = 0.0, **kwargs) -> "BoxScope | ColorScope":
+    def grid(
+        self,
+        columns: int = 0,
+        *,
+        min_column_width: float = 0.0,
+        fg: ColorLike = None,
+        bg: ColorLike = None,
+        border_color: ColorLike = None,
+        **kwargs: Any,
+    ) -> "BoxScope | ColorScope":
+        """Grid container; same colour arguments as :meth:`box`."""
         kwargs["dir"] = Direction.GRID
         kwargs["columns"] = columns
         kwargs["min_column_width"] = min_column_width
-        return self.box(**kwargs)
+        return self.box(fg=fg, bg=bg, border_color=border_color, **kwargs)
 
-    def stack(self, *, fg: ColorLike = None, **kwargs) -> "BoxScope | ColorScope":
+    def stack(
+        self,
+        *,
+        fg: ColorLike = None,
+        bg: ColorLike = None,
+        border_color: ColorLike = None,
+        **kwargs: Any,
+    ) -> "BoxScope | ColorScope":
+        """Overlay stack; same colour arguments as :meth:`box`."""
         kwargs["dir"] = Direction.STACK
-        return self.box(fg=fg, **kwargs)
+        return self.box(fg=fg, bg=bg, border_color=border_color, **kwargs)
 
     def card(
         self,

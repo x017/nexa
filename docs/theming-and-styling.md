@@ -182,7 +182,7 @@ Theme tokens restyle everything; these arguments restyle a single widget and lea
 |---|---|
 | `heading(...)` | `color=`, `bg=` (+ `pad`, `radius`, `width=ui.FILL` for a banner) |
 | `text(...)`, `markdown(...)`, `expandable_text(...)` | `color=` |
-| `input` / `textarea` / `search` / `number` | `bg=`, `color=` (alias `text_color=`), `placeholder_color=`, `border_color=`, `focus_color=` |
+| `input` / `textarea` / `search` | `bg=`, `color=` (alias `text_color=`), `placeholder_color=`, `border_color=`, `focus_color=` |
 | `card(...)` | `bg=`, `border_color=` (with `muted=`, `selected=`) |
 | `box(...)`, `row`, `column`, `grid`, `stack`, `card(...)` | `bg=`, `border_color=`, `border=`, `radius=`, and `fg=` — the text colour inherited by everything drawn inside |
 | `button` / `icon_button` | `color=` (label + glyph tint) |
@@ -191,6 +191,24 @@ Theme tokens restyle everything; these arguments restyle a single widget and lea
 | `knob`, `dot_display`, `loader`, `voice_orb`, `dock_item`, `gradient_text`, `spotlight` | `color=` / `from_color=`, `to_color=` |
 | `line_chart`, `bar_chart`, `donut_chart`, `area`, `sparkline`, … and every `Series` | per-series `color=` |
 | everything else (selects, checkboxes, switches, sliders, tables, editors, docks…) | follows `ctx.theme[...]` — change a token, or wrap the region in `ctx.set_accent` |
+
+**How far does this reach?** Not every component has a colour argument, and that
+is a boundary of the vendored engine rather than an omission: a widget can only
+be recoloured per-call if its C opts struct carries a `cui_color`. Today
+**63 of ~300** widget methods take any colour argument:
+
+- **6 containers** take `fg=` (and `bg=` / `border_color=`): `box`, `row`,
+  `column`, `grid`, `stack`, `card`. `fg=` is inherited by the text drawn inside,
+  so one line can tint a whole region.
+- **3 text fields** take the full field palette: `input`, `textarea`, `search`
+  (`bg`, `color`/`text_color`, `placeholder_color`, `border_color`,
+  `focus_color`).
+- **~40 widgets** take a foreground/`tone`/`tint` (text, headings, markdown,
+  buttons, badges, charts, knobs, image tint, …).
+- **Everything else follows the theme**: `table`, `tree`, `tabs`/`menu`,
+  `select`/`checkbox`/`switch`/`slider`, `number`, toolbars, dialogs/popovers/
+  tooltips, docks. For those, change the token (`ctx.theme[...]` / `ctx.set_accent`)
+  or wrap the region in `fg=` and draw the copy yourself with `text()`.
 
 > Color arguments cost nothing when you don't use them: the default path skips the conversion entirely, and every `ColorLike` value is memoised by its input (a hex string parses once, then costs ~0.1 µs) — so restyling 60 inputs every frame adds ~0.2 ms to the frame.
 

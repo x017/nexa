@@ -55,6 +55,11 @@ release that picks it up. The published version of this page is
   stack unwinds when the block raises, and `markdown()` / `expandable_text()`
   honour it too. The theme micro-styles (`label`, `secondary`, `muted`, `code`,
   `kbd`, `link`) and self-colouring widgets keep their own palettes.
+- **Discoverable colour arguments**: the containers (`box`, `row`, `column`,
+  `grid`, `stack`) and the text fields (`input`, `textarea`, `search`) now list
+  `fg` / `bg` / `border_color` (and the full field palette) as real parameters
+  instead of swallowing them in `**kwargs`, so they show up in signatures and
+  IDE completion.
 - **Examples**: `examples/instruments.py` (Reactor Console), `examples/devtools.py`
   (all 20 dev panels across tabs) and `examples/rtl.py` (Persian/Arabic app with
   RTL layout, localized calendar, terminal and charts).

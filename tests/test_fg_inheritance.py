@@ -186,3 +186,29 @@ def test_markdown_and_expandable_text_inherit_fg() -> None:
             ctx.expandable_text("ex", "clamped body copy " * 20)
 
     assert _count(_render(draw), _reddish) > 500
+
+
+# ---------------------------------------------------------------------------
+# the colour arguments are discoverable: they appear in the signature
+# ---------------------------------------------------------------------------
+
+def test_container_colour_arguments_are_in_the_signature() -> None:
+    import inspect
+
+    for name in ("box", "row", "column", "grid", "stack"):
+        params = inspect.signature(getattr(ui.UI, name)).parameters
+        for kw in ("fg", "bg", "border_color"):
+            assert kw in params, f"{name}() does not expose {kw}="
+    card = inspect.signature(ui.UI.card).parameters
+    for kw in ("fg", "bg", "border_color"):
+        assert kw in card, f"card() does not expose {kw}="
+
+
+def test_container_bg_and_border_still_paint() -> None:
+    def draw(ctx: ui.UI) -> None:
+        with ctx.column(bg="#123456", border_color="#ff00ff", border=2, pad=12):
+            ctx.text("on a painted container")
+
+    buf = _render(draw)
+    assert _count(buf, lambda r, g, b: abs(r - 18) < 6 and abs(g - 52) < 6 and abs(b - 86) < 6) > 1000
+    assert _count(buf, lambda r, g, b: r > 200 and b > 200 and g < 80) > 20
