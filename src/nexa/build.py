@@ -198,6 +198,27 @@ def stamp_matches(lib_path: Path, csrc_dir: Path) -> bool:
     return not version or record.get("cui_version") == version
 
 
+def default_options(env: Optional[Dict[str, str]] = None) -> Dict[str, object]:
+    """Options a plain ``python -m nexa.build`` would use on this machine.
+
+    The loader compares these with a library's stamp: a build made by an older
+    nexa (shaping off, for instance) is recompiled instead of silently rendering
+    unjoined Persian.
+    """
+    env = dict(os.environ if env is None else env)
+    is_minimal = _env_bool(env, "NEXA_MINIMAL", False)
+    return {
+        "minimal": is_minimal,
+        "fonts": _env_bool(env, "NEXA_DEFAULT_FONTS", not is_minimal),
+        "stb_image": _env_bool(env, "NEXA_STB_IMAGE", not is_minimal),
+        "text_shaping": _env_bool(env, "NEXA_RTL", False)
+        or _env_bool(env, "NEXA_TEXT_SHAPING", not is_minimal),
+        "app": _env_bool(env, "NEXA_WITH_APP", not is_minimal),
+        "gl": _env_bool(env, "NEXA_WITH_GL", not is_minimal),
+        "sw": _env_bool(env, "NEXA_WITH_SW", True),
+    }
+
+
 def _detect_compiler(env: Dict[str, str], sys_name: str) -> str:
     if env.get("CC"):
         return env["CC"]
@@ -249,11 +270,16 @@ def build_native(
     use_fonts = default_fonts if default_fonts is not None else _env_bool(env, "NEXA_DEFAULT_FONTS", not is_minimal)
     use_stb = stb_image if stb_image is not None else _env_bool(env, "NEXA_STB_IMAGE", not is_minimal)
     use_img_all = image_all_formats if image_all_formats is not None else _env_bool(env, "NEXA_IMAGE_ALL", False)
-    use_shape = (
-        text_shaping
-        if text_shaping is not None
-        else (_env_bool(env, "NEXA_TEXT_SHAPING", False) or _env_bool(env, "NEXA_RTL", False))
-    )
+    # shaping is on by default (+~24 KB): without it Persian/Arabic letters never
+    # join, which is a correctness bug far more than a size win
+    if text_shaping is not None:
+        use_shape = text_shaping
+    elif _env_bool(env, "NEXA_RTL", False):
+        use_shape = True
+    elif "NEXA_TEXT_SHAPING" in env:
+        use_shape = _env_bool(env, "NEXA_TEXT_SHAPING", True)
+    else:
+        use_shape = not is_minimal
     use_app = with_app if with_app is not None else _env_bool(env, "NEXA_WITH_APP", not is_minimal)
     use_gl = with_gl if with_gl is not None else _env_bool(env, "NEXA_WITH_GL", not is_minimal)
     use_sw = with_sw if with_sw is not None else _env_bool(env, "NEXA_WITH_SW", True)
@@ -500,7 +526,21 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--no-fonts", action="store_true", help="Omit embedded Inter/Geist/Lucide fonts")
     parser.add_argument("--no-image", action="store_true", help="Omit stb_image PNG/JPEG decoder")
     parser.add_argument("--all-image-formats", action="store_true", help="Include BMP/GIF/TGA decoding")
-    parser.add_argument("--rtl", "--text-shaping", dest="rtl", action="store_true", help="Enable bidirectional paragraphs & Arabic-script OpenType shaping")
+    parser.add_argument(
+        "--rtl",
+        "--text-shaping",
+        dest="rtl",
+        action="store_true",
+        default=None,
+        help="Bidirectional paragraphs & Arabic-script OpenType shaping (on by default)",
+    )
+    parser.add_argument(
+        "--no-rtl",
+        "--no-text-shaping",
+        dest="no_rtl",
+        action="store_true",
+        help="Drop bidi/shaping (smaller build; Persian/Arabic letters stay unjoined)",
+    )
     parser.add_argument("--headless", action="store_true", help="Omit native windowing & file dialogs")
     parser.add_argument("--no-gl", action="store_true", help="Omit OpenGL renderer")
     parser.add_argument("--no-sw", action="store_true", help="Omit software renderer")
@@ -523,7 +563,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         default_fonts=False if (args.minimal or args.no_fonts) else None,
         stb_image=False if (args.minimal or args.no_image) else None,
         image_all_formats=True if args.all_image_formats else None,
-        text_shaping=True if args.rtl else None,
+        text_shaping=False if args.no_rtl else (True if args.rtl else None),
         backend=args.platform,
         lto=True if args.lto else None,
         debug=args.debug,

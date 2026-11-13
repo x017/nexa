@@ -13,9 +13,9 @@ CUI itself only loads TrueType/OpenType bytes or a file path; finding a font by
         ctx.use_font(path_or_bytes, fallbacks=[rtl])    # BODY + MEDIUM + DISPLAY
         ctx.use_rtl_font()                              # falls back to whatever is installed
 
-Persian/Arabic also needs glyph shaping, which only a build compiled with
-``NEXA_TEXT_SHAPING=1`` (``nexa.build --rtl``) provides — see
-:func:`supports_text_shaping`.
+Persian/Arabic also needs glyph shaping, which is compiled in by default; a
+library built with ``--no-rtl`` (or by an older nexa) lacks it and is rebuilt on
+import — check :func:`supports_text_shaping`.
 """
 
 from __future__ import annotations
@@ -180,7 +180,7 @@ def find_rtl_font(
 
 
 def supports_text_shaping() -> bool:
-    """Whether this build shapes Arabic/Persian/Indic scripts (``--rtl`` builds do)."""
+    """Whether this build shapes Arabic/Persian/Indic scripts (the default build does)."""
     from .render import build_features
     from .types import BuildFeatures
 

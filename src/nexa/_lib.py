@@ -69,7 +69,7 @@ def stale_reason(path: Path, csrc_dir: Optional[Path]) -> Optional[str]:
 
     record = read_stamp(path)
     if record is not None and stamp_matches(path, csrc_dir):
-        return None
+        return _option_mismatch(record, csrc_dir)
     if record is None:
         # built before stamps existed (or by another tool): rebuild once and
         # stamp it, so the next import is free
@@ -78,6 +78,26 @@ def stale_reason(path: Path, csrc_dir: Optional[Path]) -> Optional[str]:
     if version and record.get("cui_version") != version:
         return f"built against CUI {record.get('cui_version') or '?'}, sources are {version}"
     return "C sources changed since it was built"
+
+
+def _option_mismatch(record: dict, csrc_dir: Path) -> Optional[str]:
+    """Rebuild when the library was built without a capability nexa now expects.
+
+    Only shaping is treated this strictly: a build without it cannot join
+    Persian/Arabic letters, which looks like a rendering bug rather than a
+    missing feature. Other options (fonts, gl, sw, app) are left to the user.
+    """
+    from .build import default_options
+
+    options = record.get("options") or {}
+    if not options:
+        return None
+    if options.get("minimal"):
+        return None  # an explicitly minimal build: the user chose the size trade-off
+    want = bool(default_options().get("text_shaping"))
+    if want and options.get("text_shaping") is False:
+        return "built without text shaping (Persian/Arabic letters would not join)"
+    return None
 
 
 def _unique_copy(path: Path) -> Path:
@@ -122,7 +142,7 @@ def locate_library(*, auto_build: bool = True) -> Path:
         if missing:
             raise RuntimeError(
                 f"NEXA_LIB_PATH={p} is out of date: it does not export {missing[0]}. "
-                "Rebuild it with `python -m nexa.build -o <path>` (add --rtl for shaping)."
+                "Rebuild it with `python -m nexa.build -o <path>`."
             )
         return p
 

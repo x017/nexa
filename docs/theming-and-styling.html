@@ -195,13 +195,14 @@ ctx.font_set_role(ui.<span class="tok-cls">FontRole</span>.<span class="tok-cls"
 ctx.font_add_fallback(latin, arabic)</code></pre></div>
 <p>Low-level pieces, if you want them explicitly: <code>font_load_file(path)</code>, <code>font_load_memory(bytes)</code>, <code>font_set_role(role, id)</code>, <code>font_add_fallback(font_id, fallback_id)</code>.</p>
 <h3 id="persian-arabic-hebrew-rtl">Persian / Arabic / Hebrew (RTL)</h3>
-<p>Right-to-left needs two things: an <strong>RTL build</strong> (CUI&#x27;s OpenType shaper) and a font with Arabic-script coverage.</p>
-<div class="code-panel"><div class="code-header"><span>bash</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code>NEXA_TEXT_SHAPING=1 python -m nexa.build -o src/nexa/_native/libnexa_cui.so
-# or: python -m nexa.build --rtl</code></pre></div>
+<p>Right-to-left needs two things: a shaper (on by default since CUI 1.4) and a font with Arabic-script coverage.</p>
+<div class="code-panel"><div class="code-header"><span>bash</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code>python -m nexa.build                      # shaping is on by default (+~24 KB)
+python -m nexa.build --no-rtl             # drop it (Persian/Arabic letters stay unjoined)</code></pre></div>
+<p>A library built without shaping is detected on import and recompiled once, so an old <code>_native/libnexa_cui.so</code> cannot silently render unjoined text.</p>
 <div class="code-panel"><div class="code-header"><span>python</span><button class="copy-mini" data-copy-code="1" type="button">Copy</button></div><pre><code><span class="tok-kw">import</span> nexa <span class="tok-kw">as</span> ui
 <span class="tok-kw">from</span> nexa <span class="tok-kw">import</span> fonts
 
-print(fonts.supports_text_shaping())      <span class="tok-com"># True with a --rtl build</span>
+print(fonts.supports_text_shaping())      <span class="tok-com"># True for a default build</span>
 
 <span class="tok-kw">with</span> ui.<span class="tok-cls">SoftwareRenderer</span>() <span class="tok-kw">as</span> sw, ui.<span class="tok-cls">UI</span>(width=<span class="tok-num">800</span>, height=<span class="tok-num">600</span>, renderer=sw) <span class="tok-kw">as</span> ctx:
     ctx.use_rtl_font()                    <span class="tok-com"># first installed of Vazirmatn, Vazir, Sahel,</span>

@@ -264,7 +264,7 @@ class TextMixin:
         Without ``family`` the first installed font from
         :data:`nexa.fonts.RTL_FAMILIES` is used (Vazirmatn, Noto Naskh Arabic,
         Tahoma, …).  Pair it with ``direction=ui.TextDirection.RTL`` on a
-        container, and build with ``--rtl`` so the glyphs are shaped.
+        container; shaping is compiled in by default, so glyphs join.
         """
         from ..fonts import find_rtl_font, find_system_font
 

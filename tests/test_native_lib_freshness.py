@@ -83,3 +83,22 @@ def test_source_fingerprint_tracks_sources(tmp_path: Path) -> None:
     assert build.cui_version(csrc) == "1.4.0"
     (csrc / "src" / "a.c").write_text("int a(void) { return 2; }\n", encoding="utf-8")
     assert build.source_fingerprint(csrc) != first
+
+
+def test_option_mismatch_rebuilds_unshaped_libraries() -> None:
+    unshaped = {"options": {"text_shaping": False, "minimal": False}}
+    assert "text shaping" in (_lib._option_mismatch(unshaped, ROOT / "csrc") or "")
+
+    shaped = {"options": {"text_shaping": True, "minimal": False}}
+    assert _lib._option_mismatch(shaped, ROOT / "csrc") is None
+
+    minimal = {"options": {"text_shaping": False, "minimal": True}}
+    assert _lib._option_mismatch(minimal, ROOT / "csrc") is None, "an explicit minimal build is respected"
+
+    assert _lib._option_mismatch({"options": {}}, ROOT / "csrc") is None
+
+
+def test_default_build_options_shape_text() -> None:
+    options = build.default_options()
+    assert options["text_shaping"] is True, "shaping must be the default so Persian joins"
+    assert options["minimal"] is False

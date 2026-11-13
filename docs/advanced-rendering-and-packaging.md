@@ -106,8 +106,9 @@ Compile a stripped custom shared library removing unused subsystems via CLI or e
 # Default full build (~820 KB: SW + GL 3.3 + OS Windowing + Embedded Fonts + PNG/JPEG + 160+ widgets)
 python3 -m nexa.build
 
-# Enable Unicode BiDi paragraphs & Arabic-script OpenType glyph shaping (CUI 1.1)
-python3 -m nexa.build --rtl
+# Unicode BiDi paragraphs & Arabic-script OpenType shaping are ON by default (+~24 KB);
+# drop them for a smaller build (Persian/Arabic letters then stay unjoined)
+python3 -m nexa.build --no-rtl
 
 # Minimal LTO build with Software Renderer (~672 KB)
 python3 -m nexa.build --minimal --lto

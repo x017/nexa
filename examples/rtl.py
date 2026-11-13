@@ -3,8 +3,8 @@
 Shows the CUI 1.2–1.4 pieces that make a Persian/Arabic app feel native:
 
 * ``direction=ui.TextDirection.RTL`` on the layout (and ``AUTO`` for mixed lines)
-* ``ctx.use_rtl_font()`` — installs an Arabic-capable *system* font for the whole UI
-  (build with ``python -m nexa.build --rtl`` for real glyph shaping)
+* ``ctx.use_rtl_font()`` — installs an Arabic-capable *system* font for the whole UI;
+  glyph shaping is compiled in by default, so the letters join
 * ``ctx.set_strings(...)`` — localized month and weekday names
 * ``month_calendar``, ``terminal``, ``file_browser``, ``candlestick``,
   ``image_viewer``, ``cropper``, ``emoji_picker`` and a guided ``tour``
@@ -12,7 +12,7 @@ Shows the CUI 1.2–1.4 pieces that make a Persian/Arabic app feel native:
     python examples/rtl.py
 
 Runs headless with ``NEXA_HEADLESS=1 CUI_SCREENSHOT=out.png``; without an
-Arabic font or a shaping build it still runs, just with unshaped/fallback text.
+installed Arabic font it still runs, just with fallback glyphs.
 """
 
 from __future__ import annotations
@@ -88,6 +88,12 @@ def main() -> None:
             setup["rtl_font"] = True
         except FileNotFoundError:
             setup["rtl_font"] = False   # falls back to the embedded faces
+        if not fonts.supports_text_shaping():
+            print(
+                "rtl.py: this native library was built without text shaping, so the letters "
+                "will not join. Rebuild it: python -m nexa.build  (or --rtl on old checkouts).",
+                file=__import__("sys").stderr,
+            )
         ctx.set_strings(months=MONTHS, weekdays=WEEKDAYS, today="امروز")
         setup["texture"] = ctx.image_create(tex_w, tex_h, bytes(pixels))
 

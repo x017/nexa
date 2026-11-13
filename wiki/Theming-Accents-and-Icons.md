@@ -238,19 +238,22 @@ Low-level pieces, if you want them explicitly: `font_load_file(path)`,
 
 ### Persian / Arabic / Hebrew (RTL)
 
-Right-to-left needs two things: an **RTL build** (CUI's OpenType shaper) and a
+Right-to-left needs two things: a shaper (on by default since CUI 1.4) and a
 font with Arabic-script coverage.
 
 ```bash
-NEXA_TEXT_SHAPING=1 python -m nexa.build -o src/nexa/_native/libnexa_cui.so
-# or: python -m nexa.build --rtl
+python -m nexa.build                      # shaping is on by default (+~24 KB)
+python -m nexa.build --no-rtl             # drop it (Persian/Arabic letters stay unjoined)
 ```
+
+A library built without shaping is detected on import and recompiled once, so an
+old `_native/libnexa_cui.so` cannot silently render unjoined text.
 
 ```python
 import nexa as ui
 from nexa import fonts
 
-print(fonts.supports_text_shaping())      # True with a --rtl build
+print(fonts.supports_text_shaping())      # True for a default build
 
 with ui.SoftwareRenderer() as sw, ui.UI(width=800, height=600, renderer=sw) as ctx:
     ctx.use_rtl_font()                    # first installed of Vazirmatn, Vazir, Sahel,
